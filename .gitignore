@@ -1,0 +1,44 @@
+# Virtual environment directories
+venv/
+env/
+ENV/
+virtualenv/
+.virtualenv/
+
+# Python virtual environment
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Environment variables
+.env
+.venv
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database (if using SQLite locally)
+*.sqlite3
+*.db
+
+# Django specific
+*.log
+local_settings.py
+
+# Static files (if collected locally)
+/staticfiles/
+/mediafiles/
