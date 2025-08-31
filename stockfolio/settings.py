@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
+from decouple import config  # <-- Add this import
+import dj_database_url 
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'your-secret-key-here'  # Replace with a secure value for production
+SECRET_KEY = 'ss7g$%z8rkh=3fc8cx0bux(wi(exgq1@35-+*hlf^o2s(2as1w'  # Replace with a secure value for production
 
 # SECURITY WARNING: don’t run with debug turned on in production!
 DEBUG = True
@@ -69,16 +71,28 @@ TEMPLATES = [
 WSGI_APPLICATION = 'stockfolio.wsgi.application'
 
 # PostgreSQL database settings (use docker-compose env vars or fallback defaults)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'stockfolio_db'),
-        'USER': os.getenv('DB_USER', 'stockfolio_user'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'stockfolio_pass'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+database_url = config('DATABASE_URL', default=None)
+
+if database_url:
+    # Use DATABASE_URL if available (Render production)
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=not DEBUG
+        )
     }
-}
+else:
+    # Fallback to individual variables (local development)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='stockfolio_db'),
+            'USER': config('DB_USER', default='stockfolio_user'),
+            'PASSWORD': config('DB_PASSWORD', default='stockfolio_pass'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 # Password validators
 AUTH_PASSWORD_VALIDATORS = [
