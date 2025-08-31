@@ -66,13 +66,8 @@ def register_view(request):
 
 def logout_view(request):
     """User logout view"""
-    if request.method == 'POST':
-        logout(request)
-        messages.success(request, 'You have been logged out successfully.')
-        return redirect('home')
-    
-    # If not POST, show confirmation page
-    return render(request, 'logout_confirmation.html')
+    logout(request)
+    return redirect('home') 
 
 def home_view(request):
     """Home page with upcoming dividends"""
