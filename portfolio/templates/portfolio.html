@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Navigation Header -->
+<nav class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                <span class="text-2xl">📈</span>
+                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Home
+                </a>
+                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    All Stocks
+                </a>
+                <a href="{% url 'portfolio' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
+                    My Portfolio
+                </a>
+                <a href="{% url 'watchlist' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Watchlist
+                </a>
+            </div>
+
+            <!-- User Menu -->
+            {% include 'navbar_user_menu.html' %}
+
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Portfolio
+            </h1>
+            <p class="text-xl text-gray-600">Track your investments and dividend income</p>
+        </div>
+
+        {% if portfolio_items %}
+        <!-- Portfolio Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Value</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ total_value|floatformat:2 }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-blue-600">💰</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Investment</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ total_investment|floatformat:2 }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-green-600">📊</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Gain/Loss</p>
+                        <p class="text-2xl font-bold text-gray-900 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            ${{ total_gain_loss|floatformat:2 }}
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-full flex items-center justify-center">
+                        <span class="text-2xl {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {{ total_gain_loss|yesno:"📈,📉" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Annual Dividends</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ annual_dividend_income|floatformat:2 }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-purple-600">🎯</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Table -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Your Holdings</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3">Stock</th>
+                            <th class="text-right py-3">Shares</th>
+                            <th class="text-right py-3">Avg Cost</th>
+                            <th class="text-right py-3">Current Price</th>
+                            <th class="text-right py-3">Current Value</th>
+                            <th class="text-right py-3">Gain/Loss</th>
+                            <th class="text-right py-3">Annual Dividend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in portfolio_items %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-4">
+                                <div class="flex items-center">
+                                    <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-semibold mr-3">
+                                        {{ item.item.stock.symbol|slice:":1" }}
+                                    </span>
+                                    <div>
+                                        <div class="font-semibold">{{ item.item.stock.symbol }}</div>
+                                        <div class="text-sm text-gray-600">{{ item.item.stock.company_name|truncatewords:2 }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-right py-4">{{ item.item.shares_owned }}</td>
+                            <td class="text-right py-4">${{ item.item.average_cost|floatformat:2 }}</td>
+                            <td class="text-right py-4">
+                                {% if item.latest_price %}
+                                    ${{ item.latest_price.last_price|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-right py-4">${{ item.current_value|floatformat:2 }}</td>
+                            <td class="text-right py-4">
+                                <span class="{% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                    ${{ item.gain_loss|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td class="text-right py-4">
+                                {% if item.dividend_income %}
+                                    ${{ item.dividend_income|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty Portfolio State -->
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+            <div class="text-6xl mb-4">📊</div>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your portfolio is empty</h2>
+            <p class="text-gray-600 mb-8">Start adding stocks to your portfolio to track your investments</p>
+            <a href="{% url 'all_stocks' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition duration-200">
+                Browse Stocks
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Upcoming Dividends Section -->
+        {% if portfolio_items %}
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">📅 Upcoming Dividend Payments</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for item in portfolio_items %}
+                    {% if item.latest_dividend and item.latest_dividend.ex_dividend_date %}
+                    <div class="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-semibold text-gray-900">{{ item.item.stock.symbol }}</span>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                {{ item.latest_dividend.ex_dividend_date|timeuntil }} left
+                            </span>
+                        </div>
+                        <p class="text-2xl font-bold text-green-600">${{ item.latest_dividend.amount }}</p>
+                        <p class="text-sm text-gray-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}</p>
+                        <p class="text-sm text-gray-600">
+                            Expected: ${{ item.expected_dividend|floatformat:2 }}
+                        </p>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12 mt-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">DividendTracker</h3>
+                <p class="text-gray-400">Your comprehensive dividend investment platform.</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
+                    <li><a href="{% url 'all_stocks' %}" class="text-gray-400 hover:text-white transition duration-200">All Stocks</a></li>
+                    <li><a href="{% url 'portfolio' %}" class="text-gray-400 hover:text-white transition duration-200">My Portfolio</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Account</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white transition duration-200">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white transition duration-200">Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Legal</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 DividendTracker. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}

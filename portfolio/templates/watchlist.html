@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<nav class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                <span class="text-2xl">📈</span>
+                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Home
+                </a>
+                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    All Stocks
+                </a>
+                <a href="{% url 'portfolio' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    My Portfolio
+                </a>
+                <a href="{% url 'watchlist' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
+                    Watchlist
+                </a>
+            </div>
+
+            <!-- User Menu -->
+            {% include 'navbar_user_menu.html' %}
+
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Watchlist
+            </h1>
+            <p class="text-xl text-gray-600">Track stocks you're interested in</p>
+            
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-2xl text-blue-600">⭐</span>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">{{ watchlist_items|length }}</div>
+                            <div class="text-gray-600">Watched Stocks</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-2xl text-green-600">💰</span>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">
+                                {{ dividend_stocks_count }}
+                            </div>
+                            <div class="text-gray-600">Dividend Payers</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-2xl text-purple-600">🏢</span>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">{{ sectors_count }}</div>
+                            <div class="text-gray-600">Sectors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if watchlist_items %}
+        <!-- Results Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Watched Stocks</h2>
+                <p class="text-gray-600">
+                    Showing {{ watchlist_items|length }} stock{{ watchlist_items|pluralize }} in your watchlist
+                </p>
+            </div>
+            <div class="mt-2 sm:mt-0">
+                <a href="{% url 'all_stocks' %}" 
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition duration-200 shadow-md">
+                    Browse More Stocks
+                </a>
+            </div>
+        </div>
+
+        <!-- Stocks Grid - Matching allstocks.html style -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            {% for item in watchlist_items %}
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition duration-300 border border-gray-100 transform hover:-translate-y-1 group">
+                <div class="p-6">
+                    <!-- Stock Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition duration-200">
+                                {{ item.stock.symbol }}
+                            </h3>
+                            <p class="text-sm text-gray-500">{{ item.stock.code }}</p>
+                        </div>
+                        {% if item.latest_dividend %}
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                            💰 Dividend
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Company Name -->
+                    <p class="text-gray-700 font-medium mb-4 line-clamp-2">{{ item.stock.company_name }}</p>
+                    
+                    <!-- Sector Badge -->
+                    {% if item.stock.sector %}
+                    <div class="mb-4">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                            {{ item.stock.sector }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Dividend Information -->
+                    {% if item.latest_dividend %}
+                    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl mb-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <span class="text-xs text-gray-600">Dividend</span>
+                                <div class="text-lg font-bold text-green-600">${{ item.latest_dividend.amount }}</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Yield</span>
+                                <div class="text-lg font-bold text-blue-600">{{ item.latest_dividend.yield_percent }}%</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Freq</span>
+                                <div class="text-sm font-semibold">{{ item.latest_dividend.frequency }}</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Next Ex-Date</span>
+                                <div class="text-sm font-semibold">
+                                    {% if item.latest_dividend.ex_dividend_date %}
+                                        {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}
+                                    {% else %}
+                                        No upcoming
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Price Information -->
+                    {% if item.latest_price %}
+                    <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Current Price:</span>
+                        <span class="text-lg font-bold text-gray-900">${{ item.latest_price.last_price }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-2 mb-3">
+                        <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                           class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-2 px-3 rounded-xl font-medium transition duration-200 shadow-md">
+                            View Details
+                        </a>
+                        <button onclick="toggleWatchlist({{ item.stock.id }})" 
+                                class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white py-2 px-3 rounded-xl font-medium transition duration-200 shadow-md">
+                            Remove
+                        </button>
+                    </div>
+                    
+                    <!-- Add to Portfolio Button -->
+                    {% if not item.in_portfolio %}
+                    <button onclick="openPortfolioModal('{{ item.stock.symbol }}', '{{ item.stock.company_name }}')"
+                            class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-center py-2 px-4 rounded-xl font-medium transition duration-200">
+                        + Add to Portfolio
+                    </button>
+                    {% else %}
+                    <div class="w-full bg-green-100 text-green-800 text-center py-2 px-4 rounded-xl font-medium">
+                        ✓ In Portfolio
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+            <div class="text-6xl mb-4">⭐</div>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your watchlist is empty</h2>
+            <p class="text-gray-600 mb-8">Start adding stocks to your watchlist to track them</p>
+            <a href="{% url 'all_stocks' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition duration-200 shadow-md">
+                Browse Stocks
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- CTA Section -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-2xl p-12 text-center mt-16">
+            <h2 class="text-3xl font-bold text-white mb-4">Track Your Dividend Portfolio</h2>
+            <p class="text-blue-100 text-xl mb-8 max-w-2xl mx-auto">
+                Monitor your investments, track dividend payments, and analyze your portfolio performance.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'portfolio' %}" 
+                   class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold transition duration-200 transform hover:scale-105 shadow-lg">
+                    View My Portfolio
+                </a>
+                <a href="{% url 'all_stocks' %}" 
+                   class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-xl font-semibold transition duration-200 shadow-lg">
+                    Discover More Stocks
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Navigation -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">DividendTracker</h3>
+                <p class="text-gray-400">Your comprehensive dividend investment platform.</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
+                    <li><a href="{% url 'all_stocks' %}" class="text-gray-400 hover:text-white transition duration-200">All Stocks</a></li>
+                    <li><a href="{% url 'watchlist' %}" class="text-gray-400 hover:text-white transition duration-200">Watchlist</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Account</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white transition duration-200">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white transition duration-200">Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Legal</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 DividendTracker. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+function toggleWatchlist(stockId) {
+    fetch(`/watchlist/toggle/${stockId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'removed') {
+            // Show notification
+            alert(data.message);
+            
+            // Reload the page to reflect changes
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function openPortfolioModal(symbol, companyName) {
+    // You can implement a modal here or redirect to portfolio page
+    window.location.href = `/stock/${symbol}/`;
+}
+</script>
+{% endblock %}

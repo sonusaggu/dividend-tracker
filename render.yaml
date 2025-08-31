@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: stockfolio-web
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn stockfolio.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stockfolio-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.5
+
+  - type: postgres
+    name: stockfolio-db
+    plan: free
+    ipAllowList: [] # only allow internal connections
+    databaseName: stockfolio_db
+    user: stockfolio_user

@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Navigation Header -->
+<nav class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                <span class="text-2xl">📈</span>
+                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Home
+                </a>
+                <a href="{% url 'all_stocks' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
+                    All Stocks
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'portfolio' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    My Portfolio
+                </a>
+                {% endif %}
+                
+            </div>
+
+            <!-- Auth Buttons -->
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                <!-- User Menu -->
+                <div class="relative group">
+                    <button class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+                        <span class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            {{ user.username|first|upper }}
+                        </span>
+                        <span>{{ user.username }}</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 hover:bg-red-50 border-t border-gray-200">Logout</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Login
+                </a>
+                <a href="{% url 'register' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium transition duration-200 transform hover:scale-105 shadow-md">
+                    Sign Up Free
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Discover Dividend Stocks
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Explore our comprehensive database of dividend-paying stocks. Filter by sector, search by symbol, 
+                and find your next investment opportunity.
+            </p>
+            
+            {% if not user.is_authenticated %}
+            <div class="mt-6">
+                <a href="{% url 'register' %}" class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition duration-200 transform hover:scale-105 shadow-md">
+                    Start Tracking Your Dividends - Free
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-2xl text-blue-600">📊</span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count }}</div>
+                        <div class="text-gray-600">Total Stocks</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-2xl text-green-600">💰</span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">{{ dividend_stocks_count }}</div>
+                        <div class="text-gray-600">Dividend Payers</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-2xl text-purple-600">🏢</span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">{{ sectors_count }}</div>
+                        <div class="text-gray-600">Sectors</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+            <form method="get" class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- Hidden field to preserve sort -->
+                <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                
+                <!-- Search Input -->
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🔍 Search Stocks</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            placeholder="Search by symbol or company name..." 
+                            value="{{ search_query }}"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        >
+                        <span class="absolute left-3 top-3 text-gray-400">🔍</span>
+                    </div>
+                </div>
+                
+                <!-- Sector Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🏢 Sector</label>
+                    <select 
+                        name="sector" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    >
+                        <option value="">All Sectors</option>
+                        {% for sector in sectors %}
+                        <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>
+                            {{ sector }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex items-end space-x-2">
+                    <button 
+                        type="submit" 
+                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition duration-200 transform hover:scale-105 shadow-md"
+                    >
+                        Apply Filters
+                    </button>
+                    {% if search_query or sector_filter or sort_by != 'dividend_date' %}
+                    <a 
+                        href="{% url 'all_stocks' %}" 
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-xl font-medium transition duration-200 shadow-md"
+                    >
+                        Clear
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Available Stocks</h2>
+                <p class="text-gray-600">
+                    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} stocks
+                </p>
+            </div>
+            <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+                <span class="text-sm text-gray-600">Sort by:</span>
+                <form method="get" class="m-0">
+                    <!-- Preserve existing filters -->
+                    <input type="hidden" name="search" value="{{ search_query }}">
+                    <input type="hidden" name="sector" value="{{ sector_filter }}">
+                    
+                    <select 
+                        name="sort_by" 
+                        onchange="this.form.submit()"
+                        class="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
+                        <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount (High-Low)</option>
+                        <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Dividend Yield (High-Low)</option>
+                        <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol (A-Z)</option>
+                        <option value="sector" {% if sort_by == 'sector' %}selected{% endif %}>Sector</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stocks Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            {% for item in stocks_with_dividends %}
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition duration-300 border border-gray-100 transform hover:-translate-y-1 group">
+                <div class="p-6">
+                    <!-- Stock Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition duration-200">
+                                {{ item.stock.symbol }}
+                            </h3>
+                            <p class="text-sm text-gray-500">{{ item.stock.code }}</p>
+                        </div>
+                        {% if item.has_dividend %}
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                            💰 Dividend
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Company Name -->
+                    <p class="text-gray-700 font-medium mb-4 line-clamp-2">{{ item.stock.company_name }}</p>
+                    
+                    <!-- Sector Badge -->
+                    {% if item.stock.sector %}
+                    <div class="mb-4">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                            {{ item.stock.sector }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Dividend Information -->
+                    {% if item.has_dividend %}
+                    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl mb-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <span class="text-xs text-gray-600">Dividend</span>
+                                <div class="text-lg font-bold text-green-600">${{ item.latest_dividend.amount }}</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Yield</span>
+                                <div class="text-lg font-bold text-blue-600">{{ item.latest_dividend.yield_percent }}%</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Freq</span>
+                                <div class="text-sm font-semibold">{{ item.latest_dividend.frequency }}</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-600">Next Ex-Date</span>
+                                <div class="text-sm font-semibold">
+                                    {% if item.upcoming_dividend_date %}
+                                        {{ item.upcoming_dividend_date|date:"M d, Y" }}
+                                    {% else %}
+                                        No upcoming
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Price Information -->
+                    {% if item.latest_price %}
+                    <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Current Price:</span>
+                        <span class="text-lg font-bold text-gray-900">${{ item.latest_price.last_price }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Button -->
+                    <a 
+                        href="{% url 'stock_detail' item.stock.symbol %}" 
+                        class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-3 px-4 rounded-xl font-medium transition duration-200 transform hover:scale-105 shadow-md"
+                    >
+                        View Details →
+                    </a>
+                
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-16">
+                <div class="text-6xl mb-4">🔍</div>
+                <h3 class="text-2xl font-semibold text-gray-600 mb-2">No stocks found</h3>
+                <p class="text-gray-500 mb-6">
+                    {% if search_query or sector_filter %}
+                    Try adjusting your search criteria or filters
+                    {% else %}
+                    No stocks available in the database
+                    {% endif %}
+                </p>
+                <a href="{% url 'all_stocks' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Clear filters and view all stocks
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="flex justify-center mt-12">
+            <nav class="flex items-center space-x-2 bg-white rounded-2xl shadow-lg p-4">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition duration-200">
+                    &laquo; First
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition duration-200">
+                    ← Previous
+                </a>
+                {% endif %}
+
+                <span class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Next →
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Last &raquo;
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        <!-- CTA Section - Different for logged in vs guest users -->
+        {% if user.is_authenticated %}
+        <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-2xl p-12 text-center mt-16">
+            <h2 class="text-3xl font-bold text-white mb-4">Track Your Dividend Portfolio</h2>
+            <p class="text-blue-100 text-xl mb-8 max-w-2xl mx-auto">
+                Monitor your investments, track dividend payments, and analyze your portfolio performance.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'portfolio' %}" 
+                   class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold transition duration-200 transform hover:scale-105 shadow-lg">
+                    View My Portfolio
+                </a>
+                <a href="#" 
+                   class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-xl font-semibold transition duration-200 shadow-lg">
+                    Dividend Calendar
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-2xl p-12 text-center mt-16">
+            <h2 class="text-3xl font-bold text-white mb-4">Ready to Track Your Dividends?</h2>
+            <p class="text-blue-100 text-xl mb-8 max-w-2xl mx-auto">
+                Create your free account and start building your dividend portfolio with advanced tracking and notifications.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'register' %}" 
+                   class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold transition duration-200 transform hover:scale-105 shadow-lg">
+                    Start Free Trial
+                </a>
+                <a href="{% url 'login' %}" 
+                   class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-xl font-semibold transition duration-200 shadow-lg">
+                    Sign In
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Footer Navigation -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">DividendTracker</h3>
+                <p class="text-gray-400">Your comprehensive dividend investment platform.</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
+                    <li><a href="{% url 'all_stocks' %}" class="text-gray-400 hover:text-white transition duration-200">All Stocks</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Dividend Calendar</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Account</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white transition duration-200">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white transition duration-200">Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Legal</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 DividendTracker. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}
