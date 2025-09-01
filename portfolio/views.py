@@ -379,64 +379,6 @@ def add_to_portfolio(request, symbol):
         }, status=500)
 
 @login_required
-@require_http_methods(["GET", "POST"])
-def manage_dividend_alerts(request, stock_id):
-    """Manage dividend alerts for a specific stock"""
-    try:
-        # Validate stock_id is a positive integer
-        stock_id = int(stock_id)
-        if stock_id <= 0:
-            messages.error(request, 'Invalid stock ID')
-            return redirect('dashboard')
-            
-        stock = get_object_or_404(Stock, id=stock_id)
-        
-        if request.method == 'POST':
-            try:
-                days_advance = int(request.POST.get('days_advance', 1))
-                is_active = request.POST.get('is_active') == 'true'
-                
-                # Validate days_advance
-                if days_advance < 1 or days_advance > 30:
-                    messages.error(request, 'Days advance must be between 1 and 30')
-                    return redirect('stock_detail', symbol=stock.symbol)
-                
-                alert, created = DividendAlert.objects.update_or_create(
-                    user=request.user,
-                    stock=stock,
-                    defaults={
-                        'days_advance': days_advance,
-                        'is_active': is_active
-                    }
-                )
-                
-                messages.success(request, 'Dividend alert settings saved successfully!')
-                return redirect('stock_detail', symbol=stock.symbol)
-            
-            except ValueError:
-                messages.error(request, 'Invalid input values. Please check your entries.')
-                return redirect('stock_detail', symbol=stock.symbol)
-        
-        # GET request - show management page
-        try:
-            alert = DividendAlert.objects.get(user=request.user, stock=stock)
-        except DividendAlert.DoesNotExist:
-            alert = None
-        
-        return render(request, 'dividend_alerts.html', {
-            'stock': stock,
-            'alert': alert
-        })
-    
-    except (ValueError, TypeError):
-        messages.error(request, 'Invalid stock ID')
-        return redirect('dashboard')
-    except Exception as e:
-        logger.error(f"Error in manage_dividend_alerts: {e}")
-        messages.error(request, 'An error occurred while managing dividend alerts.')
-        return redirect('dashboard')
-
-@login_required
 def watchlist_view(request):
     """View user's watchlist"""
     try:
@@ -697,3 +639,93 @@ def dashboard(request):
             'watchlist_stocks': [],
             'upcoming_dividends_count': 0,
         })
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def manage_dividend_alerts(request, symbol):
+    """Manage dividend alerts for a specific stock"""
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    
+    # Get or create alert for this user and stock
+    alert, created = DividendAlert.objects.get_or_create(
+        user=request.user,
+        stock=stock,
+        defaults={'days_advance': 1, 'is_active': True}
+    )
+    
+    if request.method == 'POST':
+        try:
+            days_advance = int(request.POST.get('days_advance', 1))
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # Validate days_advance
+            if days_advance < 1 or days_advance > 30:
+                messages.error(request, 'Days advance must be between 1 and 30.')
+                return redirect('manage_dividend_alerts', symbol=symbol)
+            
+            # Update alert
+            alert.days_advance = days_advance
+            alert.is_active = is_active
+            alert.save()
+            
+            status = "enabled" if is_active else "disabled"
+            messages.success(request, f'Dividend alerts for {stock.symbol} have been {status}.')
+            return redirect('stock_detail', symbol=symbol)
+            
+        except ValueError:
+            messages.error(request, 'Invalid input values. Please check your entries.')
+    
+    # Get dividend information
+    dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
+    
+    context = {
+        'stock': stock,
+        'dividend': dividend,
+        'alert': alert,
+    }
+    
+    return render(request, 'dividend_alerts.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_dividend_alert(request, symbol):
+    """Quick toggle for dividend alerts"""
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    
+    alert, created = DividendAlert.objects.get_or_create(
+        user=request.user,
+        stock=stock,
+        defaults={'days_advance': 1, 'is_active': True}
+    )
+    
+    # Toggle the alert status
+    alert.is_active = not alert.is_active
+    alert.save()
+    
+    status = "enabled" if alert.is_active else "disabled"
+    messages.success(request, f'Dividend alerts for {stock.symbol} have been {status}.')
+    
+    return redirect('stock_detail', symbol=symbol)
+
+@login_required
+def my_alerts(request):
+    """View all user's dividend alerts"""
+    alerts = DividendAlert.objects.filter(user=request.user).select_related('stock')
+    
+    # Get latest dividend info for each stock
+    alerts_data = []
+    for alert in alerts:
+        latest_dividend = Dividend.objects.filter(
+            stock=alert.stock
+        ).order_by('-ex_dividend_date').first()
+        
+        alerts_data.append({
+            'alert': alert,
+            'latest_dividend': latest_dividend,
+        })
+    
+    context = {
+        'alerts': alerts_data,
+    }
+    
+    return render(request, 'my_alerts.html', context)        

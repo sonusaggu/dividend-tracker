@@ -15,5 +15,7 @@ urlpatterns = [
     path('watchlist/', views.watchlist_view, name='watchlist'),
     path('portfolio/', views.portfolio_view, name='portfolio'),
     path('check-watchlist/<int:stock_id>/', views.check_watchlist_status, name='check_watchlist_status'),
-    path('set-alert/<str:symbol>/', views.set_alert, name='set_alert'),
+    path('stock/<str:symbol>/alerts/', views.manage_dividend_alerts, name='manage_dividend_alerts'),
+    path('stock/<str:symbol>/alerts/toggle/', views.toggle_dividend_alert, name='toggle_dividend_alert'),
+    path('my-alerts/', views.my_alerts, name='my_alerts'),
 ]

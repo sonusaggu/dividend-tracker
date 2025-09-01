@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Navigation Header -->
+<nav class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                <span class="text-2xl">📈</span>
+                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Home
+                </a>
+                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    All Stocks
+                </a>
+                <a href="{% url 'portfolio' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    My Portfolio
+                </a>
+                <a href="{% url 'watchlist' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
+                    Watchlist
+                </a>
+                <a href="{% url 'my_alerts' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
+                    My Alerts
+                </a>
+            </div>
+
+            <!-- User Menu -->
+            {% include 'navbar_user_menu.html' %}
+
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Dividend Alerts
+            </h1>
+            <p class="text-xl text-gray-600">Never miss an important dividend date</p>
+        </div>
+
+        {% if alerts %}
+        <!-- Alerts Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Alerts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ alerts|length }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-blue-600">🔔</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Active Alerts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ active_alerts_count }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-green-600">✅</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Upcoming Alerts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ upcoming_alerts_count }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl text-purple-600">📅</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Grid -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Your Dividend Alerts</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for alert_data in alerts %}
+                {% with alert=alert_data.alert dividend=alert_data.latest_dividend %}
+                <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200 hover:shadow-md transition duration-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-semibold mr-3">
+                                {{ alert.stock.symbol|slice:":1" }}
+                            </span>
+                            <div>
+                                <div class="font-bold text-gray-900">{{ alert.stock.symbol }}</div>
+                                <div class="text-sm text-gray-600">{{ alert.stock.company_name|truncatewords:3 }}</div>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {% if alert.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ alert.is_active|yesno:"Active,Inactive" }}
+                        </span>
+                    </div>
+                    
+                    {% if dividend %}
+                    <div class="bg-white p-3 rounded-lg mb-4 border border-gray-200">
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-gray-600">Amount:</div>
+                            <div class="font-semibold text-right">${{ dividend.amount }}</div>
+                            <div class="text-gray-600">Frequency:</div>
+                            <div class="font-semibold text-right">{{ dividend.get_frequency_display }}</div>
+                            {% if dividend.ex_dividend_date %}
+                            <div class="text-gray-600">Ex-Date:</div>
+                            <div class="font-semibold text-right">{{ dividend.ex_dividend_date|date:"M d, Y" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-sm text-gray-600 mb-4 p-2 bg-gray-100 rounded-lg">
+                        <div class="font-medium">Alert Settings</div>
+                        <div>Notify me {{ alert.days_advance }} day{{ alert.days_advance|pluralize }} before ex-date</div>
+                        <div>Via: {{ alert.get_notification_method_display }}</div>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <a href="{% url 'manage_dividend_alerts' alert.stock.symbol %}" 
+                           class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 rounded-lg text-sm transition duration-200">
+                            Edit
+                        </a>
+                        <a href="{% url 'stock_detail' alert.stock.symbol %}" 
+                           class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-center py-2 px-3 rounded-lg text-sm transition duration-200">
+                            View Stock
+                        </a>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty Alerts State -->
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+            <div class="text-6xl mb-4">🔔</div>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">No Dividend Alerts</h2>
+            <p class="text-gray-600 mb-8">You haven't set up any dividend alerts yet.</p>
+            <a href="{% url 'all_stocks' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition duration-200">
+                Browse Stocks to Set Alerts
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12 mt-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">DividendTracker</h3>
+                <p class="text-gray-400">Your comprehensive dividend investment platform.</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
+                    <li><a href="{% url 'all_stocks' %}" class="text-gray-400 hover:text-white transition duration-200">All Stocks</a></li>
+                    <li><a href="{% url 'portfolio' %}" class="text-gray-400 hover:text-white transition duration-200">My Portfolio</a></li>
+                    <li><a href="{% url 'my_alerts' %}" class="text-gray-400 hover:text-white transition duration-200">My Alerts</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Account</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white transition duration-200">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white transition duration-200">Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Legal</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 DividendTracker. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}

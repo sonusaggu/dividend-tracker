@@ -15,7 +15,7 @@
           <a href="{% url 'dashboard' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">Dashboard</a>
           <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">All Stocks</a>
           <a href="{% url 'portfolio' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">My Portfolio</a>
-          <a href="#" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">Alerts</a>
+          <a href="{% url 'my_alerts' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">Alerts</a>
         </div>
         <!-- User Menu -->
         {% include 'navbar_user_menu.html' %}

@@ -71,7 +71,7 @@
                     
                     <!-- Dividend Alerts Button -->
                     {% if dividend %}
-                    <a href="{% url 'manage_dividend_alerts' stock.id %}" 
+                    <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 
                        class="flex items-center justify-center px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition duration-200">
                         <span>🔔</span>
                         <span class="ml-2">
