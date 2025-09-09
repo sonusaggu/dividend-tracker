@@ -137,3 +137,11 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # or your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sonusaggu92@gmail.com'
+EMAIL_HOST_PASSWORD = 'xetybejdigwpyzcg'
+DEFAULT_FROM_EMAIL = 'sonusaggu92@gmail.com'
