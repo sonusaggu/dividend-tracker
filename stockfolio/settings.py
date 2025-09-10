@@ -12,7 +12,7 @@ SECRET_KEY = 'ss7g$%z8rkh=3fc8cx0bux(wi(exgq1@35-+*hlf^o2s(2as1w'  # Replace wit
 # SECURITY WARNING: don’t run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','.onrender.com', 'dividend.forum']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
