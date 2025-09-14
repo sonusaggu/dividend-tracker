@@ -43,42 +43,14 @@
             <p class="text-xl text-gray-600">Track stocks you're interested in</p>
             
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                            <span class="text-2xl text-blue-600">⭐</span>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">{{ watchlist_items|length }}</div>
-                            <div class="text-gray-600">Watched Stocks</div>
-                        </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-2xl text-orange-600">📊</span>
                     </div>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                            <span class="text-2xl text-green-600">💰</span>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">
-                                {{ dividend_stocks_count }}
-                            </div>
-                            <div class="text-gray-600">Dividend Payers</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                            <span class="text-2xl text-purple-600">🏢</span>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">{{ sectors_count }}</div>
-                            <div class="text-gray-600">Sectors</div>
-                        </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">{{ watchlist_items|length }}/10</div>
+                        <div class="text-gray-600">Watchlist Limit</div>
                     </div>
                 </div>
             </div>

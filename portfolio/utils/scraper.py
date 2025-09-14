@@ -202,7 +202,7 @@ class TSXScraper:
 
     @transaction.atomic
     def update_stock_in_database(self, transformed_data):
-        """Update stock data in Django database"""
+        """Update stock data in Django database - always update to current date"""
         try:
             symbol = transformed_data['symbol']
             if not symbol:
@@ -223,66 +223,119 @@ class TSXScraper:
 
             today = date.today()
 
-            # Update stock price
+            # Update stock price - find latest record and update it
             if transformed_data['last_price'] is not None:
-                StockPrice.objects.update_or_create(
-                    stock=stock,
-                    price_date=today,
-                    defaults={
-                        'last_price': transformed_data['last_price'],
-                        'volume': transformed_data['volume'],
-                        'fiftytwo_week_high': transformed_data['fiftytwo_week_high'],
-                        'fiftytwo_week_low': transformed_data['fiftytwo_week_low'],
-                        'currency': transformed_data['currency']
-                    }
-                )
+                # Find the most recent price record for this stock
+                latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
+                
+                if latest_price:
+                    # Update the existing record with new data and current date
+                    latest_price.price_date = today
+                    latest_price.last_price = transformed_data['last_price']
+                    latest_price.volume = transformed_data['volume']
+                    latest_price.fiftytwo_week_high = transformed_data['fiftytwo_week_high']
+                    latest_price.fiftytwo_week_low = transformed_data['fiftytwo_week_low']
+                    latest_price.currency = transformed_data['currency']
+                    latest_price.save()
+                else:
+                    # Create new record if none exists
+                    StockPrice.objects.create(
+                        stock=stock,
+                        price_date=today,
+                        last_price=transformed_data['last_price'],
+                        volume=transformed_data['volume'],
+                        fiftytwo_week_high=transformed_data['fiftytwo_week_high'],
+                        fiftytwo_week_low=transformed_data['fiftytwo_week_low'],
+                        currency=transformed_data['currency']
+                    )
 
-            # Update dividend information
+            # Update dividend information - find and update latest dividend
             if (transformed_data['dividend_amount'] is not None and 
                 transformed_data['dividend_date']):
                 
-                # Handle missing frequency
-                frequency = transformed_data['dividend_frequency']
-                if not frequency or frequency == 'N/A':
-                    frequency = 'Unknown'
-                
-                Dividend.objects.update_or_create(
+                try:
+                    if isinstance(transformed_data['dividend_date'], str):
+                        ex_dividend_date = datetime.strptime(transformed_data['dividend_date'], '%Y-%m-%d').date()
+                    else:
+                        ex_dividend_date = transformed_data['dividend_date']
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Error parsing dividend date for {symbol}: {str(e)}")
+                    ex_dividend_date = None
+                    
+                if ex_dividend_date:
+                    frequency = transformed_data['dividend_frequency']
+                    if not frequency or frequency == 'N/A':
+                        frequency = 'Unknown'
+                    
+                    payment_date = None
+                    if transformed_data['dividend_payable_date']:
+                        try:
+                            if isinstance(transformed_data['dividend_payable_date'], str):
+                                payment_date = datetime.strptime(transformed_data['dividend_payable_date'], '%Y-%m-%d').date()
+                            else:
+                                payment_date = transformed_data['dividend_payable_date']
+                        except (ValueError, TypeError) as e:
+                            logger.error(f"Error parsing payment date for {symbol}: {str(e)}")
+                            payment_date = None
+                    
+                    # Update or create dividend with the specific ex_dividend_date
+                    Dividend.objects.update_or_create(
+                        stock=stock,
+                        ex_dividend_date=ex_dividend_date,
+                        defaults={
+                            'amount': transformed_data['dividend_amount'],
+                            'yield_percent': transformed_data['dividend_yield'],
+                            'frequency': frequency,
+                            'payment_date': payment_date,
+                            'currency': transformed_data['currency']
+                        }
+                    )
+
+            # Update valuation metrics - find latest and update
+            latest_valuation = ValuationMetric.objects.filter(stock=stock).order_by('-metric_date').first()
+            if latest_valuation:
+                # Update existing record
+                latest_valuation.metric_date = today
+                latest_valuation.pe_ratio = transformed_data['pe_ratio']
+                latest_valuation.eps = transformed_data['eps']
+                latest_valuation.market_cap = transformed_data['market_cap']
+                latest_valuation.growth_3_year = transformed_data['growth_3_year']
+                latest_valuation.growth_5_year = transformed_data['growth_5_year']
+                latest_valuation.save()
+            else:
+                # Create new record
+                ValuationMetric.objects.create(
                     stock=stock,
-                    defaults={
-                        'amount': transformed_data['dividend_amount'],
-                        'yield_percent': transformed_data['dividend_yield'],
-                        'frequency': frequency,  # Use the handled value
-                        'ex_dividend_date': transformed_data['dividend_date'],
-                        'payment_date': transformed_data['dividend_payable_date'],
-                        'currency': transformed_data['currency']
-                    }
+                    metric_date=today,
+                    pe_ratio=transformed_data['pe_ratio'],
+                    eps=transformed_data['eps'],
+                    market_cap=transformed_data['market_cap'],
+                    growth_3_year=transformed_data['growth_3_year'],
+                    growth_5_year=transformed_data['growth_5_year']
                 )
 
-            # Update valuation metrics
-            ValuationMetric.objects.update_or_create(
-                stock=stock,
-                metric_date=today,
-                defaults={
-                    'pe_ratio': transformed_data['pe_ratio'],
-                    'eps': transformed_data['eps'],
-                    'market_cap': transformed_data['market_cap'],
-                    'growth_3_year': transformed_data['growth_3_year'],
-                    'growth_5_year': transformed_data['growth_5_year']
-                }
-            )
-
-            # Update analyst ratings
-            AnalystRating.objects.update_or_create(
-                stock=stock,
-                rating_date=today,
-                defaults={
-                    'aggregate_rating': transformed_data['analyst_aggregate'],
-                    'analyst_rating': transformed_data['analyst_rating'],
-                    'buy_count': transformed_data['analyst_buy'],
-                    'hold_count': transformed_data['analyst_hold'],
-                    'sell_count': transformed_data['analyst_sell']
-                }
-            )
+            # Update analyst ratings - find latest and update
+            latest_rating = AnalystRating.objects.filter(stock=stock).order_by('-rating_date').first()
+            if latest_rating:
+                # Update existing record
+                latest_rating.rating_date = today
+                latest_rating.aggregate_rating = transformed_data['analyst_aggregate']
+                latest_rating.analyst_rating = transformed_data['analyst_rating']
+                latest_rating.buy_count = transformed_data['analyst_buy']
+                latest_rating.hold_count = transformed_data['analyst_hold']
+                latest_rating.sell_count = transformed_data['analyst_sell']
+                latest_rating.save()
+            else:
+                # Create new record
+                AnalystRating.objects.create(
+                    stock=stock,
+                    rating_date=today,
+                    aggregate_rating=transformed_data['analyst_aggregate'],
+                    analyst_rating=transformed_data['analyst_rating'],
+                    buy_count=transformed_data['analyst_buy'],
+                    hold_count=transformed_data['analyst_hold'],
+                    sell_count=transformed_data['analyst_sell']
+                )
 
             return True, f"Successfully updated {symbol}"
             

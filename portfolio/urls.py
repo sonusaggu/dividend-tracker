@@ -18,4 +18,5 @@ urlpatterns = [
     path('stock/<str:symbol>/alerts/', views.manage_dividend_alerts, name='manage_dividend_alerts'),
     path('stock/<str:symbol>/alerts/toggle/', views.toggle_dividend_alert, name='toggle_dividend_alert'),
     path('my-alerts/', views.my_alerts, name='my_alerts'),
+    path('trigger-dividend-alerts/', views.trigger_dividend_alerts, name='trigger_dividend_alerts'),
 ]

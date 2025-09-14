@@ -51,6 +51,10 @@ class Dividend(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ['stock', 'ex_dividend_date']
+        ordering = ['-ex_dividend_date']
+
     def __str__(self):
         return f"{self.stock.symbol} - ${self.amount} {self.frequency}"
 

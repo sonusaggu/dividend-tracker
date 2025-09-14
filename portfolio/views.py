@@ -294,7 +294,7 @@ def stock_detail(request, symbol):
 @login_required
 @require_POST
 def toggle_watchlist(request, stock_id):
-    """Toggle stock in user's watchlist"""
+    """Toggle stock in user's watchlist with max 10 stocks limit"""
     try:
         # Validate stock_id is a positive integer
         stock_id = int(stock_id)
@@ -302,16 +302,26 @@ def toggle_watchlist(request, stock_id):
             return JsonResponse({'status': 'error', 'message': 'Invalid stock ID'}, status=400)
             
         stock = get_object_or_404(Stock, id=stock_id)
-        watchlist_item, created = Watchlist.objects.get_or_create(
-            user=request.user,
-            stock=stock
-        )
         
-        if not created:
-            watchlist_item.delete()
+        # Check if user already has this stock in watchlist
+        existing_watchlist_item = Watchlist.objects.filter(user=request.user, stock=stock).first()
+        
+        if existing_watchlist_item:
+            # Remove from watchlist
+            existing_watchlist_item.delete()
             return JsonResponse({'status': 'removed', 'message': f'Removed {stock.symbol} from watchlist'})
-        
-        return JsonResponse({'status': 'added', 'message': f'Added {stock.symbol} to watchlist'})
+        else:
+            # Check if user has reached the maximum limit
+            current_count = Watchlist.objects.filter(user=request.user).count()
+            if current_count >= 10:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Maximum limit of 10 watchlist stocks reached. Please remove some stocks first.'
+                }, status=400)
+            
+            # Add to watchlist
+            Watchlist.objects.create(user=request.user, stock=stock)
+            return JsonResponse({'status': 'added', 'message': f'Added {stock.symbol} to watchlist'})
     
     except (ValueError, TypeError):
         return JsonResponse({'status': 'error', 'message': 'Invalid stock ID'}, status=400)
@@ -399,8 +409,15 @@ def watchlist_view(request):
                 'watchlist_item': item
             })
         
+        # Calculate stats for the template
+        dividend_stocks_count = sum(1 for item in watchlist_data if item['latest_dividend'])
+        sectors = set(item['stock'].sector for item in watchlist_data if item['stock'].sector)
+        
         return render(request, 'watchlist.html', {
-            'watchlist_items': watchlist_data
+            'watchlist_items': watchlist_data,
+            'dividend_stocks_count': dividend_stocks_count,
+            'sectors_count': len(sectors),
+            'watchlist_count': len(watchlist_items),  # Add this line
         })
     
     except Exception as e:
@@ -497,7 +514,7 @@ def check_watchlist_status(request, stock_id):
 @login_required
 @require_POST
 def set_alert(request, symbol):
-    """Set alert for a stock"""
+    """Set alert for a stock with max 5 alerts per user limit"""
     # Validate symbol format
     if not symbol or not isinstance(symbol, str) or len(symbol) > 10:
         messages.error(request, 'Invalid stock symbol.')
@@ -514,6 +531,33 @@ def set_alert(request, symbol):
         if alert_type not in valid_alert_types:
             messages.error(request, 'Invalid alert type.')
             return redirect('stock_detail', symbol=symbol)
+        
+        # For dividend alerts, check the limit
+        if alert_type == 'dividend':
+            # Check if user already has this alert
+            existing_alert = UserAlert.objects.filter(
+                user=request.user, 
+                stock=stock, 
+                alert_type='dividend'
+            ).first()
+            
+            if existing_alert:
+                # Update existing alert
+                existing_alert.threshold = threshold
+                existing_alert.days_advance = days_advance
+                existing_alert.save()
+                messages.success(request, f'Dividend alert for {stock.symbol} has been updated.')
+                return redirect('stock_detail', symbol=symbol)
+            
+            # Check if user has reached the maximum limit for dividend alerts
+            dividend_alerts_count = UserAlert.objects.filter(
+                user=request.user, 
+                alert_type='dividend'
+            ).count()
+            
+            if dividend_alerts_count >= 5:
+                messages.error(request, 'Maximum limit of 5 dividend alerts reached. Please remove some alerts first.')
+                return redirect('stock_detail', symbol=symbol)
         
         # Validate threshold if it's a price alert
         if alert_type == 'price':
@@ -546,7 +590,11 @@ def set_alert(request, symbol):
             }
         )
         
-        messages.success(request, f'Alert for {stock.symbol} has been set successfully.')
+        if created:
+            messages.success(request, f'Alert for {stock.symbol} has been set successfully.')
+        else:
+            messages.info(request, f'Alert for {stock.symbol} already exists and has been updated.')
+            
         return redirect('stock_detail', symbol=symbol)
         
     except Stock.DoesNotExist:
@@ -643,15 +691,11 @@ def dashboard(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def manage_dividend_alerts(request, symbol):
-    """Manage dividend alerts for a specific stock"""
+    """Manage dividend alerts for a specific stock with max 5 alerts per user limit"""
     stock = get_object_or_404(Stock, symbol=symbol.upper())
     
-    # Get or create alert for this user and stock
-    alert, created = DividendAlert.objects.get_or_create(
-        user=request.user,
-        stock=stock,
-        defaults={'days_advance': 1, 'is_active': True}
-    )
+    # Check if alert already exists
+    alert = DividendAlert.objects.filter(user=request.user, stock=stock).first()
     
     if request.method == 'POST':
         try:
@@ -663,10 +707,25 @@ def manage_dividend_alerts(request, symbol):
                 messages.error(request, 'Days advance must be between 1 and 30.')
                 return redirect('manage_dividend_alerts', symbol=symbol)
             
-            # Update alert
-            alert.days_advance = days_advance
-            alert.is_active = is_active
-            alert.save()
+            if alert:
+                # Update existing alert
+                alert.days_advance = days_advance
+                alert.is_active = is_active
+                alert.save()
+            else:
+                # Check if user has reached the maximum limit
+                current_count = DividendAlert.objects.filter(user=request.user).count()
+                if current_count >= 5:
+                    messages.error(request, 'Maximum limit of 5 dividend alerts reached. Please remove some alerts first.')
+                    return redirect('stock_detail', symbol=symbol)
+                
+                # Create new alert
+                alert = DividendAlert.objects.create(
+                    user=request.user,
+                    stock=stock,
+                    days_advance=days_advance,
+                    is_active=is_active
+                )
             
             status = "enabled" if is_active else "disabled"
             messages.success(request, f'Dividend alerts for {stock.symbol} have been {status}.')
@@ -682,28 +741,42 @@ def manage_dividend_alerts(request, symbol):
         'stock': stock,
         'dividend': dividend,
         'alert': alert,
+        'current_alert_count': DividendAlert.objects.filter(user=request.user).count(),
+        'max_alerts': 5,
     }
     
     return render(request, 'dividend_alerts.html', context)
 
+
 @login_required
 @require_http_methods(["POST"])
 def toggle_dividend_alert(request, symbol):
-    """Quick toggle for dividend alerts"""
+    """Quick toggle for dividend alerts with max 5 alerts per user limit"""
     stock = get_object_or_404(Stock, symbol=symbol.upper())
     
-    alert, created = DividendAlert.objects.get_or_create(
-        user=request.user,
-        stock=stock,
-        defaults={'days_advance': 1, 'is_active': True}
-    )
+    # Check if alert already exists
+    existing_alert = DividendAlert.objects.filter(user=request.user, stock=stock).first()
     
-    # Toggle the alert status
-    alert.is_active = not alert.is_active
-    alert.save()
-    
-    status = "enabled" if alert.is_active else "disabled"
-    messages.success(request, f'Dividend alerts for {stock.symbol} have been {status}.')
+    if existing_alert:
+        # Toggle the alert status
+        existing_alert.is_active = not existing_alert.is_active
+        existing_alert.save()
+        status = "enabled" if existing_alert.is_active else "disabled"
+        messages.success(request, f'Dividend alerts for {stock.symbol} have been {status}.')
+    else:
+        # Check if user has reached the maximum limit
+        current_count = DividendAlert.objects.filter(user=request.user).count()
+        if current_count >= 5:
+            messages.error(request, 'Maximum limit of 5 dividend alerts reached. Please remove some alerts first.')
+        else:
+            # Create new alert
+            DividendAlert.objects.create(
+                user=request.user,
+                stock=stock,
+                days_advance=1,
+                is_active=True
+            )
+            messages.success(request, f'Dividend alerts for {stock.symbol} have been enabled.')
     
     return redirect('stock_detail', symbol=symbol)
 
@@ -729,3 +802,35 @@ def my_alerts(request):
     }
     
     return render(request, 'my_alerts.html', context)        
+
+
+@csrf_exempt
+@require_POST
+def trigger_dividend_alerts(request):
+    """
+    API endpoint to trigger dividend alert emails
+    """
+    # Simple authentication (customize as needed)
+    secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
+    if secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', 'your-secret-key-here'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Check if dry run is requested
+    dry_run = request.POST.get('dry_run', '').lower() == 'true'
+    
+    try:
+        # Run the management command
+        call_command('send_dividend_alerts', dry_run=dry_run)
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Dividend alerts processed successfully',
+            'dry_run': dry_run
+        })
+        
+    except Exception as e:
+        logger.error(f"Error triggering dividend alerts: {e}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': f'Error: {str(e)}'
+        }, status=500)
