@@ -10,6 +10,10 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.db import DatabaseError
 from datetime import datetime, timedelta
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.management import call_command
+import subprocess
 import logging
 
 from .forms import RegistrationForm
