@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'ss7g$%z8rkh=3fc8cx0bux(wi(exgq1@35-+*hlf^o2s(2as1w'  # Replace with a secure value for production
+DIVIDEND_ALERT_SECRET = 'ss7g$%z8rkh=3fc8cx0bux(wi(exgq1@35-+*hlf^o2s(2as1w'  # Replace with a secure value for production
 
 # SECURITY WARNING: don’t run with debug turned on in production!
 DEBUG = False

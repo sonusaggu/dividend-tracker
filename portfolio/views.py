@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.management import call_command
 import subprocess
+from django.conf import settings
 import logging
 
 from .forms import RegistrationForm
