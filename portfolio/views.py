@@ -839,3 +839,40 @@ def trigger_dividend_alerts(request):
             'status': 'error', 
             'message': f'Error: {str(e)}'
         }, status=500)
+
+@csrf_exempt
+@require_POST
+def trigger_daily_scrape(request):
+    """
+    API endpoint to trigger daily stock scraping
+    """
+    # Simple authentication
+    secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
+    if secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', 'your-scrape-secret-key-here'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Get optional parameters
+    days = request.POST.get('days', 60)
+    
+    try:
+        # Convert days to integer
+        try:
+            days = int(days)
+        except ValueError:
+            days = 60
+        
+        # Run the management command
+        call_command('daily_stock_scrape')
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': f'Daily stock scrape completed for {days} days',
+            'days': days
+        })
+        
+    except Exception as e:
+        logger.error(f"Error triggering daily scrape: {e}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': f'Error: {str(e)}'
+        }, status=500)
