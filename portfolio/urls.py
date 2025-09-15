@@ -20,4 +20,5 @@ urlpatterns = [
     path('my-alerts/', views.my_alerts, name='my_alerts'),
     path('trigger-dividend-alerts/', views.trigger_dividend_alerts, name='trigger_dividend_alerts'),
     path('trigger-daily-scrape/', views.trigger_daily_scrape, name='trigger_daily_scrape'),
+    path('delete-alert/<int:alert_id>/', views.delete_dividend_alert, name='delete_dividend_alert'),
 ]

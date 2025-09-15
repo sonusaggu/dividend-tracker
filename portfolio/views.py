@@ -876,3 +876,21 @@ def trigger_daily_scrape(request):
             'status': 'error', 
             'message': f'Error: {str(e)}'
         }, status=500)
+
+
+@login_required
+@require_POST
+def delete_dividend_alert(request, alert_id):
+    """Delete a dividend alert"""
+    try:
+        alert = get_object_or_404(DividendAlert, id=alert_id, user=request.user)
+        stock_symbol = alert.stock.symbol
+        alert.delete()
+        
+        messages.success(request, f'Dividend alert for {stock_symbol} has been removed.')
+        return redirect('my_alerts')
+        
+    except Exception as e:
+        logger.error(f"Error deleting dividend alert: {e}")
+        messages.error(request, 'An error occurred while deleting the alert.')
+        return redirect('my_alerts')
