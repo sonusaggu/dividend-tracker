@@ -862,7 +862,7 @@ def trigger_daily_scrape(request):
             days = 60
         
         # Run the management command
-        call_command('daily_stock_scrape')
+        call_command('daily_scrape')
         
         return JsonResponse({
             'status': 'success', 
