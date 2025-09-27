@@ -203,41 +203,7 @@
 </div>
 
 <!-- Footer Navigation -->
-<footer class="bg-gray-900 text-white py-12">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-                <h3 class="text-lg font-semibold mb-4">DividendTracker</h3>
-                <p class="text-gray-400">Your comprehensive dividend investment platform.</p>
-            </div>
-            <div>
-                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Navigation</h4>
-                <ul class="space-y-2">
-                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
-                    <li><a href="{% url 'all_stocks' %}" class="text-gray-400 hover:text-white transition duration-200">All Stocks</a></li>
-                    <li><a href="{% url 'watchlist' %}" class="text-gray-400 hover:text-white transition duration-200">Watchlist</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Account</h4>
-                <ul class="space-y-2">
-                    <li><a href="{% url 'login' %}" class="text-gray-400 hover:text-white transition duration-200">Login</a></li>
-                    <li><a href="{% url 'register' %}" class="text-gray-400 hover:text-white transition duration-200">Register</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Legal</h4>
-                <ul class="space-y-2">
-                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Privacy Policy</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Terms of Service</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 DividendTracker. All rights reserved.</p>
-        </div>
-    </div>
-</footer>
+{% include 'footer.html' %}
 
 <script>
 function toggleWatchlist(stockId) {
