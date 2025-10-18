@@ -98,6 +98,7 @@
                                 class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                 placeholder="Enter your email"
                                 value="{{ form.email.value|default:'' }}"
+                                onblur="checkEmail()"
                             >
                             <span class="absolute left-3 top-3 text-gray-400">📧</span>
                         </div>
@@ -226,3 +227,18 @@
 {% include 'footer.html' %}
 
 {% endblock %}
+
+<script>
+    function checkEmail() {
+        const email = document.getElementById('email').value.toLowerCase();
+        const allowed = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
+        
+        if (email.includes('@')) {
+            const domain = email.split('@')[1];
+            if (!allowed.includes(domain)) {
+                document.getElementById('email-error').textContent = 'Please use Gmail, Outlook, Hotmail, Yahoo, or iCloud.';
+                document.getElementById('email-error').classList.remove('hidden');
+            }
+        }
+    }
+</script>
