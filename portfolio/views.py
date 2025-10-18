@@ -54,6 +54,16 @@ def register_view(request):
         form = RegistrationForm(request.POST)
         if form.is_valid():
             try:
+                # === EMAIL CHECK ===
+                email = form.cleaned_data.get('email', '').lower()
+                allowed_domains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com']
+                
+                domain = email.split('@')[-1] if '@' in email else ''
+                if domain not in allowed_domains:
+                    messages.error(request, 'Please use Gmail, Outlook, Hotmail, Yahoo, or iCloud for registration.')
+                    return render(request, 'register.html', {'form': form})
+                # === END CHECK ===
+                
                 user = form.save()
                 login(request, user)
                 messages.success(request, 'Registration successful!')
