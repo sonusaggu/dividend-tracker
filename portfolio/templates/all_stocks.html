@@ -274,10 +274,13 @@
                     <!-- Price Information -->
                     {% if item.latest_price %}
                     <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div>
                         <span class="text-gray-600">Current Price:</span>
-                        <span class="text-lg font-bold text-gray-900">${{ item.latest_price.last_price }}</span>
+                        <span class="text-lg font-bold text-gray-900">${{ item.latest_price.price }}</span>
+                      </div>
                     </div>
-                    {% endif %}
+                  {% endif %}
+                  
                     
                     <!-- Action Button -->
                     <a 

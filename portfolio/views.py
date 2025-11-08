@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef
+from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef, Exists
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -133,123 +133,113 @@ def home_view(request):
     
     return render(request, 'home.html', context)
 
+
 def all_stocks_view(request):
-    """View all stocks with pagination, search, sector filtering, and sorting"""
-    # Get unique sectors for filter dropdown
-    sectors = Stock.objects.exclude(sector='').values_list('sector', flat=True).distinct().order_by('sector')
-    
-    # Get filter parameters with validation
+    """Optimized: View all stocks with pagination, search, sector filtering, and sorting"""
+
+    # --- 1️⃣ Fetch unique sectors once
+    sectors = list(
+        Stock.objects.exclude(sector='')
+        .values_list('sector', flat=True)
+        .distinct()
+        .order_by('sector')
+    )
+
+    # --- 2️⃣ Validate query parameters
     search_query = request.GET.get('search', '').strip()
     sector_filter = request.GET.get('sector', '')
     sort_by = request.GET.get('sort_by', 'dividend_date')
-    
-    # Validate sort_by parameter to prevent injection
+
     valid_sort_options = ['symbol', 'yield', 'sector', 'dividend_date', 'dividend_amount']
     if sort_by not in valid_sort_options:
-        sort_by = 'dividend_date'  # Default to safe option
-    
-    # Get the latest dividend for each stock
-    latest_dividends = Dividend.objects.filter(
-        stock=OuterRef('pk')
-    ).order_by('-ex_dividend_date')
-    
-    # Get the next upcoming dividend for each stock (ex_date >= today)
+        sort_by = 'dividend_date'
+
+    # --- 3️⃣ Base queryset
+    stocks = Stock.objects.all()
+
+    # --- 4️⃣ Apply filters
+    if search_query:
+        stocks = stocks.filter(
+            Q(symbol__icontains=search_query)
+            | Q(company_name__icontains=search_query)
+            | Q(code__icontains=search_query)
+        )
+
+    if sector_filter in sectors:
+        stocks = stocks.filter(sector=sector_filter)
+    else:
+        sector_filter = ''
+
+    # --- 5️⃣ Prepare subqueries
+    latest_dividends = Dividend.objects.filter(stock=OuterRef('pk')).order_by('-ex_dividend_date')
     upcoming_dividends = Dividend.objects.filter(
         stock=OuterRef('pk'),
         ex_dividend_date__gte=timezone.now().date()
     ).order_by('ex_dividend_date')
-    
-    # Start with all stocks
-    stocks = Stock.objects.all()
-    
-    # Apply search filter safely
-    if search_query:
-        stocks = stocks.filter(
-            Q(symbol__icontains=search_query) | 
-            Q(company_name__icontains=search_query) |
-            Q(code__icontains=search_query)
-        )
-    
-    # Apply sector filter safely
-    if sector_filter:
-        # Validate sector is in the list of available sectors
-        available_sectors = list(sectors)
-        if sector_filter in available_sectors:
-            stocks = stocks.filter(sector=sector_filter)
-        else:
-            # If invalid sector provided, ignore it
-            sector_filter = ''
-    
-    # Annotate with dividend information
+    latest_prices = StockPrice.objects.filter(stock=OuterRef('pk')).order_by('-price_date')
+    stocks = stocks.annotate(
+    latest_price_value=Subquery(latest_prices.values('last_price')[:1]),
+    latest_price_date=Subquery(latest_prices.values('price_date')[:1]),
+    )
+
+    # --- 6️⃣ Annotate all required fields (no N+1 queries)
     stocks = stocks.annotate(
         latest_dividend_amount=Subquery(latest_dividends.values('amount')[:1]),
         latest_dividend_yield=Subquery(latest_dividends.values('yield_percent')[:1]),
         latest_dividend_date=Subquery(latest_dividends.values('ex_dividend_date')[:1]),
         latest_dividend_frequency=Subquery(latest_dividends.values('frequency')[:1]),
         upcoming_dividend_date=Subquery(upcoming_dividends.values('ex_dividend_date')[:1]),
-        has_dividend=Case(
-            When(latest_dividend_date__isnull=False, then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField()
-        )
+        latest_price_value=Subquery(latest_prices.values('last_price')[:1]),
+        latest_price_date=Subquery(latest_prices.values('price_date')[:1]),
+        has_dividend=Exists(Dividend.objects.filter(stock=OuterRef('pk')))
     )
-    
-    # Apply sorting based on user selection
-    if sort_by == 'symbol':
-        stocks = stocks.order_by('symbol')
-    elif sort_by == 'yield':
-        stocks = stocks.order_by('-latest_dividend_yield', 'symbol')
-    elif sort_by == 'sector':
-        stocks = stocks.order_by('sector', 'symbol')
-    elif sort_by == 'dividend_date':  # Default sort - upcoming dividend date
-        # Stocks with upcoming dividends first, then by date
-        stocks = stocks.order_by(
+
+    # --- 7️⃣ Sorting map (simpler than if/elif chain)
+    sort_map = {
+        'symbol': ['symbol'],
+        'yield': ['-latest_dividend_yield', 'symbol'],
+        'sector': ['sector', 'symbol'],
+        'dividend_amount': ['-latest_dividend_amount', 'symbol'],
+        'dividend_date': [
             Case(
                 When(upcoming_dividend_date__isnull=True, then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField()
             ),
-            'upcoming_dividend_date',
-            'symbol'
-        )
-    elif sort_by == 'dividend_amount':
-        stocks = stocks.order_by('-latest_dividend_amount', 'symbol')
-    else:
-        # Default fallback
-        stocks = stocks.order_by('symbol')
-    
-    # Add pagination
+            'upcoming_dividend_date', 'symbol'
+        ],
+    }
+    stocks = stocks.order_by(*sort_map.get(sort_by, ['symbol']))
+
+    # --- 8️⃣ Pagination (handles bad pages gracefully)
     paginator = Paginator(stocks, 24)
-    page_number = request.GET.get('page', 1)
-    
-    try:
-        page_obj = paginator.page(page_number)
-    except (PageNotAnInteger, EmptyPage):
-        page_obj = paginator.page(1)
-    
-    # Get additional data for display
-    total_stocks_count = Stock.objects.count()
-    dividend_stocks_count = Dividend.objects.values('stock').distinct().count()
-    sectors_count = sectors.count()
-    
-    # Get price information for each stock
-    stocks_with_data = []
-    for stock in page_obj:
-        latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
-        
-        stocks_with_data.append({
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+
+    # --- 9️⃣ Prepare context list — already annotated, no extra DB calls
+    stocks_with_data = [
+        {
             'stock': stock,
-            'latest_dividend': {
-                'amount': stock.latest_dividend_amount,
-                'yield_percent': stock.latest_dividend_yield,
-                'ex_dividend_date': stock.latest_dividend_date,
-                'frequency': stock.latest_dividend_frequency,
-            } if stock.latest_dividend_amount else None,
+            'latest_dividend': (
+                {
+                    'amount': stock.latest_dividend_amount,
+                    'yield_percent': stock.latest_dividend_yield,
+                    'ex_dividend_date': stock.latest_dividend_date,
+                    'frequency': stock.latest_dividend_frequency,
+                } if stock.latest_dividend_amount else None
+            ),
             'upcoming_dividend_date': stock.upcoming_dividend_date,
-            'latest_price': latest_price,
-            'has_dividend': stock.has_dividend == 1,
-        })
-    
+            'latest_price': (
+                {
+                    'price': stock.latest_price_value,
+                    'date': stock.latest_price_date,
+                } if stock.latest_price_value else None
+            ),
+            'has_dividend': stock.has_dividend,
+        }
+        for stock in page_obj
+    ]
+
+    # --- 🔟 Stats (could be cached if large)
     context = {
         'stocks_with_dividends': stocks_with_data,
         'page_obj': page_obj,
@@ -257,12 +247,13 @@ def all_stocks_view(request):
         'sector_filter': sector_filter,
         'sort_by': sort_by,
         'sectors': sectors,
-        'total_stocks_count': total_stocks_count,
-        'dividend_stocks_count': dividend_stocks_count,
-        'sectors_count': sectors_count,
+        'total_stocks_count': Stock.objects.count(),
+        'dividend_stocks_count': Dividend.objects.values('stock').distinct().count(),
+        'sectors_count': len(sectors),
     }
-    
+
     return render(request, 'all_stocks.html', context)
+
 
 def stock_detail(request, symbol):
     """Detailed view for a single stock"""
