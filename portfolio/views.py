@@ -85,54 +85,56 @@ def logout_view(request):
     return redirect('home') 
 
 def home_view(request):
-    """Home page with upcoming dividends"""
+    """Home page with upcoming dividends - Fully optimized"""
     if request.user.is_authenticated:
         return redirect('dashboard')
     
-    upcoming_dividends = []
-    
     try:
-        # Get upcoming dividends in the next 30 days
-        thirty_days_later = timezone.now().date() + timedelta(days=30)
+        today = timezone.now().date()
+        thirty_days_later = today + timedelta(days=30)
         
-        # Get dividends with their related stock information
-        dividends = Dividend.objects.filter(
-            ex_dividend_date__gte=timezone.now().date(),
+        # Single optimized query using subqueries to avoid N+1
+        dividends_with_data = Dividend.objects.filter(
+            ex_dividend_date__gte=today,
             ex_dividend_date__lte=thirty_days_later
-        ).select_related('stock').order_by('ex_dividend_date')[:12]
+        ).select_related('stock').annotate(
+            # Get latest price in the same query using subquery
+            latest_price=Subquery(
+                StockPrice.objects.filter(
+                    stock=OuterRef('stock_id')
+                ).order_by('-price_date').values('last_price')[:1]
+            ),
+            latest_price_date=Subquery(
+                StockPrice.objects.filter(
+                    stock=OuterRef('stock_id')
+                ).order_by('-price_date').values('price_date')[:1]
+            )
+        ).order_by('ex_dividend_date')[:12]
         
-        for dividend in dividends:
-            # Get the latest price for this stock
-            latest_price = StockPrice.objects.filter(
-                stock=dividend.stock
-            ).order_by('-price_date').first()
-            
-            days_until = (dividend.ex_dividend_date - timezone.now().date()).days
-            
+        # Prepare data efficiently
+        upcoming_dividends = []
+        for dividend in dividends_with_data:
             upcoming_dividends.append({
                 'symbol': dividend.stock.symbol,
                 'company_name': dividend.stock.company_name,
-                'last_price': latest_price.last_price if latest_price else 'N/A',
+                'last_price': dividend.latest_price or 'N/A',
                 'dividend_amount': dividend.amount,
                 'dividend_yield': dividend.yield_percent,
                 'ex_dividend_date': dividend.ex_dividend_date,
-                'days_until': days_until,
+                'days_until': (dividend.ex_dividend_date - today).days,
                 'frequency': dividend.frequency
             })
             
     except DatabaseError as e:
         logger.error(f"Database error in home view: {e}")
         messages.error(request, 'A temporary error occurred. Please try again later.')
+        upcoming_dividends = []
     except Exception as e:
         logger.error(f"Unexpected error in home view: {e}")
-        # Continue with empty list if there's an error
+        upcoming_dividends = []
     
-    context = {
-        'upcoming_dividends': upcoming_dividends,
-    }
-    
+    context = {'upcoming_dividends': upcoming_dividends}
     return render(request, 'home.html', context)
-
 
 def all_stocks_view(request):
     """Optimized: View all stocks with pagination, search, sector filtering, and sorting"""

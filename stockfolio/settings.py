@@ -78,7 +78,7 @@ if database_url:
     # Use DATABASE_URL if available (Render production)
     DATABASES = {
         'default': dj_database_url.config(
-            conn_max_age=600,
+            conn_max_age=60,
             ssl_require=not DEBUG
         )
     }
@@ -92,6 +92,14 @@ else:
             'PASSWORD': config('DB_PASSWORD', default='stockfolio_pass'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
+             'CONN_MAX_AGE': 60,  # Reduced connection lifetime
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
+            }
         }
     }
 
@@ -113,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Localization settings
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Toronto'
 USE_I18N = True
 USE_TZ = True
 
