@@ -148,10 +148,25 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Email configuration with cleaning to remove problematic characters
+def clean_email_credential(value):
+    """Clean email credentials to remove non-ASCII characters that cause encoding issues"""
+    if not value:
+        return value
+    # Convert to string and strip whitespace
+    value = str(value).strip()
+    # Remove non-breaking spaces and other problematic characters
+    value = value.replace('\xa0', ' ').replace('\u00a0', ' ')
+    value = value.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '')
+    value = value.replace('\ufeff', '')
+    # Remove any remaining non-ASCII characters that can't be encoded as ASCII
+    value = value.encode('ascii', 'ignore').decode('ascii')
+    return value.strip()
+
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+EMAIL_HOST_USER = clean_email_credential(config('EMAIL_HOST_USER', default=''))
+EMAIL_HOST_PASSWORD = clean_email_credential(config('EMAIL_HOST_PASSWORD', default=''))
+DEFAULT_FROM_EMAIL = clean_email_credential(config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER))

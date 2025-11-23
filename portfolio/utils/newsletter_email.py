@@ -7,8 +7,10 @@ from django.conf import settings
 from portfolio.models import NewsletterSubscription
 from portfolio.utils.newsletter_utils import DividendNewsletterGenerator
 from django.utils import timezone
+from django.utils.encoding import force_str
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,30 @@ def get_site_url():
     return "https://your-app-name.onrender.com"
 
 
+def clean_text(text):
+    """
+    Clean text to remove problematic non-ASCII characters
+    Replaces non-breaking spaces and other problematic characters
+    """
+    if not text:
+        return text
+    
+    # Convert to string if needed
+    text = force_str(text, encoding='utf-8')
+    
+    # Replace non-breaking space (\xa0) with regular space
+    text = text.replace('\xa0', ' ')
+    text = text.replace('\u00a0', ' ')
+    
+    # Replace other problematic characters
+    text = text.replace('\u200b', '')  # Zero-width space
+    text = text.replace('\u200c', '')  # Zero-width non-joiner
+    text = text.replace('\u200d', '')  # Zero-width joiner
+    text = text.replace('\ufeff', '')  # Zero-width no-break space
+    
+    return text
+
+
 def send_newsletter_email(user, newsletter_content):
     """
     Send newsletter email to a single user using Django's email backend
@@ -42,8 +68,13 @@ def send_newsletter_email(user, newsletter_content):
         html_content = generate_newsletter_html(newsletter_content)
         text_content = generate_newsletter_text(newsletter_content)
         
-        # Create email
+        # Clean content to remove problematic characters
+        html_content = clean_text(html_content)
+        text_content = clean_text(text_content)
+        
+        # Create email with UTF-8 encoding
         subject = f"Weekly Dividend Newsletter - {newsletter_content['week_start'].strftime('%B %d, %Y')}"
+        subject = clean_text(subject)
         
         email = EmailMultiAlternatives(
             subject=subject,
@@ -52,8 +83,11 @@ def send_newsletter_email(user, newsletter_content):
             to=[user.email]
         )
         
-        # Attach HTML version
-        email.attach_alternative(html_content, "text/html")
+        # Set encoding explicitly
+        email.encoding = 'utf-8'
+        
+        # Attach HTML version with UTF-8 encoding
+        email.attach_alternative(html_content, "text/html; charset=utf-8")
         
         # Send email
         email.send()
@@ -63,6 +97,8 @@ def send_newsletter_email(user, newsletter_content):
         
     except Exception as e:
         logger.error(f"Error sending newsletter to {user.email}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
 
 
@@ -149,7 +185,7 @@ def generate_newsletter_html(content):
     </head>
     <body>
         <div class="header">
-            <h1>📊 Weekly Dividend Newsletter</h1>
+            <h1>Weekly Dividend Newsletter</h1>
             <p>Week of {content['week_start'].strftime('%B %d')} - {content['week_end'].strftime('%B %d, %Y')}</p>
         </div>
         
@@ -177,15 +213,21 @@ def generate_newsletter_html(content):
     
     # Add stock cards
     for stock in content['top_stocks']:
+        # Clean stock data to avoid encoding issues
+        symbol = clean_text(str(stock.get('symbol', '')))
+        company_name = clean_text(str(stock.get('company_name', '')))
+        sector = clean_text(str(stock.get('sector', ''))) if stock.get('sector') else ''
+        frequency = clean_text(str(stock.get('frequency', '')))
+        
         html += f"""
             <div class="stock-card">
-                <div class="stock-header">{stock['symbol']} - {stock['company_name']}</div>
+                <div class="stock-header">{symbol} - {company_name}</div>
                 <p><strong>Dividend:</strong> ${stock['dividend_amount']:.2f} ({stock['dividend_yield']*100:.2f}% yield)</p>
                 <p><strong>Ex-Date:</strong> {stock['ex_dividend_date'].strftime('%B %d, %Y')} ({stock['days_until']} days)</p>
-                <p><strong>Frequency:</strong> {stock['frequency']}</p>
+                <p><strong>Frequency:</strong> {frequency}</p>
                 {f"<p><strong>Current Price:</strong> ${stock['current_price']:.2f}</p>" if stock.get('current_price') else ""}
                 {f"<p><strong>P/E Ratio:</strong> {stock['pe_ratio']:.2f}</p>" if stock.get('pe_ratio') else ""}
-                {f"<p><strong>Sector:</strong> {stock['sector']}</p>" if stock.get('sector') else ""}
+                {f"<p><strong>Sector:</strong> {sector}</p>" if sector else ""}
             </div>
         """
     
@@ -197,7 +239,7 @@ def generate_newsletter_html(content):
             <div class="footer">
                 <p>You're receiving this because you subscribed to our dividend newsletter.</p>
                 <p><a href="{site_url}/newsletter/">Manage Subscription</a> | <a href="{site_url}/newsletter/?unsubscribe=1">Unsubscribe</a></p>
-                <p>&copy; {content['generated_date'].year} StockFolio. All rights reserved.</p>
+                <p>Copyright {content['generated_date'].year} StockFolio. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -229,18 +271,24 @@ Featured Stocks:
 """
     
     for i, stock in enumerate(content['top_stocks'], 1):
+        # Clean stock data to avoid encoding issues
+        symbol = clean_text(str(stock.get('symbol', '')))
+        company_name = clean_text(str(stock.get('company_name', '')))
+        sector = clean_text(str(stock.get('sector', ''))) if stock.get('sector') else ''
+        frequency = clean_text(str(stock.get('frequency', '')))
+        
         text += f"""
-{i}. {stock['symbol']} - {stock['company_name']}
+{i}. {symbol} - {company_name}
    Dividend: ${stock['dividend_amount']:.2f} ({stock['dividend_yield']*100:.2f}% yield)
    Ex-Date: {stock['ex_dividend_date'].strftime('%B %d, %Y')} ({stock['days_until']} days)
-   Frequency: {stock['frequency']}
+   Frequency: {frequency}
 """
         if stock.get('current_price'):
             text += f"   Current Price: ${stock['current_price']:.2f}\n"
         if stock.get('pe_ratio'):
             text += f"   P/E Ratio: {stock['pe_ratio']:.2f}\n"
-        if stock.get('sector'):
-            text += f"   Sector: {stock['sector']}\n"
+        if sector:
+            text += f"   Sector: {sector}\n"
     
     text += f"""
 ---
