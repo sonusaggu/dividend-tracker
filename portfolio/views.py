@@ -1023,6 +1023,15 @@ def trigger_dividend_alerts(request):
             'message': f'Error: {str(e)}'
         }, status=500)
 
+# Global variable to track scraping status
+_scraping_status = {
+    'is_running': False,
+    'started_at': None,
+    'completed_at': None,
+    'days': None,
+    'last_error': None
+}
+
 @csrf_exempt
 @require_POST
 def trigger_daily_scrape(request):
@@ -1032,12 +1041,22 @@ def trigger_daily_scrape(request):
     CSRF exempt - uses secret key authentication instead
     """
     import threading
+    global _scraping_status
     
     # Simple authentication
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
     if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
         logger.warning(f"Unauthorized attempt to trigger daily scrape from {request.META.get('REMOTE_ADDR')}")
         return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Check if scraping is already running
+    if _scraping_status.get('is_running'):
+        return JsonResponse({
+            'status': 'busy',
+            'message': 'Scraping is already running',
+            'started_at': _scraping_status.get('started_at'),
+            'days': _scraping_status.get('days')
+        }, status=409)
     
     # Get optional parameters
     days = request.POST.get('days', 60)
@@ -1053,12 +1072,26 @@ def trigger_daily_scrape(request):
         
         # Run scraping in background thread to avoid timeout
         def run_scrape():
+            global _scraping_status
             try:
-                logger.info(f"Starting background scrape for {days} days")
+                _scraping_status['is_running'] = True
+                _scraping_status['started_at'] = timezone.now().isoformat()
+                _scraping_status['days'] = days
+                _scraping_status['last_error'] = None
+                _scraping_status['completed_at'] = None
+                
+                logger.info(f"🚀 Starting background scrape for {days} days at {_scraping_status['started_at']}")
                 call_command('daily_scrape', days=days)
-                logger.info(f"Background scrape completed for {days} days")
+                
+                _scraping_status['is_running'] = False
+                _scraping_status['completed_at'] = timezone.now().isoformat()
+                logger.info(f"✅ Background scrape completed for {days} days at {_scraping_status['completed_at']}")
+                
             except Exception as e:
-                logger.error(f"Error in background scrape: {e}")
+                _scraping_status['is_running'] = False
+                _scraping_status['last_error'] = str(e)
+                _scraping_status['completed_at'] = timezone.now().isoformat()
+                logger.error(f"❌ Error in background scrape: {e}")
         
         # Start background thread
         thread = threading.Thread(target=run_scrape, daemon=True)
@@ -1069,7 +1102,8 @@ def trigger_daily_scrape(request):
             'status': 'accepted', 
             'message': f'Daily stock scrape started in background for {days} days',
             'days': days,
-            'note': 'Scraping is running asynchronously. Check logs for progress.'
+            'started_at': _scraping_status.get('started_at'),
+            'note': 'Scraping is running asynchronously. Use /scrape-status/ endpoint to check progress.'
         })
         
     except Exception as e:
@@ -1078,6 +1112,55 @@ def trigger_daily_scrape(request):
             'status': 'error', 
             'message': f'Error: {str(e)}'
         }, status=500)
+
+
+@csrf_exempt
+def scrape_status(request):
+    """
+    API endpoint to check scraping status
+    No authentication required for status check (or add if needed)
+    """
+    global _scraping_status
+    from portfolio.models import StockPrice
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Get recent stock price updates (last hour)
+    recent_updates = StockPrice.objects.filter(
+        price_date=timezone.now().date()
+    ).count()
+    
+    # Get total stocks
+    total_stocks = Stock.objects.count()
+    
+    status_data = {
+        'is_running': _scraping_status.get('is_running', False),
+        'started_at': _scraping_status.get('started_at'),
+        'completed_at': _scraping_status.get('completed_at'),
+        'days': _scraping_status.get('days'),
+        'last_error': _scraping_status.get('last_error'),
+        'database_stats': {
+            'total_stocks': total_stocks,
+            'stocks_updated_today': recent_updates,
+        }
+    }
+    
+    # Calculate duration if running
+    if _scraping_status.get('is_running') and _scraping_status.get('started_at'):
+        try:
+            # Parse ISO format datetime string
+            started_str = _scraping_status['started_at']
+            started = datetime.fromisoformat(started_str.replace('Z', '+00:00'))
+            if started.tzinfo is None:
+                started = timezone.make_aware(started)
+            duration = (timezone.now() - started).total_seconds()
+            status_data['duration_seconds'] = int(duration)
+            status_data['duration_minutes'] = round(duration / 60, 1)
+        except Exception as e:
+            logger.debug(f"Error calculating duration: {e}")
+            pass
+    
+    return JsonResponse(status_data)
 
 
 @login_required
