@@ -5,15 +5,17 @@ from django.contrib import messages
 from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef, Exists, Max, Min, Sum, Avg, Count, Prefetch
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
+from django.conf import settings
+from django.views.decorators.cache import cache_control
 from datetime import datetime, timedelta, date
 from django.core.management import call_command
 import subprocess
-from django.conf import settings
 import logging
+import os
 
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
@@ -25,6 +27,48 @@ from .utils.canadian_tax_calculator import CanadianTaxCalculator
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+@cache_control(max_age=86400)  # Cache for 1 day
+def robots_txt(request):
+    """Serve robots.txt file"""
+    robots_content = """User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login/
+Disallow: /register/
+Disallow: /trigger-daily-scrape/
+Disallow: /trigger-dividend-alerts/
+Disallow: /trigger-newsletter/
+Disallow: /scrape-status/
+Disallow: /fetch-news/
+
+# Sitemap
+Sitemap: https://dividend.forum/sitemap.xml
+
+# Crawl-delay for aggressive bots
+User-agent: *
+Crawl-delay: 1
+"""
+    return HttpResponse(robots_content, content_type='text/plain')
+
+
+@cache_control(max_age=86400)  # Cache for 1 day
+def favicon_view(request):
+    """Serve favicon - serve SVG favicon"""
+    # Try to serve the SVG favicon from static files
+    try:
+        from django.contrib.staticfiles import finders
+        favicon_path = finders.find('images/favicon.svg')
+        if favicon_path:
+            with open(favicon_path, 'rb') as f:
+                return HttpResponse(f.read(), content_type='image/svg+xml')
+    except Exception as e:
+        logger.debug(f"Could not serve favicon: {e}")
+    
+    # Return 204 No Content if favicon doesn't exist
+    return HttpResponse(status=204)
+
 
 def login_view(request):
     """User login view with CSRF protection"""

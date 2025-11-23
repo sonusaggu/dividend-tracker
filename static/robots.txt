@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login/
+Disallow: /register/
+Disallow: /trigger-daily-scrape/
+Disallow: /trigger-dividend-alerts/
+Disallow: /trigger-newsletter/
+Disallow: /scrape-status/
+Disallow: /fetch-news/
+
+# Sitemap
+Sitemap: https://dividend.forum/sitemap.xml
+
+# Crawl-delay for aggressive bots
+User-agent: *
+Crawl-delay: 1
+
