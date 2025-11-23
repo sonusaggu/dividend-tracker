@@ -235,7 +235,7 @@ def stock_detail(request, symbol):
         Stock.objects.prefetch_related(
             Prefetch('prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices'),
             Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='latest_dividends'),
-            Prefetch('valuation_metrics', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
+            Prefetch('valuations', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
             Prefetch('analyst_ratings', queryset=AnalystRating.objects.order_by('-rating_date'), to_attr='latest_ratings'),
         ),
         symbol=symbol.upper()
