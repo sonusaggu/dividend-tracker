@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST, require_http_methods
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
 from datetime import datetime, timedelta
 from django.core.management import call_command
@@ -990,11 +990,12 @@ def my_alerts(request):
         return redirect('dashboard')        
 
 
+@csrf_exempt
 @require_POST
 def trigger_dividend_alerts(request):
     """
     API endpoint to trigger dividend alert emails
-    Note: CSRF protection is handled via secret key authentication
+    CSRF exempt - uses secret key authentication instead
     """
     # Simple authentication (customize as needed)
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
@@ -1022,12 +1023,13 @@ def trigger_dividend_alerts(request):
             'message': f'Error: {str(e)}'
         }, status=500)
 
+@csrf_exempt
 @require_POST
 def trigger_daily_scrape(request):
     """
     API endpoint to trigger daily stock scraping
     Runs asynchronously to avoid Render.com timeout issues
-    Note: CSRF protection is handled via secret key authentication
+    CSRF exempt - uses secret key authentication instead
     """
     import threading
     
