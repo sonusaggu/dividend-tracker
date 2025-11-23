@@ -207,4 +207,71 @@ class NewsletterSubscription(models.Model):
         verbose_name_plural = "Newsletter Subscriptions"
     
     def __str__(self):
-        return f"{self.user.username} - {self.frequency}"    
+        return f"{self.user.username} - {self.frequency}"
+
+
+class StockNews(models.Model):
+    """News articles related to stocks"""
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='news', db_index=True)
+    title = models.CharField(max_length=500)
+    description = models.TextField(blank=True)
+    url = models.URLField(max_length=1000, unique=True, db_index=True)
+    source = models.CharField(max_length=100, blank=True)
+    author = models.CharField(max_length=200, blank=True)
+    published_at = models.DateTimeField(db_index=True)
+    image_url = models.URLField(max_length=1000, blank=True)
+    sentiment = models.CharField(max_length=20, blank=True)  # positive, negative, neutral
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-published_at']
+        indexes = [
+            models.Index(fields=['stock', '-published_at']),
+            models.Index(fields=['-published_at']),
+            models.Index(fields=['created_at']),  # For cleanup queries
+            models.Index(fields=['stock', 'created_at']),  # Composite for stock-specific cleanup
+        ]
+        verbose_name = "Stock News"
+        verbose_name_plural = "Stock News"
+    
+    def __str__(self):
+        return f"{self.stock.symbol} - {self.title[:50]}"
+    
+    @classmethod
+    def cleanup_old_news(cls, days=30, keep_per_stock=50):
+        """
+        Clean up old news articles
+        Returns tuple: (deleted_count, kept_count)
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        cutoff_date = timezone.now() - timedelta(days=days)
+        
+        # Delete articles older than cutoff
+        old_articles = cls.objects.filter(published_at__lt=cutoff_date)
+        deleted_count = old_articles.count()
+        old_articles.delete()
+        
+        # For each stock, keep only the most recent N articles
+        from django.db.models import Count
+        from portfolio.models import Stock
+        
+        stocks_with_excess = Stock.objects.annotate(
+            news_count=Count('news')
+        ).filter(news_count__gt=keep_per_stock)
+        
+        excess_deleted = 0
+        for stock in stocks_with_excess:
+            all_news = cls.objects.filter(stock=stock).order_by('-published_at')
+            if all_news.count() > keep_per_stock:
+                keep_ids = set(all_news[:keep_per_stock].values_list('id', flat=True))
+                excess = all_news.exclude(id__in=keep_ids)
+                excess_deleted += excess.count()
+                excess.delete()
+        
+        total_deleted = deleted_count + excess_deleted
+        remaining = cls.objects.count()
+        
+        return total_deleted, remaining    

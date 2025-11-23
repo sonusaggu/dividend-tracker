@@ -388,6 +388,13 @@
       </div>
     </div>
 
+    <!-- Latest News Section -->
+    {% if news_items %}
+    <div class="mb-8">
+      {% include 'components/news_section.html' %}
+    </div>
+    {% endif %}
+
     <!-- Enhanced Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <a href="{% url 'portfolio' %}" 

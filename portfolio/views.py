@@ -17,9 +17,10 @@ import logging
 
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
-from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription
+from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews
 from .services import PortfolioService, StockService, AlertService
 from .utils.newsletter_utils import DividendNewsletterGenerator
+from .utils.news_fetcher import NewsFetcher
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -971,6 +972,17 @@ def dashboard(request):
                 sectors.add(item.stock.sector)
         sectors_count = len(sectors)
         
+        # Get recent news for portfolio and watchlist stocks (last 7 days)
+        portfolio_stock_ids = [item.stock.id for item in portfolio_items]
+        watchlist_stock_ids = [item.stock.id for item in watchlist_items]
+        all_stock_ids = list(set(portfolio_stock_ids + watchlist_stock_ids))
+        
+        cutoff_date = timezone.now() - timedelta(days=7)
+        recent_news = StockNews.objects.filter(
+            stock_id__in=all_stock_ids,
+            published_at__gte=cutoff_date
+        ).select_related('stock').order_by('-published_at')[:5]
+        
         # Calculate performance metrics (simplified - can be enhanced)
         monthly_performance = None
         quarterly_performance = None
@@ -1032,6 +1044,7 @@ def dashboard(request):
             'quarterly_performance': quarterly_performance,
             'yearly_performance': yearly_performance,
             'performance_data': performance_data,
+            'news_items': recent_news,
         }
         
         return render(request, 'dashboard.html', context)
@@ -1509,3 +1522,190 @@ def newsletter_subscription(request):
         logger.error(f"Error in newsletter_subscription view: {e}", exc_info=True)
         messages.error(request, 'An error occurred while loading your subscription.')
         return redirect('dashboard')
+
+
+@login_required
+def portfolio_news(request):
+    """Display news for stocks in user's portfolio"""
+    # Get user's portfolio stocks
+    portfolio_stocks = Stock.objects.filter(
+        userportfolio__user=request.user
+    ).distinct()
+    
+    # Get recent news (last 7 days)
+    cutoff_date = timezone.now() - timedelta(days=7)
+    news_items = StockNews.objects.filter(
+        stock__in=portfolio_stocks,
+        published_at__gte=cutoff_date
+    ).select_related('stock').order_by('-published_at')[:50]
+    
+    # Group by stock
+    news_by_stock = {}
+    for news in news_items:
+        symbol = news.stock.symbol
+        if symbol not in news_by_stock:
+            news_by_stock[symbol] = {
+                'stock': news.stock,
+                'articles': []
+            }
+        news_by_stock[symbol]['articles'].append(news)
+    
+    context = {
+        'news_by_stock': news_by_stock,
+        'total_articles': len(news_items),
+        'portfolio_stocks_count': portfolio_stocks.count(),
+    }
+    
+    return render(request, 'portfolio_news.html', context)
+
+
+@login_required
+def watchlist_news(request):
+    """Display news for stocks in user's watchlist"""
+    # Get user's watchlist stocks
+    watchlist_stocks = Stock.objects.filter(
+        watchlist__user=request.user
+    ).distinct()
+    
+    # Get recent news (last 7 days)
+    cutoff_date = timezone.now() - timedelta(days=7)
+    news_items = StockNews.objects.filter(
+        stock__in=watchlist_stocks,
+        published_at__gte=cutoff_date
+    ).select_related('stock').order_by('-published_at')[:50]
+    
+    # Group by stock
+    news_by_stock = {}
+    for news in news_items:
+        symbol = news.stock.symbol
+        if symbol not in news_by_stock:
+            news_by_stock[symbol] = {
+                'stock': news.stock,
+                'articles': []
+            }
+        news_by_stock[symbol]['articles'].append(news)
+    
+    context = {
+        'news_by_stock': news_by_stock,
+        'total_articles': len(news_items),
+        'watchlist_stocks_count': watchlist_stocks.count(),
+    }
+    
+    return render(request, 'watchlist_news.html', context)
+
+
+@login_required
+def all_news(request):
+    """Display all news for portfolio and watchlist stocks combined"""
+    # Get user's portfolio and watchlist stocks
+    portfolio_stocks = Stock.objects.filter(
+        userportfolio__user=request.user
+    ).distinct()
+    
+    watchlist_stocks = Stock.objects.filter(
+        watchlist__user=request.user
+    ).distinct()
+    
+    # Filter options - determine which stocks to include
+    filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist
+    
+    # Determine which stocks to query based on filter
+    if filter_type == 'portfolio':
+        target_stocks = portfolio_stocks
+    elif filter_type == 'watchlist':
+        target_stocks = watchlist_stocks
+    else:  # 'all'
+        # Combine and get unique stocks
+        target_stocks = (portfolio_stocks | watchlist_stocks).distinct()
+    
+    # Get recent news (last 7 days) - apply filter before slicing
+    cutoff_date = timezone.now() - timedelta(days=7)
+    news_items = StockNews.objects.filter(
+        stock__in=target_stocks,
+        published_at__gte=cutoff_date
+    ).select_related('stock').order_by('-published_at')
+    
+    # Get total count before pagination
+    total_articles = news_items.count()
+    
+    # Paginate
+    paginator = Paginator(news_items, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'news_items': page_obj,
+        'filter_type': filter_type,
+        'total_articles': total_articles,
+        'portfolio_stocks_count': portfolio_stocks.count(),
+        'watchlist_stocks_count': watchlist_stocks.count(),
+    }
+    
+    return render(request, 'all_news.html', context)
+
+
+@login_required
+def stock_news(request, symbol):
+    """Display news for a specific stock"""
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    
+    # Get recent news (last 30 days)
+    cutoff_date = timezone.now() - timedelta(days=30)
+    news_items = StockNews.objects.filter(
+        stock=stock,
+        published_at__gte=cutoff_date
+    ).order_by('-published_at')
+    
+    # Paginate
+    paginator = Paginator(news_items, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'stock': stock,
+        'news_items': page_obj,
+        'total_articles': news_items.count(),
+    }
+    
+    return render(request, 'stock_news.html', context)
+
+
+@csrf_exempt
+@require_POST
+def fetch_news(request):
+    """
+    API endpoint to manually trigger news fetching
+    Can be called for specific stocks or all portfolio/watchlist stocks
+    """
+    # Simple authentication
+    secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
+    if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
+        logger.warning(f"Unauthorized attempt to fetch news from {request.META.get('REMOTE_ADDR')}")
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get stocks to fetch news for
+        stock_symbols = request.POST.getlist('stocks', [])
+        
+        if stock_symbols:
+            stocks = Stock.objects.filter(symbol__in=[s.upper() for s in stock_symbols])
+        else:
+            # Fetch for all stocks (can be limited)
+            stocks = Stock.objects.all()[:100]  # Limit to prevent timeout
+        
+        fetcher = NewsFetcher()
+        total_saved = fetcher.fetch_and_save_news(stocks, max_articles_per_stock=10)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Fetched and saved {total_saved} news articles',
+            'stocks_processed': stocks.count(),
+            'articles_saved': total_saved
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching news: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        }, status=500)

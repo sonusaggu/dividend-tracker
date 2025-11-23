@@ -84,3 +84,54 @@ services:
         sync: false  # Set manually in Render Dashboard (use App Password for Gmail)
       - key: DEFAULT_FROM_EMAIL
         sync: false  # Set manually in Render Dashboard
+
+  # Cron job to fetch news daily (runs every day at 8 AM UTC / 3 AM EST)
+  # Automatically cleans up old news after fetching (30 days retention, 50 per stock)
+  - type: cron
+    name: stockfolio-news-fetch
+    env: python
+    plan: free
+    schedule: "0 8 * * *"  # Every day at 8 AM UTC (3 AM EST)
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py fetch_stock_news --cleanup-days 30 --cleanup-keep-per-stock 50"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stockfolio-db
+          property: connectionString
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: stockfolio-web
+          property: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.5
+      - key: NEWSAPI_KEY
+        sync: false  # Set manually in Render Dashboard (optional)
+      - key: ALPHA_VANTAGE_KEY
+        sync: false  # Set manually in Render Dashboard (optional)
+
+  # Cron job to clean up old news weekly (runs every Sunday at 2 AM UTC / Saturday 9 PM EST)
+  - type: cron
+    name: stockfolio-news-cleanup
+    env: python
+    plan: free
+    schedule: "0 2 * * 0"  # Every Sunday at 2 AM UTC (Saturday 9 PM EST)
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py cleanup_old_news --days 30 --keep-per-stock 50"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stockfolio-db
+          property: connectionString
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: stockfolio-web
+          property: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.5

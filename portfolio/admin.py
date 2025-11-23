@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
-    UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription
+    UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews
 )
 
 
@@ -87,3 +87,13 @@ class NewsletterSubscriptionAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'frequency', 'subscribed_at')
     search_fields = ('user__username', 'user__email')
     readonly_fields = ('subscribed_at',)
+
+
+@admin.register(StockNews)
+class StockNewsAdmin(admin.ModelAdmin):
+    list_display = ('stock', 'title', 'source', 'published_at', 'sentiment', 'created_at')
+    list_filter = ('source', 'sentiment', 'published_at', 'created_at')
+    search_fields = ('stock__symbol', 'title', 'description')
+    date_hierarchy = 'published_at'
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 50

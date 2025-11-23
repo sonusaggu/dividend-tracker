@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Stock News - Portfolio & Watchlist | StockFolio{% endblock %}
+{% block meta_title %}Stock News Aggregation - Portfolio & Watchlist{% endblock %}
+{% block meta_description %}Stay updated with the latest news for stocks in your portfolio and watchlist. Get real-time news articles from trusted sources.{% endblock %}
+{% block meta_keywords %}stock news, portfolio news, watchlist news, financial news, market news{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-32 -mt-32 opacity-50"></div>
+            <div class="relative z-10">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                    <div>
+                        <h1 class="text-5xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                            📰 Stock News
+                        </h1>
+                        <p class="text-xl text-gray-600">Latest news for your portfolio and watchlist stocks</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex gap-3">
+                        <a href="{% url 'portfolio' %}" 
+                           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition transform hover:scale-105 shadow-lg">
+                            My Portfolio
+                        </a>
+                        <a href="{% url 'watchlist' %}" 
+                           class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-bold transition">
+                            My Watchlist
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Filter Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <a href="?filter=all" 
+                       class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'all' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
+                        All News ({{ total_articles }})
+                    </a>
+                    <a href="?filter=portfolio" 
+                       class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'portfolio' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
+                        Portfolio ({{ portfolio_stocks_count }} stocks)
+                    </a>
+                    <a href="?filter=watchlist" 
+                       class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'watchlist' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
+                        Watchlist ({{ watchlist_stocks_count }} stocks)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Articles -->
+        {% if news_items %}
+        <div class="space-y-6">
+            {% for news in news_items %}
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- News Image -->
+                    {% if news.image_url %}
+                    <div class="md:w-48 flex-shrink-0">
+                        <img src="{{ news.image_url }}" alt="{{ news.title }}" 
+                             class="w-full h-48 object-cover rounded-xl shadow-md"
+                             onerror="this.style.display='none'">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- News Content -->
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <a href="{% url 'stock_detail' news.stock.symbol %}" 
+                                       class="inline-flex items-center px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-bold text-sm hover:from-blue-600 hover:to-purple-700 transition">
+                                        {{ news.stock.symbol }}
+                                    </a>
+                                    {% if news.sentiment %}
+                                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold
+                                        {% if news.sentiment == 'positive' %}bg-green-100 text-green-800
+                                        {% elif news.sentiment == 'negative' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ news.sentiment|title }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition">
+                                    <a href="{{ news.url }}" target="_blank" rel="noopener noreferrer">
+                                        {{ news.title }}
+                                    </a>
+                                </h3>
+                            </div>
+                        </div>
+                        
+                        {% if news.description %}
+                        <p class="text-gray-600 mb-4 line-clamp-3">{{ news.description }}</p>
+                        {% endif %}
+                        
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-4 text-sm text-gray-500">
+                                {% if news.source %}
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                                    </svg>
+                                    {{ news.source }}
+                                </span>
+                                {% endif %}
+                                {% if news.author %}
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    {{ news.author }}
+                                </span>
+                                {% endif %}
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ news.published_at|timesince }} ago
+                                </span>
+                            </div>
+                            <a href="{{ news.url }}" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+                                Read More
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if news_items.has_other_pages %}
+        <div class="flex justify-center mt-12">
+            <nav class="flex items-center space-x-3 bg-white rounded-3xl shadow-2xl p-4 border-2 border-gray-100">
+                {% if news_items.has_previous %}
+                <a href="?page=1&filter={{ filter_type }}" 
+                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                    &laquo; First
+                </a>
+                <a href="?page={{ news_items.previous_page_number }}&filter={{ filter_type }}" 
+                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                    ← Previous
+                </a>
+                {% endif %}
+
+                <span class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg">
+                    Page {{ news_items.number }} of {{ news_items.paginator.num_pages }}
+                </span>
+
+                {% if news_items.has_next %}
+                <a href="?page={{ news_items.next_page_number }}&filter={{ filter_type }}" 
+                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                    Next →
+                </a>
+                <a href="?page={{ news_items.paginator.num_pages }}&filter={{ filter_type }}" 
+                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                    Last &raquo;
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-3xl shadow-2xl p-12 text-center border border-gray-100">
+            <div class="text-7xl mb-6">📰</div>
+            <h3 class="text-3xl font-bold text-gray-900 mb-3">No News Available</h3>
+            <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+                {% if filter_type == 'portfolio' %}
+                    No recent news found for your portfolio stocks. News is automatically fetched daily.
+                {% elif filter_type == 'watchlist' %}
+                    No recent news found for your watchlist stocks. News is automatically fetched daily.
+                {% else %}
+                    No recent news found for your stocks. Add stocks to your portfolio or watchlist to see news.
+                {% endif %}
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'all_stocks' %}" 
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-xl">
+                    Browse Stocks
+                </a>
+                <a href="{% url 'dashboard' %}" 
+                   class="inline-flex items-center px-8 py-4 border-2 border-blue-600 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition">
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -26,5 +26,11 @@ urlpatterns = [
     path('scrape-status/', views.scrape_status, name='scrape_status'),
     path('delete-alert/<int:alert_id>/', views.delete_dividend_alert, name='delete_dividend_alert'),
     path('newsletter/', views.newsletter_subscription, name='newsletter_subscription'),
+    # News aggregation routes
+    path('news/', views.all_news, name='all_news'),
+    path('news/portfolio/', views.portfolio_news, name='portfolio_news'),
+    path('news/watchlist/', views.watchlist_news, name='watchlist_news'),
+    path('stocks/<str:symbol>/news/', views.stock_news, name='stock_news'),
+    path('fetch-news/', views.fetch_news, name='fetch_news'),
 
 ]
