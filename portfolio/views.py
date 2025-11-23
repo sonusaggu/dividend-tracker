@@ -9,7 +9,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.core.management import call_command
 import subprocess
 from django.conf import settings
@@ -347,6 +347,142 @@ def dividend_history(request, symbol):
     }
     
     return render(request, 'dividend_history.html', context)
+
+
+@login_required
+def dividend_calendar(request):
+    """Display dividend calendar view with monthly/weekly calendar"""
+    from calendar import monthrange, month_name
+    from collections import defaultdict
+    
+    # Get filter type (all, portfolio, watchlist)
+    filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist
+    
+    # Get month/year from query params (default to current month)
+    today = timezone.now().date()
+    try:
+        year = int(request.GET.get('year', today.year))
+        month = int(request.GET.get('month', today.month))
+        # Validate month/year
+        if month < 1 or month > 12:
+            month = today.month
+        if year < 2020 or year > 2100:
+            year = today.year
+    except (ValueError, TypeError):
+        year = today.year
+        month = today.month
+    
+    # Calculate date range for the month
+    first_day = date(year, month, 1)
+    last_day_num = monthrange(year, month)[1]
+    last_day = date(year, month, last_day_num)
+    
+    # Get start of calendar (first Monday before or on first day)
+    calendar_start = first_day - timedelta(days=first_day.weekday())
+    # Get end of calendar (last Sunday after or on last day)
+    calendar_end = last_day + timedelta(days=(6 - last_day.weekday()))
+    
+    # Build query for dividends
+    dividend_query = Dividend.objects.filter(
+        ex_dividend_date__gte=calendar_start,
+        ex_dividend_date__lte=calendar_end
+    ).select_related('stock').order_by('ex_dividend_date', 'stock__symbol')
+    
+    # Apply filters
+    if filter_type == 'portfolio' and request.user.is_authenticated:
+        # Get user's portfolio stock IDs first, then filter dividends
+        portfolio_stock_ids = list(UserPortfolio.objects.filter(
+            user=request.user
+        ).values_list('stock_id', flat=True))
+        if portfolio_stock_ids:
+            dividend_query = dividend_query.filter(stock_id__in=portfolio_stock_ids)
+        else:
+            # No stocks in portfolio, return empty queryset
+            dividend_query = dividend_query.none()
+    elif filter_type == 'watchlist' and request.user.is_authenticated:
+        # Get user's watchlist stock IDs first, then filter dividends
+        watchlist_stock_ids = list(Watchlist.objects.filter(
+            user=request.user
+        ).values_list('stock_id', flat=True))
+        if watchlist_stock_ids:
+            dividend_query = dividend_query.filter(stock_id__in=watchlist_stock_ids)
+        else:
+            # No stocks in watchlist, return empty queryset
+            dividend_query = dividend_query.none()
+    
+    # Group dividends by date
+    dividends_by_date = defaultdict(list)
+    total_amount_by_date = defaultdict(float)
+    
+    for dividend in dividend_query:
+        if dividend.ex_dividend_date:
+            date_key = dividend.ex_dividend_date
+            dividends_by_date[date_key].append(dividend)
+            total_amount_by_date[date_key] += float(dividend.amount or 0)
+    
+    # Build calendar grid
+    calendar_days = []
+    current_date = calendar_start
+    
+    while current_date <= calendar_end:
+        day_dividends = dividends_by_date.get(current_date, [])
+        day_total = total_amount_by_date.get(current_date, 0)
+        is_current_month = current_date.month == month
+        
+        calendar_days.append({
+            'date': current_date,
+            'day': current_date.day,
+            'is_current_month': is_current_month,
+            'is_today': current_date == today,
+            'dividends': day_dividends,
+            'dividend_count': len(day_dividends),
+            'total_amount': day_total,
+        })
+        
+        current_date += timedelta(days=1)
+    
+    # Calculate statistics
+    total_dividends = dividend_query.count()
+    total_amount = sum(total_amount_by_date.values())
+    
+    # Get unique stocks
+    unique_stocks = set()
+    for dividends in dividends_by_date.values():
+        for div in dividends:
+            unique_stocks.add(div.stock)
+    
+    # Calculate previous/next month
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+    
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+    
+    context = {
+        'year': year,
+        'month': month,
+        'month_name': month_name[month],
+        'calendar_days': calendar_days,
+        'filter_type': filter_type,
+        'total_dividends': total_dividends,
+        'total_amount': total_amount,
+        'unique_stocks_count': len(unique_stocks),
+        'prev_year': prev_year,
+        'prev_month': prev_month,
+        'next_year': next_year,
+        'next_month': next_month,
+        'today': today,
+    }
+    
+    return render(request, 'dividend_calendar.html', context)
 
 @login_required
 @require_POST

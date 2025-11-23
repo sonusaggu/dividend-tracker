@@ -8,78 +8,109 @@
 {% block meta_keywords %}portfolio dashboard, investment tracking, dividend income, portfolio performance, stock portfolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto py-8 px-4">
-    <!-- Welcome Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-      <div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Welcome back, {{ user.username }}! 👋
-        </h1>
-        <p class="text-xl text-gray-600">Here's your investment dashboard overview</p>
-      </div>
-      <div class="mt-4 md:mt-0 flex gap-3">
-        <a href="{% url 'all_stocks' %}" 
-           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
-          Browse Stocks
-        </a>
-        <a href="{% url 'portfolio' %}" 
-           class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-semibold transition">
-          View Portfolio
-        </a>
-      </div>
-    </div>
-
-    <!-- Quick Search -->
-    <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
-      <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-        <span class="text-2xl mr-2">🔍</span>
-        Quick Stock Search
-      </h2>
-      <form method="get" action="{% url 'all_stocks' %}" class="flex gap-4">
-        <div class="flex-1 relative">
-          <input type="text" name="search" placeholder="Search stocks by symbol or name..."
-                 class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" />
-          <span class="absolute left-4 top-3.5 text-gray-400 text-xl">🔍</span>
+    <!-- Enhanced Welcome Header -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-32 -mt-32 opacity-50"></div>
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-5xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Welcome back, {{ user.username }}! 👋
+          </h1>
+          <p class="text-xl text-gray-600">Here's your comprehensive investment dashboard overview</p>
         </div>
-        <button type="submit"
-                class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-md">
-          Search
-        </button>
-      </form>
+        <div class="mt-6 md:mt-0 flex gap-3">
+          <a href="{% url 'all_stocks' %}" 
+             class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-xl">
+            <span class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              Browse Stocks
+            </span>
+          </a>
+          <a href="{% url 'portfolio' %}" 
+             class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold transition transform hover:scale-105">
+            View Portfolio
+          </a>
+        </div>
+      </div>
     </div>
 
-    <!-- Newsletter Subscription Banner -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-xl p-8 mb-8 text-white">
-      <div class="flex flex-col md:flex-row items-center justify-between">
-        <div class="flex-1 mb-4 md:mb-0">
-          <h2 class="text-2xl font-bold mb-2">🚀 Boost Your Dividend Strategy</h2>
-          <p class="text-blue-100 text-lg mb-3">Get weekly curated dividend stocks with upcoming ex-dividend dates</p>
-          <ul class="text-sm text-blue-100 space-y-1">
-            <li>• Top high-yield opportunities</li>
-            <li>• Expert analysis & insights</li>
-            <li>• Portfolio optimization tips</li>
+    <!-- Enhanced Quick Search -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-24 -mt-24 opacity-50"></div>
+      <div class="relative z-10">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <svg class="w-6 h-6 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          Quick Stock Search
+        </h2>
+        <form method="get" action="{% url 'all_stocks' %}" class="flex gap-4">
+          <div class="flex-1 relative">
+            <input type="text" name="search" placeholder="Search stocks by symbol or name..."
+                   class="w-full pl-14 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg" />
+            <svg class="absolute left-4 top-4 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <button type="submit"
+                  class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 rounded-xl font-bold text-lg transition transform hover:scale-105 shadow-xl">
+            Search
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Enhanced Newsletter Subscription Banner -->
+    <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl shadow-2xl p-10 mb-8 text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-black opacity-10"></div>
+      <div class="relative z-10 flex flex-col md:flex-row items-center justify-between">
+        <div class="flex-1 mb-6 md:mb-0">
+          <h2 class="text-3xl font-bold mb-3">🚀 Boost Your Dividend Strategy</h2>
+          <p class="text-blue-100 text-xl mb-4">Get weekly curated dividend stocks with upcoming ex-dividend dates</p>
+          <ul class="text-base text-blue-100 space-y-2">
+            <li class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Top high-yield opportunities
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Expert analysis & insights
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Portfolio optimization tips
+            </li>
           </ul>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
           {% if user.is_authenticated %}
             {% if user.newsletter_subscription and user.newsletter_subscription.is_active %}
               <a href="{% url 'newsletter_subscription' %}" 
-                 class="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-center transition hover:bg-blue-50 transform hover:scale-105">
+                 class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-center transition hover:bg-blue-50 transform hover:scale-105 shadow-xl">
                 Manage Subscription
               </a>
               <button onclick="openModal('previewModal')"
-                      class="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:bg-opacity-10 transition">
+                      class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white hover:bg-opacity-20 transition shadow-xl">
                 Preview Latest
               </button>
             {% else %}
               <button onclick="openModal('newsletterModal')"
-                      class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+                      class="bg-green-500 hover:bg-green-600 text-white px-10 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-2xl">
                 Subscribe Now
               </button>
               <button onclick="openModal('previewModal')"
-                      class="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:bg-opacity-10 transition">
+                      class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white hover:bg-opacity-20 transition shadow-xl">
                 See Sample
               </button>
             {% endif %}
@@ -88,93 +119,91 @@
       </div>
     </div>
 
-    <!-- Stats Overview -->
+    <!-- Enhanced Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <!-- Portfolio Value -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <p class="text-sm text-gray-600 mb-1">Portfolio Value</p>
-            <p class="text-3xl font-bold text-gray-900">${{ total_value|floatformat:2|intcomma|default:"0.00" }}</p>
-            {% if total_value > 0 %}
-            <p class="text-sm {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2 font-medium">
-              ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
-            </p>
-            {% else %}
-            <p class="text-sm text-gray-500 mt-2">No investments yet</p>
-            {% endif %}
+      <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-5xl">💰</div>
           </div>
-          <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center ml-4">
-            <span class="text-3xl text-green-600">💰</span>
-          </div>
+          <p class="text-sm text-green-100 mb-2 font-medium">Portfolio Value</p>
+          <p class="text-4xl font-bold mb-2">${{ total_value|floatformat:2|intcomma|default:"0.00" }}</p>
+          {% if total_value > 0 %}
+          <p class="text-base {% if total_gain_loss >= 0 %}text-green-100{% else %}text-red-200{% endif %} font-bold">
+            ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
+          </p>
+          {% else %}
+          <p class="text-sm text-green-100">No investments yet</p>
+          {% endif %}
         </div>
       </div>
 
       <!-- Annual Dividends -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <p class="text-sm text-gray-600 mb-1">Annual Dividends</p>
-            <p class="text-3xl font-bold text-gray-900">${{ annual_dividends|floatformat:2|intcomma|default:"0.00" }}</p>
-            {% if total_value > 0 and annual_dividends > 0 %}
-            <p class="text-sm text-blue-600 mt-2 font-medium">
-              {{ dividend_yield|floatformat:2 }}% yield
-            </p>
-            {% else %}
-            <p class="text-sm text-gray-500 mt-2">0.00% yield</p>
-            {% endif %}
+      <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-5xl">📈</div>
           </div>
-          <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center ml-4">
-            <span class="text-3xl text-blue-600">📈</span>
-          </div>
+          <p class="text-sm text-blue-100 mb-2 font-medium">Annual Dividends</p>
+          <p class="text-4xl font-bold mb-2">${{ annual_dividends|floatformat:2|intcomma|default:"0.00" }}</p>
+          {% if total_value > 0 and annual_dividends > 0 %}
+          <p class="text-base text-blue-100 font-bold">
+            {{ dividend_yield|floatformat:2 }}% yield
+          </p>
+          {% else %}
+          <p class="text-sm text-blue-100">0.00% yield</p>
+          {% endif %}
         </div>
       </div>
 
       <!-- Total Holdings -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <p class="text-sm text-gray-600 mb-1">Total Holdings</p>
-            <p class="text-3xl font-bold text-gray-900">{{ total_holdings|default:"0" }}</p>
-            {% if total_holdings > 0 %}
-            <p class="text-sm text-purple-600 mt-2 font-medium">
-              Across {{ sectors_count|default:1 }} sector{{ sectors_count|pluralize }}
-            </p>
-            {% else %}
-            <p class="text-sm text-gray-500 mt-2">No holdings yet</p>
-            {% endif %}
+      <div class="bg-gradient-to-br from-purple-500 to-pink-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-5xl">📊</div>
           </div>
-          <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center ml-4">
-            <span class="text-3xl text-purple-600">📊</span>
-          </div>
+          <p class="text-sm text-purple-100 mb-2 font-medium">Total Holdings</p>
+          <p class="text-4xl font-bold mb-2">{{ total_holdings|default:"0" }}</p>
+          {% if total_holdings > 0 %}
+          <p class="text-base text-purple-100 font-bold">
+            Across {{ sectors_count|default:1 }} sector{{ sectors_count|pluralize }}
+          </p>
+          {% else %}
+          <p class="text-sm text-purple-100">No holdings yet</p>
+          {% endif %}
         </div>
       </div>
 
       <!-- Upcoming Dividends Count -->
-      <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <p class="text-sm text-gray-600 mb-1">Upcoming Dividends</p>
-            <p class="text-3xl font-bold text-gray-900">{{ upcoming_dividends_count|default:"0" }}</p>
-            <p class="text-sm text-orange-600 mt-2 font-medium">Next 30 days</p>
+      <div class="bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-5xl">📅</div>
           </div>
-          <div class="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center ml-4">
-            <span class="text-3xl text-orange-600">📅</span>
-          </div>
+          <p class="text-sm text-orange-100 mb-2 font-medium">Upcoming Dividends</p>
+          <p class="text-4xl font-bold mb-2">{{ upcoming_dividends_count|default:"0" }}</p>
+          <p class="text-base text-orange-100 font-bold">Next 30 days</p>
         </div>
       </div>
     </div>
 
     <!-- Portfolio Performance & Watchlist -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Portfolio Performance -->
-      <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <!-- Enhanced Portfolio Performance -->
+      <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
-            <span class="text-2xl mr-2">📈</span>
+          <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
             Portfolio Performance
           </h2>
-          <span class="{% if total_value > 0 and percent_gain_loss >= 0 %}text-green-600{% elif total_value > 0 and percent_gain_loss < 0 %}text-red-600{% else %}text-gray-600{% endif %} font-bold text-lg">
+          <span class="{% if total_value > 0 and percent_gain_loss >= 0 %}text-green-600{% elif total_value > 0 and percent_gain_loss < 0 %}text-red-600{% else %}text-gray-600{% endif %} font-bold text-xl">
             {% if total_value > 0 %}
               ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
             {% else %}
@@ -184,86 +213,91 @@
         </div>
 
         {% if total_value > 0 and performance_data %}
-        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 h-64 mb-6 overflow-hidden flex items-center justify-center relative border border-blue-200">
-          <div class="absolute inset-0 flex justify-between items-end px-4 pb-4">
+        <div class="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-2xl p-6 h-72 mb-6 overflow-hidden flex items-center justify-center relative border-2 border-blue-200 shadow-inner">
+          <div class="absolute inset-0 flex justify-between items-end px-6 pb-6">
             {% for perf in performance_data %}
               <div class="flex flex-col items-center flex-1 mx-1">
-                <div class="performance-bar bg-gradient-to-t from-blue-600 to-purple-600 w-full rounded-t-lg shadow-md"
+                <div class="performance-bar bg-gradient-to-t from-blue-600 via-purple-600 to-indigo-600 w-full rounded-t-xl shadow-lg"
                      data-percent="{{ perf.percent }}"
-                     style="height: 0%; min-height: 5px; max-height: 100%;">
+                     style="height: 0%; min-height: 8px; max-height: 100%;">
                 </div>
-                <p class="text-xs mt-2 text-gray-600 font-medium">{{ perf.month }}</p>
+                <p class="text-sm mt-3 text-gray-700 font-bold">{{ perf.month }}</p>
               </div>
             {% endfor %}
           </div>
           <!-- Chart label -->
-          <div class="absolute top-2 left-4 text-xs text-gray-500 font-medium">
+          <div class="absolute top-4 left-6 text-sm text-gray-600 font-bold">
             Portfolio Value Trend
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-4 text-center">
-          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <p class="text-2xl font-bold {% if monthly_performance >= 0 %}text-green-600{% elif monthly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
+            <p class="text-3xl font-bold {% if monthly_performance >= 0 %}text-green-600{% elif monthly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if monthly_performance != None %}{{ monthly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-1">1 Month</p>
+            <p class="text-sm text-gray-600 mt-2 font-semibold">1 Month</p>
           </div>
-          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <p class="text-2xl font-bold {% if quarterly_performance >= 0 %}text-blue-600{% elif quarterly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
+            <p class="text-3xl font-bold {% if quarterly_performance >= 0 %}text-blue-600{% elif quarterly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if quarterly_performance != None %}{{ quarterly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-1">3 Months</p>
+            <p class="text-sm text-gray-600 mt-2 font-semibold">3 Months</p>
           </div>
-          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <p class="text-2xl font-bold {% if yearly_performance >= 0 %}text-purple-600{% elif yearly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
+            <p class="text-3xl font-bold {% if yearly_performance >= 0 %}text-purple-600{% elif yearly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if yearly_performance != None %}{{ yearly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-1">1 Year</p>
+            <p class="text-sm text-gray-600 mt-2 font-semibold">1 Year</p>
           </div>
         </div>
         {% else %}
-        <div class="text-center py-12">
-          <span class="text-6xl mb-4 block">📊</span>
-          <p class="text-gray-600 font-medium mb-2">No portfolio data</p>
-          <p class="text-sm text-gray-500 mb-4">Add stocks to see performance</p>
+        <div class="text-center py-16">
+          <span class="text-7xl mb-6 block">📊</span>
+          <p class="text-gray-600 font-bold text-xl mb-3">No portfolio data</p>
+          <p class="text-sm text-gray-500 mb-6">Add stocks to see performance</p>
           <a href="{% url 'all_stocks' %}" 
-             class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+             class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-xl">
             Browse Stocks
           </a>
         </div>
         {% endif %}
       </div>
 
-      <!-- Watchlist -->
-      <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <!-- Enhanced Watchlist -->
+      <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
-            <span class="text-2xl mr-2">⭐</span>
+          <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+            </svg>
             Watchlist
           </h2>
-          <a href="{% url 'watchlist' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition">
-            View All →
+          <a href="{% url 'watchlist' %}" class="text-blue-600 hover:text-blue-800 text-base font-bold transition flex items-center">
+            View All
+            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
           </a>
         </div>
-        <div class="space-y-3">
+        <div class="space-y-4">
           {% for item in watchlist_stocks %}
             <a href="{% url 'stock_detail' item.stock.symbol %}" 
-               class="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-purple-50 transition border border-gray-200 hover:border-blue-300 hover:shadow-md group">
-              <div class="flex items-center space-x-4">
-                <span class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-white group-hover:scale-110 transition shadow-md">
+               class="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 via-blue-50 to-purple-50 rounded-2xl hover:from-blue-100 hover:via-purple-100 hover:to-indigo-100 transition border-2 border-gray-200 hover:border-blue-400 hover:shadow-xl group">
+              <div class="flex items-center space-x-5">
+                <span class="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white group-hover:scale-110 transition shadow-lg text-lg">
                   {{ item.stock.symbol|slice:":1" }}
                 </span>
                 <div>
-                  <p class="font-bold text-gray-900 group-hover:text-blue-600 transition">{{ item.stock.symbol }}</p>
-                  <p class="text-sm text-gray-600">{{ item.stock.company_name|truncatewords:3 }}</p>
+                  <p class="font-bold text-gray-900 group-hover:text-blue-600 transition text-lg">{{ item.stock.symbol }}</p>
+                  <p class="text-sm text-gray-600 font-medium">{{ item.stock.company_name|truncatewords:3 }}</p>
                 </div>
               </div>
               <div class="text-right">
                 {% if item.latest_price %}
-                <p class="font-bold text-gray-900 text-lg">${{ item.latest_price|floatformat:2 }}</p>
+                <p class="font-bold text-gray-900 text-xl">${{ item.latest_price|floatformat:2 }}</p>
                 {% if item.price_date %}
-                <p class="text-xs text-gray-500">{{ item.price_date|date:"M d" }}</p>
+                <p class="text-xs text-gray-500 font-medium">{{ item.price_date|date:"M d" }}</p>
                 {% endif %}
                 {% else %}
                 <p class="text-gray-400 text-sm">N/A</p>
@@ -271,12 +305,12 @@
               </div>
             </a>
           {% empty %}
-            <div class="text-center py-12">
-              <span class="text-5xl mb-4 block">🔍</span>
-              <p class="text-gray-600 font-medium mb-2">No stocks in watchlist</p>
-              <p class="text-sm text-gray-500 mb-4">Start tracking stocks you're interested in</p>
+            <div class="text-center py-16">
+              <span class="text-7xl mb-6 block">🔍</span>
+              <p class="text-gray-600 font-bold text-xl mb-3">No stocks in watchlist</p>
+              <p class="text-sm text-gray-500 mb-6">Start tracking stocks you're interested in</p>
               <a href="{% url 'all_stocks' %}" 
-                 class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                 class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-xl">
                 Add Stocks
               </a>
             </div>
@@ -285,52 +319,68 @@
       </div>
     </div>
 
-    <!-- Upcoming Dividends -->
-    <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">
+    <!-- Enhanced Upcoming Dividends -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 mb-8">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
-          <span class="text-2xl mr-2">📅</span>
+        <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+          <svg class="w-7 h-7 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
           Upcoming Dividend Payments
         </h2>
-        {% if upcoming_dividends_count > 0 %}
-        <a href="{% url 'portfolio' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition">
-          View All →
-        </a>
-        {% endif %}
+        <div class="flex gap-4">
+          {% if upcoming_dividends_count > 0 %}
+          <a href="{% url 'portfolio' %}" class="text-blue-600 hover:text-blue-800 text-base font-bold transition flex items-center">
+            View All
+            <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+          {% endif %}
+          <a href="{% url 'dividend_calendar' %}" class="text-blue-600 hover:text-blue-800 text-base font-bold transition flex items-center">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Calendar View
+          </a>
+        </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for dividend in upcoming_dividends %}
           <a href="{% url 'stock_detail' dividend.stock.symbol %}" 
-             class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 p-5 hover:shadow-lg transition transform hover:scale-105 group">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-3">
-                <span class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center font-bold text-white group-hover:scale-110 transition">
-                  {{ dividend.stock.symbol|slice:":1" }}
-                </span>
-                <div>
-                  <p class="font-bold text-gray-900 group-hover:text-green-600 transition">{{ dividend.stock.symbol }}</p>
-                  <p class="text-xs text-gray-600">{{ dividend.stock.company_name|truncatewords:2 }}</p>
+             class="bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 rounded-2xl border-2 border-green-300 p-6 hover:shadow-2xl transition transform hover:scale-105 group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-green-200 opacity-20 rounded-full -mr-12 -mt-12"></div>
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center space-x-4">
+                  <span class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center font-bold text-white group-hover:scale-110 transition shadow-lg text-lg">
+                    {{ dividend.stock.symbol|slice:":1" }}
+                  </span>
+                  <div>
+                    <p class="font-bold text-gray-900 group-hover:text-green-600 transition text-lg">{{ dividend.stock.symbol }}</p>
+                    <p class="text-xs text-gray-600 font-medium">{{ dividend.stock.company_name|truncatewords:2 }}</p>
+                  </div>
                 </div>
+                <span class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-4 py-2 rounded-full font-bold shadow-lg">
+                  {{ dividend.days_until }} day{{ dividend.days_until|pluralize }}
+                </span>
               </div>
-              <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">
-                {{ dividend.days_until }} day{{ dividend.days_until|pluralize }}
-              </span>
-            </div>
-            <div class="mb-3">
-              <p class="text-3xl font-bold text-green-600 mb-1">${{ dividend.amount }}</p>
-              <p class="text-sm text-gray-600">Ex-date: {{ dividend.ex_dividend_date|date:"M d, Y" }}</p>
-            </div>
-            <div class="flex items-center text-xs text-gray-600">
-              <span class="mr-4">📊 {{ dividend.stock.sector|default:"N/A" }}</span>
+              <div class="mb-4">
+                <p class="text-4xl font-bold text-green-600 mb-2">${{ dividend.amount }}</p>
+                <p class="text-sm text-gray-600 font-medium">Ex-date: {{ dividend.ex_dividend_date|date:"M d, Y" }}</p>
+              </div>
+              <div class="flex items-center text-xs text-gray-600 font-medium">
+                <span class="mr-4">📊 {{ dividend.stock.sector|default:"N/A" }}</span>
+              </div>
             </div>
           </a>
         {% empty %}
-          <div class="col-span-full text-center py-12">
-            <span class="text-6xl mb-4 block">📊</span>
-            <p class="text-gray-600 font-medium mb-2">No upcoming dividends</p>
-            <p class="text-sm text-gray-500 mb-4">Dividends from your holdings will appear here</p>
+          <div class="col-span-full text-center py-16">
+            <span class="text-7xl mb-6 block">📊</span>
+            <p class="text-gray-600 font-bold text-xl mb-3">No upcoming dividends</p>
+            <p class="text-sm text-gray-500 mb-6">Dividends from your holdings will appear here</p>
             <a href="{% url 'all_stocks' %}" 
-               class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+               class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-xl">
               Browse Dividend Stocks
             </a>
           </div>
@@ -338,38 +388,41 @@
       </div>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Enhanced Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <a href="{% url 'portfolio' %}" 
-         class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105">
-        <div class="flex items-center justify-between">
+         class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl shadow-2xl p-8 text-white hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 relative overflow-hidden group">
+        <div class="absolute inset-0 bg-black opacity-10 group-hover:opacity-0 transition"></div>
+        <div class="relative z-10 flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold mb-2">My Portfolio</h3>
-            <p class="text-blue-100">View and manage your investments</p>
+            <h3 class="text-2xl font-bold mb-2">My Portfolio</h3>
+            <p class="text-blue-100 text-lg">View and manage your investments</p>
           </div>
-          <span class="text-4xl">📊</span>
+          <span class="text-5xl">📊</span>
         </div>
       </a>
       
       <a href="{% url 'watchlist' %}" 
-         class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl shadow-xl p-6 text-white hover:from-green-700 hover:to-emerald-700 transition transform hover:scale-105">
-        <div class="flex items-center justify-between">
+         class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl shadow-2xl p-8 text-white hover:from-green-700 hover:to-emerald-700 transition transform hover:scale-105 relative overflow-hidden group">
+        <div class="absolute inset-0 bg-black opacity-10 group-hover:opacity-0 transition"></div>
+        <div class="relative z-10 flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold mb-2">Watchlist</h3>
-            <p class="text-green-100">Track stocks you're interested in</p>
+            <h3 class="text-2xl font-bold mb-2">Watchlist</h3>
+            <p class="text-green-100 text-lg">Track stocks you're interested in</p>
           </div>
-          <span class="text-4xl">⭐</span>
+          <span class="text-5xl">⭐</span>
         </div>
       </a>
       
       <a href="{% url 'my_alerts' %}" 
-         class="bg-gradient-to-r from-orange-600 to-amber-600 rounded-2xl shadow-xl p-6 text-white hover:from-orange-700 hover:to-amber-700 transition transform hover:scale-105">
-        <div class="flex items-center justify-between">
+         class="bg-gradient-to-r from-orange-600 to-amber-600 rounded-3xl shadow-2xl p-8 text-white hover:from-orange-700 hover:to-amber-700 transition transform hover:scale-105 relative overflow-hidden group">
+        <div class="absolute inset-0 bg-black opacity-10 group-hover:opacity-0 transition"></div>
+        <div class="relative z-10 flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold mb-2">My Alerts</h3>
-            <p class="text-orange-100">Manage dividend alerts</p>
+            <h3 class="text-2xl font-bold mb-2">My Alerts</h3>
+            <p class="text-orange-100 text-lg">Manage dividend alerts</p>
           </div>
-          <span class="text-4xl">🔔</span>
+          <span class="text-5xl">🔔</span>
         </div>
       </a>
     </div>
@@ -378,19 +431,19 @@
 
 <!-- Newsletter Subscription Modal -->
 <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-md w-full">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-xl font-bold text-gray-900">📧 Subscribe to Dividend Digest</h3>
-      <button onclick="closeModal('newsletterModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition">&times;</button>
+  <div class="bg-white rounded-3xl shadow-2xl p-8 mx-4 max-w-md w-full">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl font-bold text-gray-900">📧 Subscribe to Dividend Digest</h3>
+      <button onclick="closeModal('newsletterModal')" class="text-gray-400 hover:text-gray-600 text-3xl transition">&times;</button>
     </div>
     
     <form method="post" action="{% url 'newsletter_subscription' %}">
       {% csrf_token %}
       
-      <div class="space-y-4">
+      <div class="space-y-5">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Frequency</label>
-          <select name="frequency" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Frequency</label>
+          <select name="frequency" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg">
             <option value="weekly">Weekly</option>
             <option value="biweekly">Bi-Weekly</option>
             <option value="monthly">Monthly</option>
@@ -398,8 +451,8 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Strategy Focus</label>
-          <select name="strategy" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Strategy Focus</label>
+          <select name="strategy" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg">
             <option value="high_yield">High Yield</option>
             <option value="growth_income">Growth & Income</option>
             <option value="blue_chip">Blue Chip Stocks</option>
@@ -407,20 +460,20 @@
         </div>
         
         <div class="flex items-center">
-          <input type="checkbox" name="terms" required class="mr-2 rounded" id="terms">
+          <input type="checkbox" name="terms" required class="mr-3 rounded w-5 h-5" id="terms">
           <label for="terms" class="text-sm text-gray-600">
             I agree to receive dividend insights and market updates
           </label>
         </div>
       </div>
       
-      <div class="flex gap-3 mt-6">
+      <div class="flex gap-3 mt-8">
         <button type="button" onclick="closeModal('newsletterModal')"
-                class="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition font-medium">
+                class="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl hover:bg-gray-50 transition font-bold">
           Cancel
         </button>
         <button type="submit" name="subscribe"
-                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition transform hover:scale-105">
+                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-bold transition transform hover:scale-105">
           Subscribe
         </button>
       </div>
@@ -430,66 +483,66 @@
 
 <!-- Preview Modal -->
 <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-2xl w-full max-h-96 overflow-y-auto">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-xl font-bold text-gray-900">📊 This Week's Dividend Picks</h3>
-      <button onclick="closeModal('previewModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition">&times;</button>
+  <div class="bg-white rounded-3xl shadow-2xl p-8 mx-4 max-w-2xl w-full max-h-96 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl font-bold text-gray-900">📊 This Week's Dividend Picks</h3>
+      <button onclick="closeModal('previewModal')" class="text-gray-400 hover:text-gray-600 text-3xl transition">&times;</button>
     </div>
     
-    <div class="space-y-3">
+    <div class="space-y-4">
       <!-- Sample newsletter content -->
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition">
-        <div class="flex items-center space-x-3">
-          <span class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+      <div class="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:bg-blue-100 transition border border-gray-200">
+        <div class="flex items-center space-x-4">
+          <span class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-white text-lg">
             A
           </span>
           <div>
-            <p class="font-bold text-gray-900">AAPL</p>
+            <p class="font-bold text-gray-900 text-lg">AAPL</p>
             <p class="text-sm text-gray-600">Apple Inc.</p>
           </div>
         </div>
         <div class="text-right">
-          <p class="font-bold text-green-600 text-lg">$0.24</p>
+          <p class="font-bold text-green-600 text-xl">$0.24</p>
           <p class="text-sm text-gray-600">Feb 09, 2024</p>
         </div>
       </div>
       
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition">
-        <div class="flex items-center space-x-3">
-          <span class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+      <div class="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:bg-blue-100 transition border border-gray-200">
+        <div class="flex items-center space-x-4">
+          <span class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-white text-lg">
             M
           </span>
           <div>
-            <p class="font-bold text-gray-900">MSFT</p>
+            <p class="font-bold text-gray-900 text-lg">MSFT</p>
             <p class="text-sm text-gray-600">Microsoft Corporation</p>
           </div>
         </div>
         <div class="text-right">
-          <p class="font-bold text-green-600 text-lg">$0.75</p>
+          <p class="font-bold text-green-600 text-xl">$0.75</p>
           <p class="text-sm text-gray-600">Feb 14, 2024</p>
         </div>
       </div>
       
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition">
-        <div class="flex items-center space-x-3">
-          <span class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+      <div class="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:bg-blue-100 transition border border-gray-200">
+        <div class="flex items-center space-x-4">
+          <span class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-white text-lg">
             J
           </span>
           <div>
-            <p class="font-bold text-gray-900">JNJ</p>
+            <p class="font-bold text-gray-900 text-lg">JNJ</p>
             <p class="text-sm text-gray-600">Johnson & Johnson</p>
           </div>
         </div>
         <div class="text-right">
-          <p class="font-bold text-green-600 text-lg">$1.19</p>
+          <p class="font-bold text-green-600 text-xl">$1.19</p>
           <p class="text-sm text-gray-600">Feb 16, 2024</p>
         </div>
       </div>
     </div>
     
-    <div class="mt-6 text-center">
+    <div class="mt-8 text-center">
       <button onclick="closeModal('previewModal'); openModal('newsletterModal')"
-              class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition transform hover:scale-105 shadow-md">
+              class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-xl">
         Get Full Newsletter
       </button>
     </div>
