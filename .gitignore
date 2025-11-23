@@ -5,12 +5,38 @@ ENV/
 virtualenv/
 .virtualenv/
 
-# Python virtual environment
-*.pyc
+# Python bytecode
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environment directories
 __pycache__/
+*.pyc
 *.pyo
 *.pyd
-.Python
 
 # Environment variables
 .env
