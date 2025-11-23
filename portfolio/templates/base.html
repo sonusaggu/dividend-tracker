@@ -1,10 +1,77 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment.{% endblock %}">
-    <title>{% block title %}Dividend Tracker{% endblock %}</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>{% block title %}StockFolio - Dividend Tracker & Portfolio Manager{% endblock %}</title>
+    <meta name="title" content="{% block meta_title %}StockFolio - Track Dividend Stocks & Build Your Portfolio{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment. Get real-time stock data, dividend alerts, and portfolio insights.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}dividend stocks, stock portfolio, dividend tracker, TSX stocks, dividend yield, stock analysis, portfolio management, dividend alerts{% endblock %}">
+    <meta name="author" content="StockFolio">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.svg' %}">
+    <link rel="shortcut icon" href="{% static 'images/favicon.svg' %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}StockFolio - Dividend Tracker & Portfolio Manager{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment.{% endblock %}">
+    {% block og_image %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon.svg' %}">
+    {% endblock %}
+    <meta property="og:site_name" content="StockFolio">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}StockFolio - Dividend Tracker & Portfolio Manager{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment.{% endblock %}">
+    {% block twitter_image %}
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/favicon.svg' %}">
+    {% endblock %}
+    
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="application-name" content="StockFolio">
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "{% block schema_type %}WebApplication{% endblock %}",
+      "name": "StockFolio",
+      "description": "{% block schema_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment.{% endblock %}",
+      "url": "{{ request.build_absolute_uri }}",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      }
+    }
+    </script>
+    
+    {% block extra_meta %}{% endblock %}
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

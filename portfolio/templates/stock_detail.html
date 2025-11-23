@@ -2,7 +2,15 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}{{ stock.symbol }} - {{ stock.company_name }} - StockFolio{% endblock %}
+{% block title %}{{ stock.symbol }} - {{ stock.company_name }} | Stock Analysis & Dividend Info - StockFolio{% endblock %}
+{% block meta_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock Analysis{% endblock %}
+{% block meta_description %}{{ stock.symbol }} ({{ stock.company_name }}) - View dividend yield {{ stock.dividends.first.yield_percent|floatformat:2 }}%, ex-dividend dates, stock price, P/E ratio, analyst ratings, and more.{% endblock %}
+{% block meta_keywords %}{{ stock.symbol }}, {{ stock.company_name }}, dividend stock, {{ stock.sector }}, TSX stock, stock analysis{% endblock %}
+{% block og_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock Analysis{% endblock %}
+{% block og_description %}{{ stock.symbol }} ({{ stock.company_name }}) - Dividend yield {{ stock.dividends.first.yield_percent|floatformat:2 }}%, ex-dividend dates, and comprehensive stock analysis.{% endblock %}
+{% block twitter_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock{% endblock %}
+{% block twitter_description %}{{ stock.symbol }} ({{ stock.company_name }}) - View dividend yield, ex-dividend dates, and stock analysis.{% endblock %}
+{% block schema_type %}FinancialProduct{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
