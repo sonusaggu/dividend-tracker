@@ -32,5 +32,7 @@ urlpatterns = [
     path('news/watchlist/', views.watchlist_news, name='watchlist_news'),
     path('stocks/<str:symbol>/news/', views.stock_news, name='stock_news'),
     path('fetch-news/', views.fetch_news, name='fetch_news'),
+    # Canadian tools
+    path('tools/', views.canadian_tools, name='canadian_tools'),
 
 ]

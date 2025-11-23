@@ -21,6 +21,7 @@ from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, Newslett
 from .services import PortfolioService, StockService, AlertService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
+from .utils.canadian_tax_calculator import CanadianTaxCalculator
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -1722,3 +1723,120 @@ def fetch_news(request):
             'status': 'error',
             'message': f'Error: {str(e)}'
         }, status=500)
+
+
+def canadian_tools(request):
+    """Canadian tax and investment tools page - accessible to all users"""
+    context = {
+        'provinces': [
+            ('ON', 'Ontario'), ('BC', 'British Columbia'), ('AB', 'Alberta'),
+            ('QC', 'Quebec'), ('MB', 'Manitoba'), ('SK', 'Saskatchewan'),
+            ('NS', 'Nova Scotia'), ('NB', 'New Brunswick'), ('NL', 'Newfoundland'),
+            ('PE', 'Prince Edward Island'), ('NT', 'Northwest Territories'),
+            ('YT', 'Yukon'), ('NU', 'Nunavut')
+        ]
+    }
+    
+    # If form submitted, calculate results
+    if request.method == 'POST':
+        tool_type = request.POST.get('tool_type')
+        
+        try:
+            if tool_type == 'dividend_tax':
+                dividend_amount = float(request.POST.get('dividend_amount', 0) or 0)
+                province = request.POST.get('province', 'ON')
+                is_eligible = request.POST.get('is_eligible', 'true') == 'true'
+                
+                if dividend_amount > 0:
+                    result = CanadianTaxCalculator.calculate_dividend_tax_credit(
+                        dividend_amount, is_eligible, province
+                    )
+                    context['dividend_result'] = result
+                context['tool_type'] = 'dividend_tax'
+                
+            elif tool_type == 'capital_gains':
+                capital_gain = float(request.POST.get('capital_gain', 0) or 0)
+                taxable_income = float(request.POST.get('taxable_income', 0) or 0)
+                province = request.POST.get('province', 'ON')
+                
+                if capital_gain > 0:
+                    result = CanadianTaxCalculator.calculate_capital_gains_tax(
+                        capital_gain, taxable_income, province
+                    )
+                    context['capital_gains_result'] = result
+                context['tool_type'] = 'capital_gains'
+                
+            elif tool_type == 'rrsp':
+                age = int(request.POST.get('age', 30) or 30)
+                previous_year_income = float(request.POST.get('previous_year_income', 0) or 0)
+                unused_room = float(request.POST.get('unused_room', 0) or 0)
+                
+                if previous_year_income > 0:
+                    result = CanadianTaxCalculator.calculate_rrsp_contribution_limit(
+                        age, previous_year_income, unused_room
+                    )
+                    context['rrsp_result'] = result
+                context['tool_type'] = 'rrsp'
+                
+            elif tool_type == 'tfsa':
+                age = int(request.POST.get('age', 18) or 18)
+                year = int(request.POST.get('year', 2024) or 2024)
+                previous_contributions = float(request.POST.get('previous_contributions', 0) or 0)
+                
+                result = CanadianTaxCalculator.calculate_tfsa_contribution_limit(
+                    age, year, previous_contributions
+                )
+                context['tfsa_result'] = result
+                context['tool_type'] = 'tfsa'
+                
+            elif tool_type == 'portfolio_tax' and request.user.is_authenticated:
+                # Get user's portfolio data
+                portfolio_items = PortfolioService.get_portfolio_with_annotations(request.user)
+                annual_income = float(request.POST.get('annual_income', 0) or 0)
+                province = request.POST.get('province', 'ON')
+                
+                # Prepare portfolio data
+                portfolio_data = []
+                for item in portfolio_items:
+                    annual_dividends = PortfolioService.calculate_annual_dividend(
+                        item.latest_dividend_amount,
+                        item.shares_owned,
+                        item.latest_dividend_frequency
+                    )
+                    
+                    # Calculate capital gains
+                    current_value = 0
+                    investment_value = 0
+                    if item.latest_price_value and item.shares_owned:
+                        current_value = float(item.latest_price_value * item.shares_owned)
+                    if item.average_cost and item.shares_owned:
+                        investment_value = float(item.average_cost * item.shares_owned)
+                    
+                    capital_gains = max(0, current_value - investment_value)
+                    
+                    portfolio_data.append({
+                        'symbol': item.stock.symbol,
+                        'annual_dividends': annual_dividends,
+                        'capital_gains': capital_gains
+                    })
+                
+                if portfolio_data:
+                    result = CanadianTaxCalculator.calculate_portfolio_tax_summary(
+                        portfolio_data, annual_income, province
+                    )
+                    context['portfolio_tax_result'] = result
+                context['tool_type'] = 'portfolio_tax'
+                context['portfolio_items'] = portfolio_data
+            else:
+                context['tool_type'] = tool_type
+                
+        except (ValueError, TypeError) as e:
+            logger.error(f"Error processing tax tool calculation: {e}")
+            messages.error(request, f"Invalid input. Please check your values and try again.")
+            context['tool_type'] = tool_type
+        except Exception as e:
+            logger.error(f"Unexpected error in tax tool: {e}")
+            messages.error(request, "An error occurred. Please try again.")
+            context['tool_type'] = tool_type
+    
+    return render(request, 'canadian_tools.html', context)

@@ -1,0 +1,586 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Canadian Tax & Investment Tools - StockFolio{% endblock %}
+
+{% block meta_description %}Free Canadian tax calculators for dividend tax credits, capital gains, RRSP, and TFSA contribution limits. Perfect for TSX stock investors.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-16 pt-8 pb-12">
+            <div class="mb-6">
+                <span class="text-6xl mb-4 block">🇨🇦</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                Canadian Tax & Investment Tools
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
+                Free calculators for Canadian investors: Dividend Tax Credits, Capital Gains, RRSP & TFSA limits
+            </p>
+            <div class="mt-8 flex justify-center">
+                <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="bg-{% if message.tags == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if message.tags == 'error' %}red{% else %}blue{% endif %}-200 text-{% if message.tags == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Tool Selection Tabs -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex flex-wrap gap-3 mb-8 border-b-2 border-gray-200 pb-6">
+                <button onclick="showTool('dividend_tax')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white">
+                    Dividend Tax Credit
+                </button>
+                <button onclick="showTool('capital_gains')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Capital Gains Tax
+                </button>
+                <button onclick="showTool('rrsp')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    RRSP Calculator
+                </button>
+                <button onclick="showTool('tfsa')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    TFSA Calculator
+                </button>
+                {% if user.is_authenticated %}
+                <button onclick="showTool('portfolio_tax')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Portfolio Tax Summary
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Dividend Tax Credit Calculator -->
+            <div id="dividend_tax" class="tool-section">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Dividend Tax Credit Calculator</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Calculate your dividend tax credit for eligible Canadian dividends. Most TSX dividends qualify for the enhanced dividend tax credit.
+                    </p>
+                </div>
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="tool_type" value="dividend_tax">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Annual Dividend Amount (CAD)
+                            </label>
+                            <input type="number" name="dividend_amount" step="0.01" min="0" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="1000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Province
+                            </label>
+                            <select name="province" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% for code, name in provinces %}
+                                <option value="{{ code }}" {% if code == 'ON' %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" name="is_eligible" value="true" checked
+                                    class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm font-medium text-gray-700">Eligible Dividend (most TSX dividends)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                        Calculate Tax Credit
+                    </button>
+                </form>
+
+                {% if dividend_result %}
+                <div class="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-900 mb-4">Tax Credit Results</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Dividend Amount</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ dividend_result.dividend_amount|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Grossed-Up Amount</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ dividend_result.grossed_up_amount|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Federal Credit</div>
+                            <div class="text-2xl font-bold text-blue-600">${{ dividend_result.federal_credit|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Provincial Credit</div>
+                            <div class="text-2xl font-bold text-blue-600">${{ dividend_result.provincial_credit|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg md:col-span-2">
+                            <div class="text-sm text-gray-600">Total Tax Credit</div>
+                            <div class="text-3xl font-bold text-green-600">${{ dividend_result.total_credit|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Effective Tax Rate</div>
+                            <div class="text-2xl font-bold text-gray-900">{{ dividend_result.effective_tax_rate }}%</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">After-Tax Amount</div>
+                            <div class="text-2xl font-bold text-green-600">${{ dividend_result.after_tax_amount|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">
+                        💡 <strong>Note:</strong> Most Canadian investors pay little to no tax on eligible dividends thanks to the dividend tax credit!
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Capital Gains Tax Calculator -->
+            <div id="capital_gains" class="tool-section hidden">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Capital Gains Tax Calculator</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Calculate tax on capital gains. Only 50% of capital gains are taxable in Canada.
+                    </p>
+                </div>
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="tool_type" value="capital_gains">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Capital Gain Amount (CAD)
+                            </label>
+                            <input type="number" name="capital_gain" step="0.01" min="0" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="5000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Annual Taxable Income (CAD)
+                            </label>
+                            <input type="number" name="taxable_income" step="0.01" min="0" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="75000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Province
+                            </label>
+                            <select name="province" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                {% for code, name in provinces %}
+                                <option value="{{ code }}" {% if code == 'ON' %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                        Calculate Tax
+                    </button>
+                </form>
+
+                {% if capital_gains_result %}
+                <div class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="text-xl font-bold text-blue-900 mb-4">Capital Gains Tax Results</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Capital Gain</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ capital_gains_result.capital_gain|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Taxable Portion (50%)</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ capital_gains_result.taxable_portion|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Estimated Tax Rate</div>
+                            <div class="text-2xl font-bold text-gray-900">{{ capital_gains_result.estimated_tax_rate }}%</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Tax Payable</div>
+                            <div class="text-2xl font-bold text-red-600">${{ capital_gains_result.tax_payable|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg md:col-span-2">
+                            <div class="text-sm text-gray-600">After-Tax Gain</div>
+                            <div class="text-3xl font-bold text-green-600">${{ capital_gains_result.after_tax_gain|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- RRSP Calculator -->
+            <div id="rrsp" class="tool-section hidden">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">RRSP Contribution Limit Calculator</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Calculate your RRSP contribution room and potential tax savings.
+                    </p>
+                </div>
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="tool_type" value="rrsp">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Your Age
+                            </label>
+                            <input type="number" name="age" min="18" max="100" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="30">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Previous Year's Earned Income (CAD)
+                            </label>
+                            <input type="number" name="previous_year_income" step="0.01" min="0" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="75000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Unused Contribution Room (CAD)
+                            </label>
+                            <input type="number" name="unused_room" step="0.01" min="0" value="0"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                        Calculate RRSP Room
+                    </button>
+                </form>
+
+                {% if rrsp_result %}
+                <div class="mt-8 p-6 bg-purple-50 border border-purple-200 rounded-lg">
+                    <h3 class="text-xl font-bold text-purple-900 mb-4">RRSP Contribution Room</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">New Contribution Limit</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ rrsp_result.contribution_limit|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Unused Room</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ rrsp_result.unused_room|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg md:col-span-2">
+                            <div class="text-sm text-gray-600">Total Available Room</div>
+                            <div class="text-3xl font-bold text-purple-600">${{ rrsp_result.total_available_room|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">2024 Maximum Limit</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ rrsp_result.max_limit_2024|floatformat:0 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Estimated Tax Savings</div>
+                            <div class="text-2xl font-bold text-green-600">${{ rrsp_result.estimated_tax_savings|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- TFSA Calculator -->
+            <div id="tfsa" class="tool-section hidden">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">TFSA Contribution Room Calculator</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Calculate your Tax-Free Savings Account contribution room. All growth and withdrawals are tax-free!
+                    </p>
+                </div>
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="tool_type" value="tfsa">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Your Age
+                            </label>
+                            <input type="number" name="age" min="18" max="100" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="25">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Tax Year
+                            </label>
+                            <input type="number" name="year" min="2009" max="2025" value="2024" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Previous Contributions (CAD)
+                            </label>
+                            <input type="number" name="previous_contributions" step="0.01" min="0" value="0"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                        Calculate TFSA Room
+                    </button>
+                </form>
+
+                {% if tfsa_result %}
+                {% if tfsa_result.eligible %}
+                <div class="mt-8 p-6 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <h3 class="text-xl font-bold text-indigo-900 mb-4">TFSA Contribution Room</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">{{ tfsa_result.year }} Annual Limit</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ tfsa_result.annual_limit|floatformat:0 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Cumulative Limit (2009-{{ tfsa_result.year }})</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ tfsa_result.cumulative_limit|floatformat:0 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Previous Contributions</div>
+                            <div class="text-2xl font-bold text-gray-900">${{ tfsa_result.previous_contributions|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg md:col-span-2">
+                            <div class="text-sm text-gray-600">Available Contribution Room</div>
+                            <div class="text-3xl font-bold text-indigo-600">${{ tfsa_result.available_room|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">
+                        💡 <strong>Remember:</strong> TFSA withdrawals can be re-contributed in the following year!
+                    </p>
+                </div>
+                {% else %}
+                <div class="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-red-800">{{ tfsa_result.message }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Portfolio Tax Summary -->
+            {% if user.is_authenticated %}
+            <div id="portfolio_tax" class="tool-section hidden">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Portfolio Tax Summary</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Get a comprehensive tax summary for your entire portfolio including dividends and capital gains.
+                    </p>
+                </div>
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="tool_type" value="portfolio_tax">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Annual Taxable Income (CAD)
+                            </label>
+                            <input type="number" name="annual_income" step="0.01" min="0" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="75000.00">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Province
+                            </label>
+                            <select name="province" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                {% for code, name in provinces %}
+                                <option value="{{ code }}" {% if code == 'ON' %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                        Calculate Portfolio Tax
+                    </button>
+                </form>
+
+                {% if portfolio_tax_result %}
+                <div class="mt-8 space-y-6">
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <div class="text-sm text-gray-600">Total Dividends</div>
+                            <div class="text-3xl font-bold text-gray-900">${{ portfolio_tax_result.total_dividends|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <div class="text-sm text-gray-600">Total Capital Gains</div>
+                            <div class="text-3xl font-bold text-gray-900">${{ portfolio_tax_result.total_capital_gains|floatformat:2 }}</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <div class="text-sm text-gray-600">Total Tax Credits</div>
+                            <div class="text-3xl font-bold text-green-600">${{ portfolio_tax_result.total_tax_credits|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Breakdown -->
+                    {% if portfolio_tax_result.dividend_tax_info %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                        <h4 class="font-bold text-green-900 mb-4">Dividend Tax Information</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-sm text-gray-600">Tax Credit</div>
+                                <div class="text-2xl font-bold text-green-600">${{ portfolio_tax_result.dividend_tax_info.total_credit|floatformat:2 }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-600">Effective Tax Rate</div>
+                                <div class="text-2xl font-bold text-gray-900">{{ portfolio_tax_result.dividend_tax_info.effective_tax_rate }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if portfolio_tax_result.capital_gains_tax_info %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <h4 class="font-bold text-blue-900 mb-4">Capital Gains Tax Information</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-sm text-gray-600">Tax Payable</div>
+                                <div class="text-2xl font-bold text-red-600">${{ portfolio_tax_result.capital_gains_tax_info.tax_payable|floatformat:2 }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-600">After-Tax Gain</div>
+                                <div class="text-2xl font-bold text-green-600">${{ portfolio_tax_result.capital_gains_tax_info.after_tax_gain|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Final Summary -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
+                        <h4 class="font-bold text-xl mb-4">Net After-Tax Income</h4>
+                        <div class="text-4xl font-bold">${{ portfolio_tax_result.net_after_tax_income|floatformat:2 }}</div>
+                        <p class="mt-2 text-blue-100">Total dividends + capital gains after taxes</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Information Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-10 mt-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">💡 Important Notes for Canadian Investors</h2>
+            <div class="space-y-6 text-gray-700 max-w-4xl mx-auto">
+                <div class="flex items-start space-x-4 p-6 bg-blue-50 rounded-lg border border-blue-100">
+                    <span class="text-3xl flex-shrink-0">📊</span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Dividend Tax Credit</h3>
+                        <p class="text-base leading-relaxed">Most TSX dividends are "eligible dividends" and qualify for the enhanced dividend tax credit. This means most Canadians pay little to no tax on dividend income!</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-green-50 rounded-lg border border-green-100">
+                    <span class="text-3xl flex-shrink-0">💰</span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Capital Gains</h3>
+                        <p class="text-base leading-relaxed">Only 50% of capital gains are taxable in Canada. This makes capital gains more tax-efficient than regular income.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-purple-50 rounded-lg border border-purple-100">
+                    <span class="text-3xl flex-shrink-0">🏦</span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">RRSP vs TFSA</h3>
+                        <p class="text-base leading-relaxed">
+                            <strong>RRSP:</strong> Tax deduction now, tax on withdrawal. Best if you're in a higher tax bracket now than in retirement.<br><br>
+                            <strong>TFSA:</strong> No tax deduction, but all growth and withdrawals are tax-free. Best for tax-free growth.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-yellow-50 rounded-lg border border-yellow-100">
+                    <span class="text-3xl flex-shrink-0">⚠️</span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Disclaimer</h3>
+                        <p class="text-base leading-relaxed">These calculators provide estimates only. Tax rates vary by province and income level. Always consult with a tax professional for personalized advice.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTool(toolId, buttonElement) {
+    // Hide all tool sections
+    document.querySelectorAll('.tool-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Show selected tool
+    const toolSection = document.getElementById(toolId);
+    if (toolSection) {
+        toolSection.classList.remove('hidden');
+    }
+    
+    // Update tab styles
+    document.querySelectorAll('.tool-tab').forEach(tab => {
+        tab.classList.remove('bg-blue-600', 'text-white');
+        tab.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    // Highlight active tab
+    if (buttonElement) {
+        buttonElement.classList.remove('bg-gray-200', 'text-gray-700');
+        buttonElement.classList.add('bg-blue-600', 'text-white');
+    } else {
+        // Find button by tool ID
+        const buttons = document.querySelectorAll('.tool-tab');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(toolId)) {
+                btn.classList.remove('bg-gray-200', 'text-gray-700');
+                btn.classList.add('bg-blue-600', 'text-white');
+            }
+        });
+    }
+}
+
+// Update button onclick handlers to pass the button element
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.tool-tab').forEach(button => {
+        const originalOnclick = button.getAttribute('onclick');
+        if (originalOnclick) {
+            const toolId = originalOnclick.match(/'([^']+)'/)?.[1];
+            if (toolId) {
+                button.onclick = function() {
+                    showTool(toolId, this);
+                };
+            }
+        }
+    });
+    
+    // Show initial tool based on form submission or default to dividend_tax
+    {% if tool_type %}
+    showTool('{{ tool_type }}');
+    {% else %}
+    showTool('dividend_tax');
+    {% endif %}
+});
+</script>
+{% endblock %}
