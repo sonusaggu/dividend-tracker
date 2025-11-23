@@ -1,81 +1,35 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ stock.symbol }} - {{ stock.company_name }} - StockFolio{% endblock %}
 
 {% block content %}
-<nav class="bg-white shadow-lg border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-            <!-- Logo -->
-            <a href="{% url 'home' %}" class="flex items-center space-x-2">
-                <span class="text-2xl">📈</span>
-                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
-            </a>
-
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Home
-                </a>
-                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    All Stocks
-                </a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'portfolio' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    My Portfolio
-                </a>
-                <a href="{% url 'my_alerts' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">Alerts</a>
-                <a href="{% url 'watchlist' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Watchlist
-                </a>
-                {% endif %}
-                
-            </div>
-
-            <!-- Auth Buttons -->
-            <div class="flex items-center space-x-4">
-                {% if user.is_authenticated %}
-                <!-- User Menu -->
-                <div class="relative group">
-                    <button class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
-                        <span class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                            {{ user.username|first|upper }}
-                        </span>
-                        <span>{{ user.username }}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 hover:bg-red-50 border-t border-gray-200">Logout</a>
-                    </div>
-                </div>
-                {% else %}
-                <a href="{% url 'login' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Login
-                </a>
-                <a href="{% url 'register' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium transition duration-200 transform hover:scale-105 shadow-md">
-                    Sign Up Free
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</nav>
-
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-    <div class="max-w-6xl mx-auto px-4">
-       
-
+    <div class="max-w-7xl mx-auto px-4">
         <!-- Stock Header Card -->
         <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex items-start space-x-4">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-2xl text-white font-bold">{{ stock.symbol|slice:":1" }}</span>
+                <div class="flex items-start space-x-4 mb-6 lg:mb-0">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition">
+                        <span class="text-3xl text-white font-bold">{{ stock.symbol|slice:":1" }}</span>
                     </div>
-                    <div>
-                        <h1 class="text-4xl font-bold text-gray-900">{{ stock.symbol }}</h1>
-                        <p class="text-xl text-gray-700 mt-1">{{ stock.company_name }}</p>
-                        <div class="flex flex-wrap gap-2 mt-3">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h1 class="text-4xl font-bold text-gray-900">{{ stock.symbol }}</h1>
+                            {% if stock.tsx60_member %}
+                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+                                TSX 60
+                            </span>
+                            {% endif %}
+                            {% if stock.is_etf %}
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
+                                ETF
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xl text-gray-700 mb-3">{{ stock.company_name }}</p>
+                        <div class="flex flex-wrap gap-2">
                             {% if stock.sector %}
                             <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
                                 🏢 {{ stock.sector }}
@@ -89,34 +43,47 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 lg:mt-0 text-center lg:text-right">
+                <div class="text-center lg:text-right">
                     {% if latest_price %}
-                    <div class="text-3xl font-bold text-gray-900">${{ latest_price.last_price }}</div>
-                    <div class="text-sm text-gray-600 mt-1">Current Price</div>
+                    <div class="mb-2">
+                        <div class="text-4xl font-bold text-gray-900">${{ latest_price.last_price|floatformat:2 }}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            {% if latest_price.price_date %}
+                                As of {{ latest_price.price_date|date:"M d, Y" }}
+                            {% else %}
+                                Current Price
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-gray-400">Price not available</div>
                     {% endif %}
                 </div>
             </div>
             
-            <!-- Watchlist/Portfolio Buttons -->
+            <!-- Quick Actions -->
             {% if user.is_authenticated %} 
-            <div class="bg-gray-50 rounded-xl p-4 mt-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">Track This Stock</h3>
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 mt-8 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <span class="text-xl mr-2">⚡</span>
+                    Quick Actions
+                </h3>
                 
-                <div class="flex flex-col sm:flex-row gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <!-- Watchlist Button -->
                     <button id="watchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
-                            class="flex items-center justify-center px-4 py-2 border {% if in_watchlist %}border-green-600 text-green-600 bg-green-50{% else %}border-blue-600 text-blue-600{% endif %} rounded-lg hover:bg-blue-600 hover:text-white transition duration-200">
-                        <span id="watchlistIcon">{% if in_watchlist %}✅{% else %}⭐{% endif %}</span>
-                        <span id="watchlistText" class="ml-2">
+                            class="flex items-center justify-center px-4 py-3 border-2 {% if in_watchlist %}border-green-600 text-green-700 bg-green-50{% else %}border-blue-600 text-blue-600 bg-white{% endif %} rounded-xl hover:shadow-md transition transform hover:scale-105 font-medium">
+                        <span id="watchlistIcon" class="text-xl mr-2">{% if in_watchlist %}✅{% else %}⭐{% endif %}</span>
+                        <span id="watchlistText">
                             {% if in_watchlist %}In Watchlist{% else %}Add to Watchlist{% endif %}
                         </span>
                     </button>
                     
                     <!-- Portfolio Button -->
                     <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
-                            class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
-                        <span>+</span>
-                        <span class="ml-2">
+                            class="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-md font-medium">
+                        <span class="text-xl mr-2">📌</span>
+                        <span>
                             {% if in_portfolio %}Update Portfolio{% else %}Add to Portfolio{% endif %}
                         </span>
                     </button>
@@ -124,17 +91,68 @@
                     <!-- Dividend Alerts Button -->
                     {% if dividend %}
                     <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 
-                       class="flex items-center justify-center px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition duration-200">
-                        <span>🔔</span>
-                        <span class="ml-2">
+                       class="flex items-center justify-center px-4 py-3 border-2 border-purple-600 text-purple-700 bg-white rounded-xl hover:bg-purple-50 transition transform hover:scale-105 font-medium">
+                        <span class="text-xl mr-2">🔔</span>
+                        <span>
                             {% if has_dividend_alert %}Manage Alert{% else %}Set Alert{% endif %}
                         </span>
                     </a>
                     {% endif %}
                 </div>
             </div>
+            {% else %}
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mt-8 border border-blue-200 text-center">
+                <p class="text-gray-700 mb-4">Sign in to track this stock and manage your portfolio</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'login' %}" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition">
+                        Sign In
+                    </a>
+                    <a href="{% url 'register' %}" class="border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-xl font-medium hover:bg-blue-50 transition">
+                        Register
+                    </a>
+                </div>
+            </div>
             {% endif %}
         </div>
+        
+        <!-- Key Metrics Summary -->
+        {% if dividend or valuation or latest_price %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {% if dividend %}
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                <div class="text-xs text-gray-600 mb-1">Dividend Yield</div>
+                <div class="text-2xl font-bold text-green-600">
+                    {% if dividend.yield_percent %}
+                        {{ dividend.yield_percent|floatformat:2 }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if dividend %}
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                <div class="text-xs text-gray-600 mb-1">Dividend Amount</div>
+                <div class="text-2xl font-bold text-blue-600">${{ dividend.amount|default:"N/A" }}</div>
+            </div>
+            {% endif %}
+            
+            {% if valuation and valuation.pe_ratio %}
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                <div class="text-xs text-gray-600 mb-1">P/E Ratio</div>
+                <div class="text-2xl font-bold text-purple-600">{{ valuation.pe_ratio|floatformat:2 }}</div>
+            </div>
+            {% endif %}
+            
+            {% if valuation and valuation.market_cap %}
+            <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-200">
+                <div class="text-xs text-gray-600 mb-1">Market Cap</div>
+                <div class="text-lg font-bold text-orange-600">{{ valuation.market_cap }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
         
         <!-- Main Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -144,53 +162,93 @@
                 <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-                            <span class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
-                                <span class="text-white">💰</span>
+                            <span class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-white text-xl">💰</span>
                             </span>
                             Dividend Information
                         </h2>
                         {% if dividend %}
                         <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
-                            {{ dividend.frequency }}
+                            {{ dividend.frequency|default:"N/A" }}
                         </span>
                         {% endif %}
                     </div>
                     
                     {% if dividend %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl">
+                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
                             <div class="text-sm text-gray-600 mb-2">Dividend Amount</div>
                             <div class="text-3xl font-bold text-green-600">${{ dividend.amount }}</div>
-                            <div class="text-sm text-gray-500 mt-1">Per share</div>
+                            <div class="text-xs text-gray-500 mt-2">Per share</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl">
+                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
                             <div class="text-sm text-gray-600 mb-2">Dividend Yield</div>
-                            <div class="text-3xl font-bold text-blue-600">{{ dividend.yield_percent }}%</div>
-                            <div class="text-sm text-gray-500 mt-1">Annualized</div>
+                            <div class="text-3xl font-bold text-blue-600">
+                                {% if dividend.yield_percent %}
+                                    {{ dividend.yield_percent|floatformat:2 }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-2">Annualized</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200">
                             <div class="text-sm text-gray-600 mb-2">Next Ex-Date</div>
-                            <div class="text-2xl font-bold text-purple-600">{{ dividend.ex_dividend_date }}</div>
-                            <div class="text-sm text-gray-500 mt-1">
+                            <div class="text-2xl font-bold text-purple-600">
                                 {% if dividend.ex_dividend_date %}
-                                    in {{ dividend.ex_dividend_date|timeuntil }}
+                                    {{ dividend.ex_dividend_date|date:"M d, Y" }}
+                                {% else %}
+                                    TBD
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-2">
+                                {% if dividend.ex_dividend_date %}
+                                    <span class="text-gray-600">
+                                        {{ dividend.ex_dividend_date|timeuntil }}
+                                    </span>
+                                {% else %}
+                                    Not scheduled
                                 {% endif %}
                             </div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl">
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl border border-orange-200">
                             <div class="text-sm text-gray-600 mb-2">Payment Date</div>
-                            <div class="text-xl font-bold text-orange-600">{{ dividend.payment_date|default:"N/A" }}</div>
-                            <div class="text-sm text-gray-500 mt-1">Expected</div>
+                            <div class="text-xl font-bold text-orange-600">
+                                {% if dividend.payment_date %}
+                                    {{ dividend.payment_date|date:"M d, Y" }}
+                                {% else %}
+                                    TBD
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-2">Expected payment</div>
                         </div>
                     </div>
                     
-                    <div class="mt-6 p-4 bg-gray-50 rounded-xl">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-600">Currency</span>
-                            <span class="font-semibold">{{ dividend.currency }}</span>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Currency:</span>
+                                <span class="font-semibold">{{ dividend.currency|default:"CAD" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Frequency:</span>
+                                <span class="font-semibold">{{ dividend.frequency|default:"N/A" }}</span>
+                            </div>
+                            {% if dividend.declaration_date %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Declared:</span>
+                                <span class="font-semibold">{{ dividend.declaration_date|date:"M d, Y" }}</span>
+                            </div>
+                            {% endif %}
+                            {% if dividend.record_date %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Record Date:</span>
+                                <span class="font-semibold">{{ dividend.record_date|date:"M d, Y" }}</span>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% else %}
@@ -205,37 +263,47 @@
                 <!-- Valuation Metrics Card -->
                 <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white">💎</span>
+                        <span class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-white text-xl">💎</span>
                         </span>
                         Valuation Metrics
                     </h2>
                     
                     {% if valuation %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">P/E Ratio</span>
-                                <span class="text-lg font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</span>
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-600 font-medium">P/E Ratio</span>
+                                <span class="text-2xl font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</span>
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">Price-to-Earnings</div>
+                            <div class="text-xs text-gray-500">Price-to-Earnings Ratio</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">EPS</span>
-                                <span class="text-lg font-bold text-gray-900">{{ valuation.eps|default:"N/A" }}</span>
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-600 font-medium">EPS</span>
+                                <span class="text-2xl font-bold text-gray-900">${{ valuation.eps|default:"N/A" }}</span>
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">Earnings Per Share</div>
+                            <div class="text-xs text-gray-500">Earnings Per Share</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Market Cap</span>
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-600 font-medium">Market Cap</span>
                                 <span class="text-lg font-bold text-gray-900">{{ valuation.market_cap|default:"N/A" }}</span>
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">Market Capitalization</div>
+                            <div class="text-xs text-gray-500">Market Capitalization</div>
                         </div>
+                        
+                        {% if valuation.book_value %}
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-600 font-medium">Book Value</span>
+                                <span class="text-lg font-bold text-gray-900">${{ valuation.book_value }}</span>
+                            </div>
+                            <div class="text-xs text-gray-500">Per Share</div>
+                        </div>
+                        {% endif %}
                     </div>
                     {% else %}
                     <div class="text-center py-8">
@@ -251,59 +319,59 @@
                 <!-- Analyst Ratings Card -->
                 <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white">📈</span>
+                        <span class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-white text-xl">📈</span>
                         </span>
                         Analyst Ratings
                     </h2>
                     
                     {% if analyst_rating %}
-                    <div class="text-center mb-6">
-                        <div class="text-3xl font-bold text-gray-900 mb-2">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
-                        <div class="text-sm text-gray-600">Consensus Rating</div>
+                    <div class="text-center mb-6 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                        <div class="text-4xl font-bold text-gray-900 mb-2">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
+                        <div class="text-sm text-gray-600 font-medium">Consensus Rating</div>
                     </div>
                     
                     {% with total=analyst_rating.buy_count|add:analyst_rating.hold_count|add:analyst_rating.sell_count %}
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-green-600 font-semibold">Buy</span>
-                            <div class="flex items-center">
-                                <div class="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                                    {% if total > 0 %}
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.buy_count total 100 %}%"></div>
-                                    {% else %}
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
-                                    {% endif %}
-                                </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-green-600 font-semibold">Buy</span>
                                 <span class="text-lg font-bold text-green-600">{{ analyst_rating.buy_count|default:0 }}</span>
                             </div>
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                            <span class="text-yellow-600 font-semibold">Hold</span>
-                            <div class="flex items-center">
-                                <div class="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                                    {% if total > 0 %}
-                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.hold_count total 100 %}%"></div>
-                                    {% else %}
-                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
-                                    {% endif %}
-                                </div>
-                                <span class="text-lg font-bold text-yellow-600">{{ analyst_rating.hold_count|default:0 }}</span>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                {% if total > 0 %}
+                                <div class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.buy_count total 100 %}%"></div>
+                                {% else %}
+                                <div class="bg-green-500 h-3 rounded-full" style="width: 0%"></div>
+                                {% endif %}
                             </div>
                         </div>
                         
-                        <div class="flex items-center justify-between">
-                            <span class="text-red-600 font-semibold">Sell</span>
-                            <div class="flex items-center">
-                                <div class="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                                    {% if total > 0 %}
-                                    <div class="bg-red-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.sell_count total 100 %}%"></div>
-                                    {% else %}
-                                    <div class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
-                                    {% endif %}
-                                </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-yellow-600 font-semibold">Hold</span>
+                                <span class="text-lg font-bold text-yellow-600">{{ analyst_rating.hold_count|default:0 }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                {% if total > 0 %}
+                                <div class="bg-yellow-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.hold_count total 100 %}%"></div>
+                                {% else %}
+                                <div class="bg-yellow-500 h-3 rounded-full" style="width: 0%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-red-600 font-semibold">Sell</span>
                                 <span class="text-lg font-bold text-red-600">{{ analyst_rating.sell_count|default:0 }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                {% if total > 0 %}
+                                <div class="bg-red-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.sell_count total 100 %}%"></div>
+                                {% else %}
+                                <div class="bg-red-500 h-3 rounded-full" style="width: 0%"></div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -319,31 +387,31 @@
                 <!-- Stock Info Card -->
                 <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-700 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white">ℹ️</span>
+                        <span class="w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-700 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-white text-xl">ℹ️</span>
                         </span>
                         Stock Details
                     </h2>
                     
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <span class="text-gray-600">Symbol</span>
                             <span class="font-semibold text-gray-900">{{ stock.symbol }}</span>
                         </div>
                         
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <span class="text-gray-600">Code</span>
                             <span class="font-semibold text-gray-900">{{ stock.code }}</span>
                         </div>
                         
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <span class="text-gray-600">ETF</span>
                             <span class="font-semibold {% if stock.is_etf %}text-green-600{% else %}text-gray-900{% endif %}">
                                 {{ stock.is_etf|yesno:"Yes,No" }}
                             </span>
                         </div>
                         
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <span class="text-gray-600">TSX 60</span>
                             <span class="font-semibold {% if stock.tsx60_member %}text-green-600{% else %}text-gray-900{% endif %}">
                                 {{ stock.tsx60_member|yesno:"Yes,No" }}
@@ -352,78 +420,91 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons Card -->
-                <div class="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl shadow-xl p-6 text-center">
-                    <h3 class="text-white font-semibold mb-4">Track This Stock</h3>
-                    
-                    {% if user.is_authenticated %}
-                    <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')" class="w-full bg-white text-blue-600 hover:bg-gray-100 py-3 px-4 rounded-xl font-semibold transition duration-200 mb-3">
-                        📌 {% if in_portfolio %}Update Portfolio{% else %}Add to Portfolio{% endif %}
-                    </button>
-                    
-                    <button onclick="toggleWatchlist({{ stock.id }})" class="w-full border-2 border-white text-white hover:bg-white/10 py-3 px-4 rounded-xl font-semibold transition duration-200">
-                        {% if in_watchlist %}✅ Remove from Watchlist{% else %}⭐ Add to Watchlist{% endif %}
-                    </button>
-                    {% else %}
-                    <p class="text-white/80 mb-4">Sign in to track this stock</p>
-                    <a href="{% url 'login' %}" class="w-full bg-white text-blue-600 hover:bg-gray-100 py-3 px-4 rounded-xl font-semibold transition duration-200 block">
-                        Sign In
+                <!-- Portfolio Status Card -->
+                {% if user.is_authenticated and in_portfolio %}
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-6 border border-green-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-xl mr-2">📊</span>
+                        Your Holdings
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shares:</span>
+                            <span class="font-bold text-gray-900">{{ portfolio_item.shares_owned }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Avg Cost:</span>
+                            <span class="font-bold text-gray-900">${{ portfolio_item.average_cost|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Value:</span>
+                            <span class="font-bold text-green-600">
+                                {% if portfolio_total_value %}
+                                    ${{ portfolio_total_value|floatformat:2|intcomma }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'portfolio' %}" class="mt-4 block text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                        View Portfolio
                     </a>
-                    <a href="{% url 'register' %}" class="w-full border-2 border-white text-white hover:bg-white/10 py-3 px-4 rounded-xl font-semibold transition duration-200 block mt-2">
-                        Register
-                    </a>
-                    {% endif %}
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Portfolio Modal -->
-<div id="portfolioModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
-        <div class="mt-3 text-center">
-            <h3 class="text-lg font-medium text-gray-900">{% if in_portfolio %}Update{% else %}Add{% endif %} <span id="modalStockSymbol"></span> to Portfolio</h3>
-            
-            <form id="portfolioForm" method="post" action="">
-                {% csrf_token %}
-                <div class="mt-4 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Shares Owned</label>
-                        <input type="number" name="shares_owned" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Number of shares" min="1" step="1"
-                               value="{% if portfolio_item %}{{ portfolio_item.shares_owned }}{% endif %}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Average Cost ($)</label>
-                        <input type="number" name="average_cost" step="0.01" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Cost per share" min="0.01"
-                               value="{% if portfolio_item %}{{ portfolio_item.average_cost }}{% endif %}">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
-                        <textarea name="notes" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  placeholder="Any notes about this investment" rows="3">{% if portfolio_item %}{{ portfolio_item.notes }}{% endif %}</textarea>
-                    </div>
+<div id="portfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">{% if in_portfolio %}Update{% else %}Add{% endif %} <span id="modalStockSymbol"></span> to Portfolio</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition duration-200">
+                &times;
+            </button>
+        </div>
+        
+        <form id="portfolioForm" method="post" action="">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Shares Owned</label>
+                    <input type="number" name="shares_owned" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Number of shares" min="1" step="1"
+                           value="{% if portfolio_item %}{{ portfolio_item.shares_owned }}{% endif %}">
                 </div>
                 
-                <div class="mt-6 flex space-x-3">
-                    <button type="button" onclick="closeModal()"
-                            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-md hover:from-blue-700 hover:to-purple-700 transition duration-200">
-                        {% if in_portfolio %}Update Portfolio{% else %}Add to Portfolio{% endif %}
-                    </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Average Cost ($)</label>
+                    <input type="number" name="average_cost" step="0.01" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Cost per share" min="0.01"
+                           value="{% if portfolio_item %}{{ portfolio_item.average_cost }}{% endif %}">
                 </div>
-            </form>
-        </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                    <textarea name="notes" 
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Any notes about this investment" rows="3">{% if portfolio_item %}{{ portfolio_item.notes }}{% endif %}</textarea>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex space-x-3">
+                <button type="button" onclick="closeModal()"
+                        class="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition font-medium">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition transform hover:scale-105">
+                    {% if in_portfolio %}Update{% else %}Add to{% endif %} Portfolio
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -433,16 +514,25 @@ function openPortfolioModal(symbol, name) {
     document.getElementById('modalStockSymbol').textContent = symbol;
     document.getElementById('portfolioForm').action = `/portfolio/add/${symbol}/`;
     document.getElementById('portfolioModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
     document.getElementById('portfolioModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
 }
 
 // Close modal when clicking outside
 document.addEventListener('click', function(event) {
     const modal = document.getElementById('portfolioModal');
     if (modal && event.target === modal) {
+        closeModal();
+    }
+});
+
+// Close with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
         closeModal();
     }
 });
@@ -454,17 +544,16 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
     const sharesInput = this.querySelector('input[name="shares_owned"]');
     const costInput = this.querySelector('input[name="average_cost"]');
     
-    // Clear any previous alerts/errors (you can customize this if you want nicer UI)
-    // Basic validation
+    // Validation
     if (!sharesInput.value || Number(sharesInput.value) < 1) {
-        alert('Shares Owned must be at least 1.');
+        Toast.error('Shares Owned must be at least 1.');
         sharesInput.focus();
-        return; // stop submission
+        return;
     }
     if (!costInput.value || Number(costInput.value) <= 0) {
-        alert('Average Cost must be greater than $0.');
+        Toast.error('Average Cost must be greater than $0.');
         costInput.focus();
-        return; // stop submission
+        return;
     }
     
     const formData = new FormData(this);
@@ -482,18 +571,17 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
     .then(data => {
         if (data.status === 'success') {
             closeModal();
-            alert(data.message || 'Portfolio updated successfully!');
-            location.reload();
+            Toast.success(data.message || 'Portfolio updated successfully!');
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert(data.message || 'Error updating portfolio.');
+            Toast.error(data.message || 'Error updating portfolio.');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating portfolio. Please try again.');
+        Toast.error('Error updating portfolio. Please try again.');
     });
 });
-
 
 // Watchlist Functions
 function toggleWatchlist(stockId) {
@@ -519,18 +607,20 @@ function toggleWatchlist(stockId) {
         if (data.status === 'added') {
             watchlistIcon.textContent = '✅';
             watchlistText.textContent = 'In Watchlist';
-            watchlistBtn.classList.add('border-green-600', 'text-green-600', 'bg-green-50');
-            watchlistBtn.classList.remove('border-blue-600', 'text-blue-600');
+            watchlistBtn.classList.add('border-green-600', 'text-green-700', 'bg-green-50');
+            watchlistBtn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
+            Toast.success('Added to watchlist!');
         } else if (data.status === 'removed') {
             watchlistIcon.textContent = '⭐';
             watchlistText.textContent = 'Add to Watchlist';
-            watchlistBtn.classList.remove('border-green-600', 'text-green-600', 'bg-green-50');
-            watchlistBtn.classList.add('border-blue-600', 'text-blue-600');
+            watchlistBtn.classList.remove('border-green-600', 'text-green-700', 'bg-green-50');
+            watchlistBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
+            Toast.success('Removed from watchlist!');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating watchlist. Please try again.');
+        Toast.error('Error updating watchlist. Please try again.');
     });
 }
 
@@ -549,20 +639,5 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
-// Check if stock is in watchlist on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // This would be set from the view context
-    {% if in_watchlist %}
-    const watchlistBtn = document.getElementById('watchlistBtn');
-    const watchlistIcon = document.getElementById('watchlistIcon');
-    const watchlistText = document.getElementById('watchlistText');
-    
-    watchlistIcon.textContent = '✅';
-    watchlistText.textContent = 'In Watchlist';
-    watchlistBtn.classList.add('border-green-600', 'text-green-600', 'bg-green-50');
-    watchlistBtn.classList.remove('border-blue-600', 'text-blue-600');
-    {% endif %}
-});
 </script>
 {% endblock %}

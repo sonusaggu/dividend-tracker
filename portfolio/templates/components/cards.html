@@ -1,0 +1,117 @@
+{# Reusable Card Components #}
+
+{# Stat Card Component #}
+{% macro stat_card(title, value, icon, color="blue", subtitle="", trend=None) %}
+<div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+    <div class="flex items-center justify-between">
+        <div class="flex-1">
+            <p class="text-sm text-gray-600 mb-1">{{ title }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ value }}</p>
+            {% if subtitle %}
+            <p class="text-sm mt-2 {% if color == 'green' %}text-green-600{% elif color == 'red' %}text-red-600{% elif color == 'blue' %}text-blue-600{% elif color == 'purple' %}text-purple-600{% elif color == 'orange' %}text-orange-600{% else %}text-gray-600{% endif %}">
+                {{ subtitle }}
+            </p>
+            {% endif %}
+            {% if trend %}
+            <p class="text-sm mt-1 {% if trend >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if trend >= 0 %}+{% endif %}{{ trend }}%
+            </p>
+            {% endif %}
+        </div>
+        <div class="w-12 h-12 {% if color == 'green' %}bg-green-100{% elif color == 'red' %}bg-red-100{% elif color == 'blue' %}bg-blue-100{% elif color == 'purple' %}bg-purple-100{% elif color == 'orange' %}bg-orange-100{% else %}bg-gray-100{% endif %} rounded-full flex items-center justify-center">
+            <span class="text-2xl">{{ icon }}</span>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{# Stock Card Component #}
+{% macro stock_card(stock, show_actions=True) %}
+<div class="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 transform hover:-translate-y-2 group">
+    <div class="{% if stock.days_until <= 3 %}bg-red-500{% elif stock.days_until <= 7 %}bg-orange-500{% else %}bg-green-500{% endif %} h-2 rounded-t-2xl"></div>
+    
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                {{ stock.symbol }}
+            </h3>
+            {% if stock.days_until is not None %}
+            <span class="{% if stock.days_until <= 3 %}bg-red-100 text-red-800{% elif stock.days_until <= 7 %}bg-orange-100 text-orange-800{% else %}bg-green-100 text-green-800{% endif %} text-sm font-medium px-3 py-1 rounded-full">
+                {% if stock.days_until == 0 %}Today{% else %}{{ stock.days_until }} day{{ stock.days_until|pluralize }}{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        
+        {% if stock.company_name %}
+        <p class="text-gray-600 text-sm mb-6 line-clamp-2">{{ stock.company_name }}</p>
+        {% endif %}
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            {% if stock.dividend_amount %}
+            <div class="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                <div class="text-xs text-gray-600 mb-1">Dividend</div>
+                <div class="text-lg font-bold text-green-600">${{ stock.dividend_amount }}</div>
+            </div>
+            {% endif %}
+            
+            {% if stock.dividend_yield %}
+            <div class="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                <div class="text-xs text-gray-600 mb-1">Yield</div>
+                <div class="text-lg font-bold text-blue-600">{{ stock.dividend_yield }}%</div>
+            </div>
+            {% endif %}
+            
+            {% if stock.last_price %}
+            <div class="text-center p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                <div class="text-xs text-gray-600 mb-1">Price</div>
+                <div class="text-lg font-bold text-gray-900">${{ stock.last_price }}</div>
+            </div>
+            {% endif %}
+            
+            {% if stock.ex_dividend_date %}
+            <div class="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+                <div class="text-xs text-gray-600 mb-1">Ex-Date</div>
+                <div class="text-sm font-bold text-purple-600">{{ stock.ex_dividend_date|date:"M d" }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if stock.frequency %}
+        <div class="mb-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                📆 {{ stock.frequency }}
+            </span>
+        </div>
+        {% endif %}
+        
+        {% if show_actions %}
+        <a href="{% url 'stock_detail' stock.symbol %}" 
+           class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group-hover:shadow-xl">
+            View Details →
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{# Empty State Component #}
+{% macro empty_state(icon, title, description, action_text=None, action_url=None) %}
+<div class="text-center py-16 bg-white rounded-2xl shadow-xl">
+    <div class="text-8xl mb-6">{{ icon }}</div>
+    <h3 class="text-2xl font-semibold text-gray-600 mb-4">{{ title }}</h3>
+    <p class="text-gray-500 max-w-md mx-auto mb-6">{{ description }}</p>
+    {% if action_text and action_url %}
+    <a href="{{ action_url }}" class="text-blue-600 hover:text-blue-800 font-semibold">
+        {{ action_text }} →
+    </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# Loading Spinner Component #}
+{% macro loading_spinner(size="md") %}
+<div class="flex justify-center items-center py-8">
+    <div class="spinner {% if size == 'sm' %}w-4 h-4{% elif size == 'lg' %}w-12 h-12{% else %}w-8 h-8{% endif %}"></div>
+</div>
+{% endmacro %}
+

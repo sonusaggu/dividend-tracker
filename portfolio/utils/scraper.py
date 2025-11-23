@@ -96,7 +96,8 @@ class TSXScraper:
             if isinstance(value, str):
                 value = value.replace('%', '').replace(',', '').strip()
             return Decimal(value)
-        except:
+        except (ValueError, TypeError, AttributeError):
+            logger.debug(f"Failed to parse decimal: {value}")
             return None
 
     def _parse_float(self, value):
@@ -107,7 +108,8 @@ class TSXScraper:
             if isinstance(value, str):
                 value = value.replace('%', '').replace(',', '').strip()
             return float(value)
-        except:
+        except (ValueError, TypeError, AttributeError):
+            logger.debug(f"Failed to parse float: {value}")
             return None
 
     def _parse_int(self, value):
@@ -118,7 +120,8 @@ class TSXScraper:
             if isinstance(value, str):
                 value = value.replace(',', '').strip()
             return int(value)
-        except:
+        except (ValueError, TypeError, AttributeError):
+            logger.debug(f"Failed to parse int: {value}")
             return None
 
     def _parse_market_cap(self, market_cap_str):
@@ -136,7 +139,8 @@ class TSXScraper:
                 return float(market_cap_str.replace('K', '')) * 1_000
             else:
                 return float(market_cap_str)
-        except:
+        except (ValueError, TypeError, AttributeError):
+            logger.debug(f"Failed to parse market cap: {market_cap_str}")
             return None
 
     def transform_stock_data(self, raw_data):
@@ -160,7 +164,8 @@ class TSXScraper:
                             hold_count = self._parse_int(part.replace('Hold:', '').strip())
                         elif 'Sell:' in part:
                             sell_count = self._parse_int(part.replace('Sell:', '').strip())
-                except:
+                except (ValueError, TypeError, AttributeError) as e:
+                    logger.debug(f"Failed to parse analyst aggregate: {analyst_aggregate}, error: {e}")
                     pass
 
             transformed = {

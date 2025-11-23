@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Track and analyze dividend stocks. Build your portfolio and never miss a dividend payment.{% endblock %}">
     <title>{% block title %}Dividend Tracker{% endblock %}</title>
 
     <!-- Tailwind CSS -->
@@ -31,15 +32,287 @@
     </script>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Custom Styles -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast Notification Styles */
+        .toast {
+            animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), fadeOut 0.3s ease-in 4.7s;
+            animation-fill-mode: forwards;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(120%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(120%) scale(0.8);
+            }
+        }
+        
+        .toast-icon {
+            animation: scaleIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.1s;
+            animation-fill-mode: both;
+        }
+        
+        @keyframes scaleIn {
+            from {
+                transform: scale(0) rotate(-180deg);
+            }
+            to {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+        
+        /* Progress bar animation */
+        .toast-progress {
+            animation: shrinkWidth 5s linear forwards;
+        }
+        
+        @keyframes shrinkWidth {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+        
+        /* Hover effect for toasts */
+        .toast:hover {
+            transform: translateX(-5px) scale(1.02);
+            transition: transform 0.2s ease;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 640px) {
+            #toastContainer {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+            
+            .toast {
+                padding: 0.875rem;
+            }
+        }
     </style>
+    
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
-    {% block content %}{% endblock %}
+<body class="bg-gray-50 text-gray-800 antialiased flex flex-col min-h-screen">
+    <!-- Navigation -->
+    {% include 'components/navbar.html' %}
+    
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 left-4 md:left-auto md:max-w-md z-50 space-y-3"></div>
+    
+    <!-- Messages (Django) -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 pt-4 w-full">
+        {% for message in messages %}
+        <div class="toast-message mb-4" data-type="{{ message.tags }}" data-message="{{ message|escapejs }}"></div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+    
+    <!-- Common JavaScript -->
+    <script>
+        // Beautiful Toast Notification System
+        const Toast = {
+            show: function(message, type = 'info', duration = 5000) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                
+                const toastId = 'toast-' + Date.now();
+                const icons = {
+                    success: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                    error: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                    warning: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                    info: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                };
+                
+                const colors = {
+                    success: {
+                        bg: 'bg-gradient-to-r from-green-500 to-emerald-600',
+                        icon: 'text-white',
+                        text: 'text-white',
+                        border: 'border-green-400'
+                    },
+                    error: {
+                        bg: 'bg-gradient-to-r from-red-500 to-rose-600',
+                        icon: 'text-white',
+                        text: 'text-white',
+                        border: 'border-red-400'
+                    },
+                    warning: {
+                        bg: 'bg-gradient-to-r from-yellow-500 to-amber-600',
+                        icon: 'text-white',
+                        text: 'text-white',
+                        border: 'border-yellow-400'
+                    },
+                    info: {
+                        bg: 'bg-gradient-to-r from-blue-500 to-indigo-600',
+                        icon: 'text-white',
+                        text: 'text-white',
+                        border: 'border-blue-400'
+                    }
+                };
+                
+                const color = colors[type] || colors.info;
+                const icon = icons[type] || icons.info;
+                
+                const toast = document.createElement('div');
+                toast.id = toastId;
+                toast.className = `toast ${color.bg} ${color.border} border-2 rounded-xl shadow-2xl p-4 mb-3 backdrop-blur-sm cursor-pointer`;
+                toast.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="toast-icon ${color.icon} flex-shrink-0 mr-3 mt-0.5">
+                            ${icon}
+                        </div>
+                        <div class="flex-1 ${color.text}">
+                            <p class="font-semibold text-sm leading-relaxed break-words">${this.escapeHtml(message)}</p>
+                        </div>
+                        <button onclick="Toast.remove('${toastId}'); event.stopPropagation();" 
+                                class="ml-3 ${color.text} hover:opacity-70 transition-opacity flex-shrink-0 p-1 rounded hover:bg-white hover:bg-opacity-20"
+                                aria-label="Close notification">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mt-3 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                        <div class="toast-progress h-full bg-white bg-opacity-50 rounded-full"></div>
+                    </div>
+                `;
+                
+                // Click to dismiss
+                toast.addEventListener('click', () => {
+                    this.remove(toastId);
+                });
+                
+                container.appendChild(toast);
+                
+                // Auto remove after duration
+                setTimeout(() => {
+                    this.remove(toastId);
+                }, duration);
+            },
+            
+            success: function(message, duration) {
+                this.show(message, 'success', duration);
+            },
+            
+            error: function(message, duration) {
+                this.show(message, 'error', duration);
+            },
+            
+            warning: function(message, duration) {
+                this.show(message, 'warning', duration);
+            },
+            
+            info: function(message, duration) {
+                this.show(message, 'info', duration);
+            },
+            
+            remove: function(toastId) {
+                const toast = document.getElementById(toastId);
+                if (toast) {
+                    toast.style.animation = 'fadeOut 0.3s ease-in forwards';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }
+            },
+            
+            escapeHtml: function(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+        
+        // Initialize Django messages as toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Convert Django messages to toasts
+            const messageElements = document.querySelectorAll('.toast-message');
+            messageElements.forEach(function(element) {
+                const type = element.dataset.type || 'info';
+                const message = element.dataset.message || '';
+                if (message) {
+                    Toast.show(message, type);
+                }
+                element.remove();
+            });
+        });
+        
+        // Common utility functions
+        const Utils = {
+            formatCurrency: function(value) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(value);
+            },
+            
+            formatNumber: function(value) {
+                return new Intl.NumberFormat('en-US').format(value);
+            },
+            
+            formatPercent: function(value) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'percent',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(value / 100);
+            }
+        };
+    </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

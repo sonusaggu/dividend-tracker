@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from portfolio.models import DividendAlert, Dividend
-from portfolio.email import send_dividend_alert_email
 from datetime import date, datetime
 import pytz
 import logging
 from collections import defaultdict
+from portfolio.utils.email_api import send_dividend_alert_email
 
 logger = logging.getLogger(__name__)
 

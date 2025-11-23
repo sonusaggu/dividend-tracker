@@ -1,0 +1,78 @@
+<!-- User Menu Component -->
+<div class="flex items-center space-x-4">
+    {% if user.is_authenticated %}
+    <div class="relative group">
+        <button class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition duration-200 px-3 py-2 rounded-lg hover:bg-gray-50">
+            <span class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md hover:scale-110 transition-transform">
+                {{ user.username|first|upper }}
+            </span>
+            <span class="hidden sm:block font-medium">{{ user.username }}</span>
+            <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+            <div class="py-2">
+                <!-- User Info -->
+                <div class="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+                    <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                    <p class="text-xs text-gray-500">{{ user.email }}</p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div class="py-2">
+                    <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition duration-200 group/item">
+                        <svg class="w-5 h-5 text-gray-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="{% url 'portfolio' %}" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition duration-200 group/item">
+                        <svg class="w-5 h-5 text-gray-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span class="font-medium">Portfolio</span>
+                    </a>
+                    <a href="{% url 'watchlist' %}" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition duration-200 group/item">
+                        <svg class="w-5 h-5 text-gray-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                        <span class="font-medium">Watchlist</span>
+                    </a>
+                    <a href="{% url 'my_alerts' %}" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition duration-200 group/item">
+                        <svg class="w-5 h-5 text-gray-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span class="font-medium">Alerts</span>
+                    </a>
+                    <a href="{% url 'newsletter_subscription' %}" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition duration-200 group/item">
+                        <svg class="w-5 h-5 text-gray-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="font-medium">Newsletter</span>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 bg-gray-50">
+                <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition duration-200 group/item">
+                    <svg class="w-5 h-5 group-hover/item:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span class="font-semibold">Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="flex items-center space-x-3">
+        <a href="{% url 'login' %}" 
+           class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+            Login
+        </a>
+        <a href="{% url 'register' %}" 
+           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+            Sign Up Free
+        </a>
+    </div>
+    {% endif %}
+</div>

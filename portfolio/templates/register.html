@@ -1,78 +1,54 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - StockFolio{% endblock %}
 
 {% block content %}
-<!-- Navigation Header -->
-<nav class="bg-white shadow-lg border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-            <!-- Logo -->
-            <a href="{% url 'home' %}" class="flex items-center space-x-2">
-                <span class="text-2xl">📈</span>
-                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
-            </a>
-
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Home
-                </a>
-                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    All Stocks
-                </a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Dividend Calendar
-                </a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Resources
-                </a>
-            </div>
-
-            <!-- Auth Buttons -->
-            <div class="flex items-center space-x-4">
-                <a href="{% url 'login' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Login
-                </a>
-                <a href="{% url 'register' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
-                    Sign Up Free
-                </a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
-    <div class="max-w-7xl mx-auto px-4">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4">
+    <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Join DividendTracker
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Join <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">StockFolio</span>
             </h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
                 Create your free account and start tracking your dividend portfolio today
             </p>
         </div>
 
         <div class="max-w-md mx-auto">
             <!-- Registration Card -->
-            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100">
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
+                    
                     {% if messages %}
                         {% for message in messages %}
-                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
+                        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                             {{ message }}
                         </div>
                         {% endfor %}
                     {% endif %}
+                    
                     {% if form.errors %}
-                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
-                            Please correct the errors below.
+                        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg text-sm">
+                            <p class="font-semibold mb-1">Please correct the errors below:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
                         </div>
                     {% endif %}
                     
                     <!-- Username Field -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Username
                         </label>
                         <div class="relative">
@@ -80,20 +56,26 @@
                                 type="text" 
                                 name="username" 
                                 required 
-                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                class="w-full pl-12 pr-4 py-3.5 border-2 {% if form.username.errors %}border-red-300{% else %}border-gray-200{% endif %} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
                                 placeholder="Choose a username"
                                 value="{{ form.username.value|default:'' }}"
+                                autocomplete="username"
                             >
-                            <span class="absolute left-3 top-3 text-gray-400">👤</span>
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">👤</span>
                         </div>
                         {% if form.username.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.username.errors.0 }}</p>
+                            <p class="text-red-500 text-xs mt-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ form.username.errors.0 }}
+                            </p>
                         {% endif %}
                     </div>
 
                     <!-- Email Field -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Email Address
                         </label>
                         <div class="relative">
@@ -101,21 +83,26 @@
                                 type="email" 
                                 name="email" 
                                 required 
-                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                class="w-full pl-12 pr-4 py-3.5 border-2 {% if form.email.errors %}border-red-300{% else %}border-gray-200{% endif %} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
                                 placeholder="Enter your email"
                                 value="{{ form.email.value|default:'' }}"
-                                onblur="checkEmail()"
+                                autocomplete="email"
                             >
-                            <span class="absolute left-3 top-3 text-gray-400">📧</span>
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">📧</span>
                         </div>
                         {% if form.email.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                            <p class="text-red-500 text-xs mt-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ form.email.errors.0 }}
+                            </p>
                         {% endif %}
                     </div>
 
                     <!-- Password Field -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Password
                         </label>
                         <div class="relative">
@@ -123,19 +110,25 @@
                                 type="password" 
                                 name="password1" 
                                 required 
-                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                class="w-full pl-12 pr-4 py-3.5 border-2 {% if form.password1.errors %}border-red-300{% else %}border-gray-200{% endif %} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
                                 placeholder="Create a password"
+                                autocomplete="new-password"
                             >
-                            <span class="absolute left-3 top-3 text-gray-400">🔒</span>
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🔒</span>
                         </div>
                         {% if form.password1.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.password1.errors.0 }}</p>
+                            <p class="text-red-500 text-xs mt-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ form.password1.errors.0 }}
+                            </p>
                         {% endif %}
                     </div>
 
                     <!-- Confirm Password Field -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Confirm Password
                         </label>
                         <div class="relative">
@@ -143,57 +136,63 @@
                                 type="password" 
                                 name="password2" 
                                 required 
-                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                class="w-full pl-12 pr-4 py-3.5 border-2 {% if form.password2.errors %}border-red-300{% else %}border-gray-200{% endif %} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
                                 placeholder="Confirm your password"
+                                autocomplete="new-password"
                             >
-                            <span class="absolute left-3 top-3 text-gray-400">🔒</span>
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🔒</span>
                         </div>
                         {% if form.password2.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.password2.errors.0 }}</p>
+                            <p class="text-red-500 text-xs mt-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ form.password2.errors.0 }}
+                            </p>
                         {% endif %}
                     </div>
 
                     <!-- Terms Agreement -->
-                    <div class="flex items-center">
+                    <div class="flex items-start">
                         <input 
                             id="terms" 
                             name="terms" 
                             type="checkbox" 
                             required
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
                         >
-                        <label for="terms" class="ml-2 block text-sm text-gray-700">
-                            I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms of Service</a> and <a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>
+                        <label for="terms" class="ml-3 block text-sm text-gray-700">
+                            I agree to the <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold">Terms of Service</a> and <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold">Privacy Policy</a>
                         </label>
                     </div>
 
                     <!-- Submit Button -->
                     <button 
                         type="submit" 
-                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-medium transition duration-200 transform hover:scale-105 shadow-md"
+                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                     >
                         Create Account
                     </button>
                 </form>
 
                 <!-- Divider -->
-                <div class="mt-6">
+                <div class="mt-8">
                     <div class="relative">
                         <div class="absolute inset-0 flex items-center">
                             <div class="w-full border-t border-gray-300"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">
+                            <span class="px-4 bg-white text-gray-500 font-medium">
                                 Already have an account?
                             </span>
                         </div>
                     </div>
 
                     <!-- Login Link -->
-                    <div class="mt-6 text-center">
+                    <div class="mt-6">
                         <a 
                             href="{% url 'login' %}" 
-                            class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white py-3 px-4 rounded-xl font-medium transition duration-200 inline-block"
+                            class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 inline-block text-center transform hover:scale-[1.02]"
                         >
                             Sign In to Your Account
                         </a>
@@ -203,48 +202,47 @@
 
             <!-- Benefits Section -->
             <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white rounded-2xl p-4 text-center border border-gray-100 shadow-sm">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span class="text-blue-600">📊</span>
+                <div class="bg-white rounded-xl p-5 text-center border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <span class="text-2xl">📊</span>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-900">Track Dividends</h3>
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Track Dividends</h3>
                     <p class="text-xs text-gray-600">Monitor all your dividend payments</p>
                 </div>
-                <div class="bg-white rounded-2xl p-4 text-center border border-gray-100 shadow-sm">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span class="text-green-600">💰</span>
+                <div class="bg-white rounded-xl p-5 text-center border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <span class="text-2xl">💰</span>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-900">Portfolio Insights</h3>
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Portfolio Insights</h3>
                     <p class="text-xs text-gray-600">Analyze your investment performance</p>
                 </div>
-                <div class="bg-white rounded-2xl p-4 text-center border border-gray-100 shadow-sm">
-                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span class="text-purple-600">🔔</span>
+                <div class="bg-white rounded-xl p-5 text-center border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <span class="text-2xl">🔔</span>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-900">Smart Alerts</h3>
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Smart Alerts</h3>
                     <p class="text-xs text-gray-600">Get notified about dividend dates</p>
+                </div>
+            </div>
+
+            <!-- Trust Indicators -->
+            <div class="mt-8 text-center">
+                <div class="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-500">✓</span>
+                        <span>Free Forever</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-500">✓</span>
+                        <span>Secure & Private</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-500">✓</span>
+                        <span>No Credit Card</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Footer Navigation -->
-{% include 'footer.html' %}
-
 {% endblock %}
-
-<script>
-    function checkEmail() {
-        const email = document.getElementById('email').value.toLowerCase();
-        const allowed = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
-        
-        if (email.includes('@')) {
-            const domain = email.split('@')[1];
-            if (!allowed.includes(domain)) {
-                document.getElementById('email-error').textContent = 'Please use Gmail, Outlook, Hotmail, Yahoo, or iCloud.';
-                document.getElementById('email-error').classList.remove('hidden');
-            }
-        }
-    }
-</script>

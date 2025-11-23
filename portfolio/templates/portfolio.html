@@ -1,57 +1,40 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}My Portfolio - StockFolio{% endblock %}
 
 {% block content %}
-<!-- Navigation Header -->
-<nav class="bg-white shadow-lg border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-            <!-- Logo -->
-            <a href="{% url 'home' %}" class="flex items-center space-x-2">
-                <span class="text-2xl">📈</span>
-                <span class="text-xl font-bold text-gray-800">DividendTracker</span>
-            </a>
-
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="{% url 'home' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Home
-                </a>
-                <a href="{% url 'all_stocks' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    All Stocks
-                </a>
-                <a href="{% url 'portfolio' %}" class="text-blue-600 border-b-2 border-blue-600 font-medium">
-                    My Portfolio
-                </a>
-                <a href="{% url 'watchlist' %}" class="text-gray-600 hover:text-blue-600 transition duration-200 font-medium">
-                    Watchlist
-                </a>
-            </div>
-
-            <!-- User Menu -->
-            {% include 'navbar_user_menu.html' %}
-
-        </div>
-    </div>
-</nav>
-
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
     <div class="max-w-7xl mx-auto px-4">
         <!-- Header Section -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                My Portfolio
-            </h1>
-            <p class="text-xl text-gray-600">Track your investments and dividend income</p>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    My Portfolio
+                </h1>
+                <p class="text-xl text-gray-600">Track your investments and dividend income</p>
+            </div>
+            <a href="{% url 'all_stocks' %}" 
+               class="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+                + Add Stock
+            </a>
         </div>
 
         {% if portfolio_items %}
         <!-- Portfolio Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Value -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">Total Value</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ total_value|floatformat:2 }}</p>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600 mb-1">Total Portfolio Value</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ total_value|floatformat:2|intcomma }}</p>
+                        {% if total_roi_percent %}
+                        <p class="text-sm {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2">
+                            {{ total_roi_percent|floatformat:2 }}% ROI
+                        </p>
+                        {% endif %}
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <span class="text-2xl text-blue-600">💰</span>
@@ -59,11 +42,13 @@
                 </div>
             </div>
             
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <!-- Total Investment -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">Total Investment</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ total_investment|floatformat:2 }}</p>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600 mb-1">Total Invested</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ total_investment|floatformat:2|intcomma }}</p>
+                        <p class="text-xs text-gray-500 mt-2">{{ portfolio_items|length }} holding{{ portfolio_items|length|pluralize }}</p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <span class="text-2xl text-green-600">📊</span>
@@ -71,27 +56,39 @@
                 </div>
             </div>
             
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <!-- Total Gain/Loss -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">Total Gain/Loss</p>
-                        <p class="text-2xl font-bold text-gray-900 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                            ${{ total_gain_loss|floatformat:2 }}
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600 mb-1">Total Gain/Loss</p>
+                        <p class="text-2xl font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            ${{ total_gain_loss|floatformat:2|intcomma }}
                         </p>
+                        {% if total_roi_percent %}
+                        <p class="text-sm {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2">
+                            ({{ total_roi_percent|floatformat:2 }}%)
+                        </p>
+                        {% endif %}
                     </div>
                     <div class="w-12 h-12 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-full flex items-center justify-center">
                         <span class="text-2xl {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                            {{ total_gain_loss|yesno:"📈,📉" }}
+                            {% if total_gain_loss >= 0 %}📈{% else %}📉{% endif %}
                         </span>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <!-- Annual Dividends -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">Annual Dividends</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ annual_dividend_income|floatformat:2 }}</p>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600 mb-1">Annual Dividends</p>
+                        <p class="text-2xl font-bold text-gray-900">${{ annual_dividend_income|floatformat:2|intcomma }}</p>
+                        {% if portfolio_yield %}
+                        <p class="text-sm text-purple-600 mt-2">
+                            {{ portfolio_yield|floatformat:2 }}% yield
+                        </p>
+                        {% endif %}
                     </div>
                     <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                         <span class="text-2xl text-purple-600">🎯</span>
@@ -100,107 +97,468 @@
             </div>
         </div>
 
-        <!-- Portfolio Table -->
+        <!-- Additional Metrics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Portfolio Yield -->
+            <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-xl p-6 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Portfolio Yield</p>
+                        <p class="text-3xl font-bold text-purple-600">{{ portfolio_yield|floatformat:2 }}%</p>
+                        <p class="text-xs text-gray-600 mt-1">Based on current value</p>
+                    </div>
+                    <span class="text-4xl">📈</span>
+                </div>
+            </div>
+
+            <!-- Yield on Cost -->
+            {% if yield_on_cost %}
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-6 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Yield on Cost</p>
+                        <p class="text-3xl font-bold text-green-600">{{ yield_on_cost|floatformat:2 }}%</p>
+                        <p class="text-xs text-gray-600 mt-1">Based on invested amount</p>
+                    </div>
+                    <span class="text-4xl">💎</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Monthly Dividend Income -->
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-xl p-6 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Monthly Income</p>
+                        <p class="text-3xl font-bold text-blue-600">${{ monthly_dividend_income|floatformat:2|intcomma }}</p>
+                        <p class="text-xs text-gray-600 mt-1">Estimated monthly</p>
+                    </div>
+                    <span class="text-4xl">💵</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Allocation -->
+        {% if sector_allocation %}
         <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
-            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Your Holdings</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <span class="text-2xl mr-2">🏢</span>
+                Sector Allocation
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for sector, percent in sector_allocation.items %}
+                <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
+                    <p class="text-sm text-gray-600 mb-1">{{ sector }}</p>
+                    <div class="flex items-center justify-between">
+                        <p class="text-lg font-bold text-gray-900">{{ percent|floatformat:1 }}%</p>
+                        <div class="w-16 bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ percent }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Portfolio Holdings Table -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4 md:mb-0">Your Holdings</h2>
+                <div class="flex items-center space-x-2">
+                    <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Sort by Symbol
+                    </button>
+                    <button onclick="sortTable('value')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Sort by Value
+                    </button>
+                </div>
+            </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="w-full" id="portfolioTable">
                     <thead>
-                        <tr class="border-b">
-                            <th class="text-left py-3">Stock</th>
-                            <th class="text-right py-3">Shares</th>
-                            <th class="text-right py-3">Avg Cost</th>
-                            <th class="text-right py-3">Current Price</th>
-                            <th class="text-right py-3">Current Value</th>
-                            <th class="text-right py-3">Gain/Loss</th>
-                            <th class="text-right py-3">Annual Dividend</th>
+                        <tr class="border-b-2 border-gray-200">
+                            <th class="text-left py-4 px-2 font-semibold text-gray-700">Stock</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Shares</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Avg Cost</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Current Price</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Current Value</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Allocation</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Gain/Loss</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">ROI</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Annual Div</th>
+                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in portfolio_items %}
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-4">
-                                <div class="flex items-center">
-                                    <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-semibold mr-3">
+                        <tr class="border-b hover:bg-gray-50 transition" data-symbol="{{ item.item.stock.symbol }}" data-value="{{ item.current_value }}">
+                            <td class="py-4 px-2">
+                                <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="flex items-center group">
+                                    <span class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 group-hover:scale-110 transition">
                                         {{ item.item.stock.symbol|slice:":1" }}
                                     </span>
                                     <div>
-                                        <div class="font-semibold">{{ item.item.stock.symbol }}</div>
-                                        <div class="text-sm text-gray-600">{{ item.item.stock.company_name|truncatewords:2 }}</div>
+                                        <div class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ item.item.stock.symbol }}</div>
+                                        <div class="text-xs text-gray-600">{{ item.item.stock.company_name|truncatewords:3 }}</div>
+                                        {% if item.item.stock.sector %}
+                                        <div class="text-xs text-blue-600 mt-1">{{ item.item.stock.sector }}</div>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="text-right py-4 px-2 font-medium">{{ item.item.shares_owned|intcomma }}</td>
+                            <td class="text-right py-4 px-2">${{ item.item.average_cost|floatformat:2 }}</td>
+                            <td class="text-right py-4 px-2">
+                                {% if item.latest_price %}
+                                    <span class="font-semibold">${{ item.latest_price.last_price|floatformat:2 }}</span>
+                                    {% if item.latest_price.price_date %}
+                                    <div class="text-xs text-gray-500">{{ item.latest_price.price_date|date:"M d" }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right py-4 px-2 font-semibold">${{ item.current_value|floatformat:2|intcomma }}</td>
+                            <td class="text-right py-4 px-2">
+                                <div class="flex items-center justify-end">
+                                    <span class="font-medium text-gray-700 mr-2">{{ item.portfolio_allocation|floatformat:1 }}%</span>
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-right py-4">{{ item.item.shares_owned }}</td>
-                            <td class="text-right py-4">${{ item.item.average_cost|floatformat:2 }}</td>
-                            <td class="text-right py-4">
-                                {% if item.latest_price %}
-                                    ${{ item.latest_price.last_price|floatformat:2 }}
-                                {% else %}
-                                    -
-                                {% endif %}
+                            <td class="text-right py-4 px-2">
+                                <div>
+                                    <span class="font-semibold {% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        ${{ item.gain_loss|floatformat:2|intcomma }}
+                                    </span>
+                                    {% if item.roi_percent %}
+                                    <div class="text-xs {% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        ({{ item.roi_percent|floatformat:2 }}%)
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td class="text-right py-4">${{ item.current_value|floatformat:2 }}</td>
-                            <td class="text-right py-4">
-                                <span class="{% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                    ${{ item.gain_loss|floatformat:2 }}
+                            <td class="text-right py-4 px-2">
+                                <span class="{% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+                                    {{ item.roi_percent|floatformat:2 }}%
                                 </span>
                             </td>
-                            <td class="text-right py-4">
+                            <td class="text-right py-4 px-2">
                                 {% if item.dividend_income %}
-                                    ${{ item.dividend_income|floatformat:2 }}
+                                    <div>
+                                        <span class="font-semibold text-green-600">${{ item.dividend_income|floatformat:2|intcomma }}</span>
+                                        {% if item.yield_on_cost %}
+                                        <div class="text-xs text-gray-600">{{ item.yield_on_cost|floatformat:2 }}% YoC</div>
+                                        {% endif %}
+                                    </div>
                                 {% else %}
-                                    -
+                                    <span class="text-gray-400">-</span>
                                 {% endif %}
+                            </td>
+                            <td class="text-right py-4 px-2">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a href="{% url 'stock_detail' item.item.stock.symbol %}" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium" title="View Details">
+                                        View
+                                    </a>
+                                    <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})" 
+                                            class="text-green-600 hover:text-green-800 text-sm font-medium" title="Edit">
+                                        Edit
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <td class="py-4 px-2 font-bold text-gray-900">Total</td>
+                            <td class="text-right py-4 px-2 font-bold text-gray-900">{{ portfolio_items|length }} stocks</td>
+                            <td colspan="3" class="text-right py-4 px-2 font-bold text-gray-900">${{ total_value|floatformat:2|intcomma }}</td>
+                            <td class="text-right py-4 px-2 font-bold text-gray-900">100%</td>
+                            <td class="text-right py-4 px-2 font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                ${{ total_gain_loss|floatformat:2|intcomma }}
+                            </td>
+                            <td class="text-right py-4 px-2 font-bold {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {{ total_roi_percent|floatformat:2 }}%
+                            </td>
+                            <td class="text-right py-4 px-2 font-bold text-green-600">${{ annual_dividend_income|floatformat:2|intcomma }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
+        </div>
+
+        <!-- Upcoming Dividends Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
+                    <span class="text-2xl mr-2">📅</span>
+                    Upcoming Dividend Payments
+                </h2>
+                <a href="{% url 'my_alerts' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    Manage Alerts →
+                </a>
+            </div>
+            
+            {% regroup portfolio_items|dictsort:"latest_dividend.ex_dividend_date" by latest_dividend.ex_dividend_date as dividends_by_date %}
+            
+            {% if dividends_by_date %}
+            <div class="space-y-6">
+                {% for dividend_group in dividends_by_date %}
+                    {% if dividend_group.grouper %}
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                            {{ dividend_group.grouper|date:"F d, Y" }}
+                            <span class="text-sm font-normal text-gray-500">
+                                ({{ dividend_group.grouper|timeuntil }})
+                            </span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for item in dividend_group.list %}
+                                {% if item.latest_dividend and item.latest_dividend.ex_dividend_date == dividend_group.grouper %}
+                                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-200 hover:shadow-md transition">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="font-bold text-gray-900 hover:text-blue-600 transition">
+                                            {{ item.item.stock.symbol }}
+                                        </a>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                            {{ item.latest_dividend.frequency }}
+                                        </span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="text-3xl font-bold text-green-600 mb-1">${{ item.expected_dividend|floatformat:2 }}</p>
+                                        <p class="text-sm text-gray-600">
+                                            ${{ item.latest_dividend.amount }} per share × {{ item.item.shares_owned }} shares
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">Yield: {{ item.latest_dividend.yield_percent|floatformat:2 }}%</span>
+                                        <span class="text-gray-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d" }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <span class="text-5xl mb-4 block">📊</span>
+                <p class="text-gray-600 font-medium mb-2">No upcoming dividends</p>
+                <p class="text-sm text-gray-500">Dividends from your holdings will appear here</p>
+            </div>
+            {% endif %}
         </div>
         {% else %}
         <!-- Empty Portfolio State -->
         <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
             <div class="text-6xl mb-4">📊</div>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your portfolio is empty</h2>
-            <p class="text-gray-600 mb-8">Start adding stocks to your portfolio to track your investments</p>
-            <a href="{% url 'all_stocks' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition duration-200">
-                Browse Stocks
-            </a>
-        </div>
-        {% endif %}
-
-        <!-- Upcoming Dividends Section -->
-        {% if portfolio_items %}
-        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-            <h2 class="text-2xl font-semibold text-gray-900 mb-6">📅 Upcoming Dividend Payments</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for item in portfolio_items %}
-                    {% if item.latest_dividend and item.latest_dividend.ex_dividend_date %}
-                    <div class="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="font-semibold text-gray-900">{{ item.item.stock.symbol }}</span>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                {{ item.latest_dividend.ex_dividend_date|timeuntil }} left
-                            </span>
-                        </div>
-                        <p class="text-2xl font-bold text-green-600">${{ item.latest_dividend.amount }}</p>
-                        <p class="text-sm text-gray-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}</p>
-                        <p class="text-sm text-gray-600">
-                            Expected: ${{ item.expected_dividend|floatformat:2 }}
-                        </p>
-                    </div>
-                    {% endif %}
-                {% endfor %}
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                Start building your dividend portfolio by adding stocks. Track your investments, monitor gains, and never miss a dividend payment.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'all_stocks' %}" 
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">
+                    Browse Stocks
+                </a>
+                <a href="{% url 'watchlist' %}" 
+                   class="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-blue-50 transition">
+                    View Watchlist
+                </a>
             </div>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Footer -->
-{% include 'footer.html' %}
+<!-- Edit Portfolio Item Modal -->
+<div id="editPortfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Edit Portfolio Item</h3>
+            <button onclick="closeModal('editPortfolioModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition duration-200">
+                &times;
+            </button>
+        </div>
+        
+        <form id="editPortfolioForm" method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Stock Symbol</label>
+                    <input type="text" id="editStockSymbol" readonly 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Shares Owned</label>
+                    <input type="number" name="shares_owned" id="editSharesOwned" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Number of shares" min="1" step="1">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Average Cost ($)</label>
+                    <input type="number" name="average_cost" id="editAverageCost" step="0.01" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Cost per share" min="0.01">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                    <textarea name="notes" id="editNotes" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Any notes about this investment" rows="3"></textarea>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex space-x-3">
+                <button type="button" onclick="closeModal('editPortfolioModal')"
+                        class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition font-medium">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
+<script>
+// Modal utility functions
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editPortfolioModal');
+    if (editModal) {
+        editModal.addEventListener('click', function(e) {
+            if (e.target === editModal) {
+                closeModal('editPortfolioModal');
+            }
+        });
+    }
+    
+    // Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('editPortfolioModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeModal('editPortfolioModal');
+            }
+        }
+    });
+});
+
+function sortTable(sortBy) {
+    const table = document.getElementById('portfolioTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    rows.sort((a, b) => {
+        if (sortBy === 'symbol') {
+            const aSymbol = a.dataset.symbol;
+            const bSymbol = b.dataset.symbol;
+            return aSymbol.localeCompare(bSymbol);
+        } else if (sortBy === 'value') {
+            const aValue = parseFloat(a.dataset.value) || 0;
+            const bValue = parseFloat(b.dataset.value) || 0;
+            return bValue - aValue;
+        }
+        return 0;
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function editPortfolioItem(symbol, shares, cost, notes) {
+    // Set form values
+    document.getElementById('editStockSymbol').value = symbol;
+    document.getElementById('editSharesOwned').value = shares;
+    document.getElementById('editAverageCost').value = cost;
+    document.getElementById('editNotes').value = notes || '';
+    
+    // Update form action
+    document.getElementById('editPortfolioForm').action = `/portfolio/add/${symbol}/`;
+    
+    // Open modal
+    openModal('editPortfolioModal');
+}
+
+// Handle edit portfolio form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editPortfolioForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const sharesInput = this.querySelector('input[name="shares_owned"]');
+            const costInput = this.querySelector('input[name="average_cost"]');
+            
+            // Validation
+            if (!sharesInput.value || Number(sharesInput.value) < 1) {
+                Toast.error('Shares Owned must be at least 1.');
+                sharesInput.focus();
+                return;
+            }
+            if (!costInput.value || Number(costInput.value) <= 0) {
+                Toast.error('Average Cost must be greater than $0.');
+                costInput.focus();
+                return;
+            }
+            
+            const formData = new FormData(this);
+            const action = this.action;
+            
+            fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeModal('editPortfolioModal');
+                    Toast.success(data.message || 'Portfolio updated successfully!');
+                    // Reload page to show updated data
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Toast.error(data.message || 'Error updating portfolio.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Toast.error('Error updating portfolio. Please try again.');
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

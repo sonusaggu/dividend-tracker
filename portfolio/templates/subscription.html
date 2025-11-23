@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Newsletter Subscription - StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                📧 Dividend Newsletter
+            </h1>
+            <p class="text-xl text-gray-600">Get curated dividend insights delivered to your inbox</p>
+        </div>
+
+        <!-- Subscription Status Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                    <div class="w-16 h-16 {% if subscription.is_active %}bg-green-100{% else %}bg-gray-100{% endif %} rounded-full flex items-center justify-center">
+                        <span class="text-3xl">{% if subscription.is_active %}✅{% else %}📬{% endif %}</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            {% if subscription.is_active %}Subscription Active{% else %}Not Subscribed{% endif %}
+                        </h2>
+                        <p class="text-gray-600">
+                            {% if subscription.is_active %}
+                                {% if subscription.subscribed_at %}
+                                    Subscribed since {{ subscription.subscribed_at|date:"F d, Y" }}
+                                {% else %}
+                                    Your subscription is active
+                                {% endif %}
+                            {% else %}
+                                Subscribe to receive weekly dividend insights
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    {% if subscription.is_active %}
+                        <button type="submit" name="unsubscribe" 
+                                class="bg-red-100 hover:bg-red-200 text-red-700 px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105">
+                            Unsubscribe
+                        </button>
+                    {% else %}
+                        <button type="submit" name="subscribe" 
+                                class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+                            Subscribe Now
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% if subscription.is_active %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <!-- Preferences Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+                        <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-blue-600">⚙️</span>
+                        </span>
+                        Newsletter Preferences
+                    </h2>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="space-y-6">
+                            <!-- Email Frequency -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    📅 Email Frequency
+                                </label>
+                                <select name="frequency" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                    <option value="weekly" {% if subscription.frequency == 'weekly' %}selected{% endif %}>Weekly - Every Monday</option>
+                                    <option value="biweekly" {% if subscription.frequency == 'biweekly' %}selected{% endif %}>Bi-Weekly - Every Other Monday</option>
+                                    <option value="monthly" {% if subscription.frequency == 'monthly' %}selected{% endif %}>Monthly - First Monday of the Month</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-2">Choose how often you want to receive dividend insights</p>
+                            </div>
+
+                            <!-- Investment Strategy -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    🎯 Investment Strategy
+                                </label>
+                                <select name="strategy" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                    <option value="high_yield" {% if subscription.preferences.strategy == 'high_yield' or not subscription.preferences or not subscription.preferences.strategy %}selected{% endif %}>
+                                        High Yield Focus - Stocks with 5%+ dividend yield
+                                    </option>
+                                    <option value="growth_income" {% if subscription.preferences.strategy == 'growth_income' %}selected{% endif %}>
+                                        Growth & Income - Balanced dividend and growth
+                                    </option>
+                                    <option value="blue_chip" {% if subscription.preferences.strategy == 'blue_chip' %}selected{% endif %}>
+                                        Blue Chip Stocks - Established, stable companies
+                                    </option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-2">Select the type of dividend stocks that match your investment goals</p>
+                            </div>
+
+                            <!-- Stocks Count -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    📊 Stocks per Newsletter
+                                </label>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="relative">
+                                        <input type="radio" name="stocks_count" value="5" 
+                                               {% if subscription.preferences.stocks_count == 5 %}checked{% endif %}
+                                               class="peer sr-only">
+                                        <div class="border-2 border-gray-200 rounded-xl p-4 text-center cursor-pointer transition peer-checked:border-blue-600 peer-checked:bg-blue-50 hover:border-blue-300">
+                                            <div class="text-2xl font-bold text-gray-900">5</div>
+                                            <div class="text-xs text-gray-600 mt-1">Stocks</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative">
+                                        <input type="radio" name="stocks_count" value="10" 
+                                               {% if subscription.preferences.stocks_count == 10 or not subscription.preferences or not subscription.preferences.stocks_count %}checked{% endif %}
+                                               class="peer sr-only">
+                                        <div class="border-2 border-gray-200 rounded-xl p-4 text-center cursor-pointer transition peer-checked:border-blue-600 peer-checked:bg-blue-50 hover:border-blue-300">
+                                            <div class="text-2xl font-bold text-gray-900">10</div>
+                                            <div class="text-xs text-gray-600 mt-1">Stocks</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative">
+                                        <input type="radio" name="stocks_count" value="15" 
+                                               {% if subscription.preferences.stocks_count == 15 %}checked{% endif %}
+                                               class="peer sr-only">
+                                        <div class="border-2 border-gray-200 rounded-xl p-4 text-center cursor-pointer transition peer-checked:border-blue-600 peer-checked:bg-blue-50 hover:border-blue-300">
+                                            <div class="text-2xl font-bold text-gray-900">15</div>
+                                            <div class="text-xs text-gray-600 mt-1">Stocks</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Number of top dividend stocks to feature in each newsletter</p>
+                            </div>
+
+                            <!-- Additional Options -->
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" name="include_analysis" 
+                                           {% if subscription.preferences and subscription.preferences.include_analysis %}checked{% endif %}
+                                           class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="ml-3 text-sm font-medium text-gray-700">
+                                        Include detailed analysis and market insights
+                                    </span>
+                                </label>
+                                <p class="text-xs text-gray-500 mt-2 ml-8">Get in-depth analysis of each stock including valuation metrics and trends</p>
+                            </div>
+
+                            <!-- Save Button -->
+                            <button type="submit" name="subscribe" 
+                                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg text-lg">
+                                💾 Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Sidebar -->
+            <div class="space-y-6">
+                <!-- Preview Card -->
+                <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">👀</span>
+                        Preview
+                    </h3>
+                    
+                    {% if preview_content.top_stocks %}
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            {% for stock in preview_content.top_stocks|slice:":5" %}
+                            <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-bold text-gray-900 text-lg">{{ stock.symbol }}</span>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                                {{ stock.dividend_yield|floatformat:2 }}%
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 mt-1 line-clamp-1">{{ stock.company_name }}</p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
+                                    <div class="bg-white rounded-lg p-2">
+                                        <div class="text-gray-500">Dividend</div>
+                                        <div class="font-bold text-green-600">${{ stock.dividend_amount }}</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-2">
+                                        <div class="text-gray-500">Ex-date</div>
+                                        <div class="font-bold">{{ stock.ex_dividend_date|date:"M d" }}</div>
+                                    </div>
+                                </div>
+                                {% if stock.days_until is not None %}
+                                <div class="mt-2 text-center">
+                                    <span class="text-xs px-2 py-1 rounded-full {% if stock.days_until <= 3 %}bg-red-100 text-red-700{% elif stock.days_until <= 7 %}bg-orange-100 text-orange-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                                        {{ stock.days_until }} day{{ stock.days_until|pluralize }} until ex-date
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                            <div class="text-center">
+                                <p class="text-sm font-bold text-blue-900 mb-1">
+                                    {{ preview_content.statistics.total_stocks }} stocks selected
+                                </p>
+                                <p class="text-xs text-blue-700">
+                                    Avg yield: <span class="font-semibold">{{ preview_content.statistics.average_yield }}%</span> • 
+                                    <span class="font-semibold">{{ preview_content.strategy_used|title|default:"High Yield" }}</span> strategy
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <span class="text-5xl mb-3 block">📊</span>
+                            <p class="text-gray-600 font-medium mb-2">No upcoming dividends</p>
+                            <p class="text-sm text-gray-500">Check back later for new opportunities</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Benefits Card -->
+                <div class="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl shadow-xl p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="text-2xl mr-2">✨</span>
+                        What You'll Get
+                    </h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start">
+                            <span class="mr-2">📈</span>
+                            <span>Top dividend stocks curated by strategy</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">📅</span>
+                            <span>Upcoming ex-dividend dates</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">💰</span>
+                            <span>Yield analysis and comparisons</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">📊</span>
+                            <span>Market insights and trends</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">🎯</span>
+                            <span>Portfolio optimization tips</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Not Subscribed - Benefits Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">📈</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Curated Stocks</h3>
+                <p class="text-sm text-gray-600">Top dividend opportunities handpicked based on your strategy</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">📅</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Never Miss a Date</h3>
+                <p class="text-sm text-gray-600">Get notified about upcoming ex-dividend dates in advance</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 text-center">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">💡</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Expert Insights</h3>
+                <p class="text-sm text-gray-600">Analysis and market trends to help you make informed decisions</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Back to Dashboard -->
+        <div class="text-center mt-8">
+            <a href="{% url 'dashboard' %}" 
+               class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
