@@ -9,6 +9,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('stocks/', views.all_stocks_view, name='all_stocks'),
     path('stocks/<str:symbol>/', views.stock_detail, name='stock_detail'),
+    path('stocks/<str:symbol>/dividend-history/', views.dividend_history, name='dividend_history'),
     path('watchlist/toggle/<int:stock_id>/', views.toggle_watchlist, name='toggle_watchlist'),
     path('portfolio/add/<str:symbol>/', views.add_to_portfolio, name='add_to_portfolio'),
     path('dividend-alerts/<int:stock_id>/', views.manage_dividend_alerts, name='manage_dividend_alerts'),

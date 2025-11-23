@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ stock.symbol }} - Dividend History | StockFolio{% endblock %}
+{% block meta_title %}{{ stock.symbol }} Dividend History - StockFolio{% endblock %}
+{% block meta_description %}View complete dividend history for {{ stock.symbol }} ({{ stock.company_name }}). See all past dividend payments, amounts, dates, and yields.{% endblock %}
+{% block meta_keywords %}{{ stock.symbol }}, dividend history, past dividends, dividend payments, {{ stock.company_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'stock_detail' stock.symbol %}" 
+                       class="text-blue-600 hover:text-blue-800 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ stock.symbol }} - Dividend History</h1>
+                        <p class="text-gray-600 mt-1">{{ stock.company_name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        {% if total_dividends > 0 %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-2">Total Dividends</div>
+                <div class="text-3xl font-bold">{{ total_dividends }}</div>
+                <div class="text-sm opacity-75 mt-2">All time</div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-2">Total Paid</div>
+                <div class="text-3xl font-bold">${{ total_amount|floatformat:2 }}</div>
+                <div class="text-sm opacity-75 mt-2">Cumulative</div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-2">Average Dividend</div>
+                <div class="text-3xl font-bold">${{ avg_amount|floatformat:2 }}</div>
+                <div class="text-sm opacity-75 mt-2">Per payment</div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+                <div class="text-sm opacity-90 mb-2">Annual Dividend</div>
+                <div class="text-3xl font-bold">${{ annual_dividend|floatformat:2 }}</div>
+                <div class="text-sm opacity-75 mt-2">
+                    {% if current_yield %}
+                        ({{ current_yield|floatformat:2 }}% yield)
+                    {% else %}
+                        This year
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                <div class="text-sm text-gray-600 mb-2">Highest Dividend</div>
+                <div class="text-2xl font-bold text-green-600">${{ max_amount|floatformat:2 }}</div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                <div class="text-sm text-gray-600 mb-2">Lowest Dividend</div>
+                <div class="text-2xl font-bold text-gray-600">${{ min_amount|floatformat:2 }}</div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                <div class="text-sm text-gray-600 mb-2">Payment Frequency</div>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for freq, count in frequency_dist.items %}
+                    <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
+                        {{ freq }}: {{ count }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Dividend History Table -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600">
+                <h2 class="text-2xl font-bold text-white">Dividend Payment History</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ex-Dividend Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Yield</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Payment Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Frequency</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for dividend in dividends %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {% if dividend.ex_dividend_date %}
+                                        {{ dividend.ex_dividend_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </div>
+                                {% if dividend.ex_dividend_date %}
+                                <div class="text-xs text-gray-500">
+                                    {% if dividend.ex_dividend_date < today %}
+                                        <span class="text-gray-500">{{ dividend.ex_dividend_date|timesince }} ago</span>
+                                    {% else %}
+                                        <span class="text-blue-600">In {{ dividend.ex_dividend_date|timeuntil }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-lg font-bold text-gray-900">
+                                    ${{ dividend.amount|floatformat:4 }}
+                                </div>
+                                <div class="text-xs text-gray-500">{{ dividend.currency }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if dividend.yield_percent %}
+                                <span class="text-blue-600 font-semibold">
+                                    {{ dividend.yield_percent|floatformat:2 }}%
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {% if dividend.payment_date %}
+                                        {{ dividend.payment_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-gray-400">TBD</span>
+                                    {% endif %}
+                                </div>
+                                {% if dividend.payment_date %}
+                                <div class="text-xs text-gray-500">
+                                    {% if dividend.payment_date < today %}
+                                        <span class="text-green-600">Paid</span>
+                                    {% else %}
+                                        <span class="text-orange-600">Upcoming</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full
+                                    {% if dividend.frequency == 'Monthly' %}bg-green-100 text-green-800
+                                    {% elif dividend.frequency == 'Quarterly' %}bg-blue-100 text-blue-800
+                                    {% elif dividend.frequency == 'Semi-Annual' %}bg-purple-100 text-purple-800
+                                    {% elif dividend.frequency == 'Annual' %}bg-orange-100 text-orange-800
+                                    {% else %}bg-gray-100 text-gray-800
+                                    {% endif %}">
+                                    {{ dividend.frequency|default:"Unknown" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if dividend.ex_dividend_date %}
+                                    {% if dividend.ex_dividend_date < today %}
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                            Past
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                            Upcoming
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                        Unknown
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="text-gray-400 text-lg">No dividend history available</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if dividends.has_other_pages %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing page {{ dividends.number }} of {{ dividends.paginator.num_pages }}
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if dividends.has_previous %}
+                        <a href="?page={{ dividends.previous_page_number }}" 
+                           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Previous
+                        </a>
+                        {% endif %}
+                        {% if dividends.has_next %}
+                        <a href="?page={{ dividends.next_page_number }}" 
+                           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Next
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% else %}
+        <!-- No Dividends State -->
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+            <div class="text-6xl mb-4">📊</div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Dividend History</h3>
+            <p class="text-gray-600 mb-6">This stock doesn't have any dividend payment history recorded.</p>
+            <a href="{% url 'stock_detail' stock.symbol %}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Stock Details
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

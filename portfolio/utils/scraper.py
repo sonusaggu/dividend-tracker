@@ -254,7 +254,8 @@ class TSXScraper:
                         currency=transformed_data['currency']
                     )
 
-            # Update dividend information - find and update latest dividend
+            # Update dividend information - maintains history by ex_dividend_date
+            # Each unique ex_dividend_date creates a new record, building history over time
             if (transformed_data['dividend_amount'] is not None and 
                 transformed_data['dividend_date']):
                 
@@ -284,7 +285,9 @@ class TSXScraper:
                             payment_date = None
                     
                     # Update or create dividend with the specific ex_dividend_date
-                    Dividend.objects.update_or_create(
+                    # This maintains history: each unique ex_dividend_date = new record
+                    # If same ex_dividend_date exists, it updates that record
+                    dividend, created = Dividend.objects.update_or_create(
                         stock=stock,
                         ex_dividend_date=ex_dividend_date,
                         defaults={
@@ -295,6 +298,11 @@ class TSXScraper:
                             'currency': transformed_data['currency']
                         }
                     )
+                    
+                    if created:
+                        logger.debug(f"Created new dividend record for {symbol} with ex-date {ex_dividend_date}")
+                    else:
+                        logger.debug(f"Updated existing dividend record for {symbol} with ex-date {ex_dividend_date}")
 
             # Update valuation metrics - find latest and update
             latest_valuation = ValuationMetric.objects.filter(stock=stock).order_by('-metric_date').first()
