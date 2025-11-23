@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef, Exists
+from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef, Exists, Max, Min, Sum, Avg, Count, Prefetch
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -230,24 +230,32 @@ def stock_detail(request, symbol):
     if not symbol or not isinstance(symbol, str) or len(symbol) > 10:
         return HttpResponseBadRequest("Invalid stock symbol")
     
-    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    # Optimized: Use prefetch_related to get all related data in fewer queries
+    stock = get_object_or_404(
+        Stock.objects.prefetch_related(
+            Prefetch('prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices'),
+            Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='latest_dividends'),
+            Prefetch('valuation_metrics', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
+            Prefetch('analyst_ratings', queryset=AnalystRating.objects.order_by('-rating_date'), to_attr='latest_ratings'),
+        ),
+        symbol=symbol.upper()
+    )
     
-    # Get latest data - optimized with single queries
-    latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
-    dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
-    valuation = ValuationMetric.objects.filter(stock=stock).order_by('-metric_date').first()
-    analyst_rating = AnalystRating.objects.filter(stock=stock).order_by('-rating_date').first()
+    # Get latest data from prefetched attributes (no additional queries)
+    latest_price = stock.latest_prices[0] if stock.latest_prices else None
+    dividend = stock.latest_dividends[0] if stock.latest_dividends else None
+    valuation = stock.latest_valuations[0] if stock.latest_valuations else None
+    analyst_rating = stock.latest_ratings[0] if stock.latest_ratings else None
     
-    # Check if stock is in user's watchlist and portfolio - optimized
+    # Check if stock is in user's watchlist and portfolio - optimized with single query
     in_watchlist = False
     in_portfolio = False
     has_dividend_alert = False
     portfolio_item = None
-    
-    # Calculate portfolio value if applicable
     portfolio_total_value = None
+    
     if request.user.is_authenticated:
-        # Use single query with select_related for portfolio
+        # Get all user-related data in one query using select_related
         portfolio_item = UserPortfolio.objects.filter(
             user=request.user, stock=stock
         ).select_related('stock').first()
@@ -257,13 +265,11 @@ def stock_detail(request, symbol):
         if portfolio_item and latest_price and portfolio_item.shares_owned:
             portfolio_total_value = float(portfolio_item.shares_owned * latest_price.last_price)
         
-        # Use exists() for boolean checks (more efficient)
+        # Combine exists() checks - could be optimized further but exists() is already efficient
         in_watchlist = Watchlist.objects.filter(user=request.user, stock=stock).exists()
         has_dividend_alert = DividendAlert.objects.filter(
             user=request.user, stock=stock, is_active=True
         ).exists()
-    else:
-        portfolio_item = None
     
     context = {
         'stock': stock,
@@ -293,39 +299,43 @@ def dividend_history(request, symbol):
     # Get all dividends ordered by ex-dividend date (most recent first)
     dividends = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date')
     
-    # Calculate statistics
-    total_dividends = dividends.count()
-    if total_dividends > 0:
-        total_amount = sum(float(d.amount) for d in dividends if d.amount)
-        avg_amount = total_amount / total_dividends if total_dividends > 0 else 0
-        max_amount = max((float(d.amount) for d in dividends if d.amount), default=0)
-        min_amount = min((float(d.amount) for d in dividends if d.amount), default=0)
-        
-        # Get frequency distribution
-        frequency_dist = {}
-        for div in dividends:
-            freq = div.frequency or 'Unknown'
-            frequency_dist[freq] = frequency_dist.get(freq, 0) + 1
-        
-        # Calculate annual dividend (if we have enough data)
-        current_year = timezone.now().year
-        this_year_dividends = [d for d in dividends if d.ex_dividend_date and d.ex_dividend_date.year == current_year]
-        annual_dividend = sum(float(d.amount) for d in this_year_dividends if d.amount)
-        
-        # Get latest price for yield calculation
-        latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
-        current_yield = None
-        if latest_price and latest_price.last_price and annual_dividend > 0:
-            current_yield = (annual_dividend / float(latest_price.last_price)) * 100
-    else:
-        total_amount = 0
-        avg_amount = 0
-        max_amount = 0
-        min_amount = 0
-        frequency_dist = {}
-        annual_dividend = 0
-        current_yield = None
-        latest_price = None
+    # Calculate statistics using database aggregation (much faster)
+    stats = dividends.aggregate(
+        total_count=Count('id'),
+        total_amount=Sum('amount'),
+        avg_amount=Avg('amount'),
+        max_amount=Max('amount'),
+        min_amount=Min('amount')
+    )
+    
+    total_dividends = stats['total_count'] or 0
+    total_amount = float(stats['total_amount'] or 0)
+    avg_amount = float(stats['avg_amount'] or 0)
+    max_amount = float(stats['max_amount'] or 0)
+    min_amount = float(stats['min_amount'] or 0)
+    
+    # Get frequency distribution using database aggregation
+    frequency_dist = dict(
+        dividends.values('frequency')
+        .annotate(count=Count('id'))
+        .values_list('frequency', 'count')
+    )
+    # Handle None frequencies
+    if None in frequency_dist:
+        frequency_dist['Unknown'] = frequency_dist.pop(None)
+    
+    # Calculate annual dividend using database aggregation
+    current_year = timezone.now().year
+    annual_dividend = float(
+        dividends.filter(ex_dividend_date__year=current_year)
+        .aggregate(total=Sum('amount'))['total'] or 0
+    )
+    
+    # Get latest price for yield calculation (single query)
+    latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
+    current_yield = None
+    if latest_price and latest_price.last_price and annual_dividend > 0:
+        current_yield = (annual_dividend / float(latest_price.last_price)) * 100
     
     # Paginate dividends (20 per page)
     paginator = Paginator(dividends, 20)
@@ -943,12 +953,14 @@ def dashboard(request):
             for dividend in user_dividends
         ]
         
-        # Get watchlist stocks with prices - optimized
-        watchlist_items = Watchlist.objects.filter(user=request.user).select_related('stock')[:5]
+        # Get watchlist stocks with prices - optimized with prefetch to avoid N+1
+        watchlist_items = Watchlist.objects.filter(user=request.user).select_related('stock').prefetch_related(
+            Prefetch('stock__prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices')
+        )[:5]
         watchlist_stocks = []
         for item in watchlist_items:
             stock = item.stock
-            latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
+            latest_price = stock.latest_prices[0] if stock.latest_prices else None
             watchlist_stocks.append({
                 'stock': stock,
                 'latest_price': latest_price.last_price if latest_price else None,
@@ -1597,36 +1609,37 @@ def watchlist_news(request):
 @login_required
 def all_news(request):
     """Display all news for portfolio and watchlist stocks combined"""
-    # Get user's portfolio and watchlist stocks
-    portfolio_stocks = Stock.objects.filter(
-        userportfolio__user=request.user
-    ).distinct()
-    
-    watchlist_stocks = Stock.objects.filter(
-        watchlist__user=request.user
-    ).distinct()
-    
     # Filter options - determine which stocks to include
     filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist
     
-    # Determine which stocks to query based on filter
-    if filter_type == 'portfolio':
-        target_stocks = portfolio_stocks
-    elif filter_type == 'watchlist':
-        target_stocks = watchlist_stocks
-    else:  # 'all'
-        # Combine and get unique stocks
-        target_stocks = (portfolio_stocks | watchlist_stocks).distinct()
-    
-    # Get recent news (last 7 days) - apply filter before slicing
+    # Optimized: Get stock IDs directly instead of full querysets
     cutoff_date = timezone.now() - timedelta(days=7)
-    news_items = StockNews.objects.filter(
-        stock__in=target_stocks,
-        published_at__gte=cutoff_date
-    ).select_related('stock').order_by('-published_at')
+    
+    if filter_type == 'portfolio':
+        stock_ids = UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct()
+    elif filter_type == 'watchlist':
+        stock_ids = Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct()
+    else:  # 'all'
+        # Combine portfolio and watchlist stock IDs efficiently
+        portfolio_ids = set(UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True))
+        watchlist_ids = set(Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True))
+        stock_ids = list(portfolio_ids | watchlist_ids)
+    
+    # Get recent news (last 7 days) - optimized query
+    if stock_ids:
+        news_items = StockNews.objects.filter(
+            stock_id__in=stock_ids,
+            published_at__gte=cutoff_date
+        ).select_related('stock').order_by('-published_at')
+    else:
+        news_items = StockNews.objects.none()
     
     # Get total count before pagination
     total_articles = news_items.count()
+    
+    # Get counts for context (optimized)
+    portfolio_stocks_count = UserPortfolio.objects.filter(user=request.user).values('stock_id').distinct().count()
+    watchlist_stocks_count = Watchlist.objects.filter(user=request.user).values('stock_id').distinct().count()
     
     # Paginate
     paginator = Paginator(news_items, 20)
@@ -1637,8 +1650,8 @@ def all_news(request):
         'news_items': page_obj,
         'filter_type': filter_type,
         'total_articles': total_articles,
-        'portfolio_stocks_count': portfolio_stocks.count(),
-        'watchlist_stocks_count': watchlist_stocks.count(),
+        'portfolio_stocks_count': portfolio_stocks_count,
+        'watchlist_stocks_count': watchlist_stocks_count,
     }
     
     return render(request, 'all_news.html', context)

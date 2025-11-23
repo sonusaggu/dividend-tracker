@@ -20,6 +20,8 @@ class Command(BaseCommand):
         
         self.stdout.write(f"🚀 Starting daily stock scrape for {days} days...")
         logger.info(f"🚀 Starting daily stock scrape for {days} days...")
+        self.stdout.write("⏳ This may take a few minutes. Progress will be shown below...")
+        self.stdout.write("")
         
         scraper = TSXScraper()
         results = scraper.update_daily_stocks(days=days)
@@ -27,6 +29,7 @@ class Command(BaseCommand):
         success_count = sum(1 for r in results if r['success'])
         failed_count = len(results) - success_count
         
+        self.stdout.write("")
         self.stdout.write(
             self.style.SUCCESS(f"✅ Daily scrape completed: {success_count}/{len(results)} stocks updated")
         )
@@ -35,4 +38,9 @@ class Command(BaseCommand):
         # Log summary
         if failed_count > 0:
             failed_symbols = [r['symbol'] for r in results if not r['success']]
+            self.stdout.write(
+                self.style.WARNING(f"⚠️  Failed to update {failed_count} stocks: {', '.join(failed_symbols[:10])}")
+            )
             logger.warning(f"⚠️ Failed to update {failed_count} stocks: {failed_symbols[:10]}")  # Log first 10
+        else:
+            self.stdout.write(self.style.SUCCESS("✨ All stocks processed successfully!"))
