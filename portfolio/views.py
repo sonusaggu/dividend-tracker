@@ -1115,6 +1115,55 @@ def trigger_daily_scrape(request):
 
 
 @csrf_exempt
+@require_POST
+def trigger_newsletter(request):
+    """
+    API endpoint to trigger newsletter sending
+    Runs synchronously (newsletters are usually fast)
+    CSRF exempt - uses secret key authentication instead
+    """
+    import threading
+    
+    # Simple authentication
+    secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
+    if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
+        logger.warning(f"Unauthorized attempt to trigger newsletter from {request.META.get('REMOTE_ADDR')}")
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Get optional parameters
+    dry_run = request.POST.get('dry_run', '').lower() == 'true'
+    
+    try:
+        # Run newsletter sending in background thread (optional, can be synchronous)
+        def run_newsletter():
+            try:
+                logger.info(f"Starting newsletter sending (dry_run={dry_run})")
+                call_command('send_dividend_newsletter', dry_run=dry_run)
+                logger.info(f"Newsletter sending completed")
+            except Exception as e:
+                logger.error(f"Error in newsletter sending: {e}")
+        
+        # Start background thread
+        thread = threading.Thread(target=run_newsletter, daemon=True)
+        thread.start()
+        
+        # Return immediately
+        return JsonResponse({
+            'status': 'accepted', 
+            'message': f'Newsletter sending started in background (dry_run={dry_run})',
+            'dry_run': dry_run,
+            'note': 'Newsletter is being sent asynchronously. Check logs for progress.'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error triggering newsletter: {e}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': f'Error: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
 def scrape_status(request):
     """
     API endpoint to check scraping status

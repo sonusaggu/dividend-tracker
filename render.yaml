@@ -46,3 +46,41 @@ services:
         value: "False"
       - key: PYTHON_VERSION
         value: 3.11.5
+
+  # Cron job to send weekly newsletters (runs every Monday at 9 AM EST / 2 PM UTC)
+  - type: cron
+    name: stockfolio-weekly-newsletter
+    env: python
+    plan: free
+    schedule: "0 14 * * 1"  # Every Monday at 2 PM UTC (9 AM EST)
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py send_dividend_newsletter"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stockfolio-db
+          property: connectionString
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: stockfolio-web
+          property: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.5
+      # Email Configuration (set these in Render Dashboard)
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      - key: EMAIL_HOST
+        sync: false  # Set manually in Render Dashboard
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false  # Set manually in Render Dashboard
+      - key: EMAIL_HOST_PASSWORD
+        sync: false  # Set manually in Render Dashboard (use App Password for Gmail)
+      - key: DEFAULT_FROM_EMAIL
+        sync: false  # Set manually in Render Dashboard
