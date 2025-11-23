@@ -1026,8 +1026,11 @@ def trigger_dividend_alerts(request):
 def trigger_daily_scrape(request):
     """
     API endpoint to trigger daily stock scraping
+    Runs asynchronously to avoid Render.com timeout issues
     Note: CSRF protection is handled via secret key authentication
     """
+    import threading
+    
     # Simple authentication
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
     if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
@@ -1046,13 +1049,25 @@ def trigger_daily_scrape(request):
         except (ValueError, TypeError):
             days = 60
         
-        # Run the management command
-        call_command('daily_scrape', days=days)
+        # Run scraping in background thread to avoid timeout
+        def run_scrape():
+            try:
+                logger.info(f"Starting background scrape for {days} days")
+                call_command('daily_scrape', days=days)
+                logger.info(f"Background scrape completed for {days} days")
+            except Exception as e:
+                logger.error(f"Error in background scrape: {e}")
         
+        # Start background thread
+        thread = threading.Thread(target=run_scrape, daemon=True)
+        thread.start()
+        
+        # Return immediately to avoid timeout
         return JsonResponse({
-            'status': 'success', 
-            'message': f'Daily stock scrape completed for {days} days',
-            'days': days
+            'status': 'accepted', 
+            'message': f'Daily stock scrape started in background for {days} days',
+            'days': days,
+            'note': 'Scraping is running asynchronously. Check logs for progress.'
         })
         
     except Exception as e:
