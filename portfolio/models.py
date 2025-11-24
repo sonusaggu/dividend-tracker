@@ -299,4 +299,31 @@ class PortfolioSnapshot(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.snapshot_date} - ${self.total_value}"    
+        return f"{self.user.username} - {self.snapshot_date} - ${self.total_value}"
+
+
+class EmailVerification(models.Model):
+    """Email verification tokens for user account activation"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='email_verification', db_index=True)
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False, db_index=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', 'is_verified']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {'Verified' if self.is_verified else 'Pending'}"
+    
+    def is_expired(self):
+        """Check if verification token is expired (24 hours)"""
+        from datetime import timedelta
+        if self.is_verified:
+            return False
+        expiry_time = self.created_at + timedelta(hours=24)
+        return timezone.now() > expiry_time    

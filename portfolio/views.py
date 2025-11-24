@@ -90,7 +90,74 @@ def login_view(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # Check if email is verified (only if EmailVerification table exists)
+            try:
+                from portfolio.models import EmailVerification
+                from django.db import connection
+                
+                # Check if table exists (works for both PostgreSQL and SQLite)
+                table_name = EmailVerification._meta.db_table
+                table_exists = False
+                
+                try:
+                    if connection.vendor == 'postgresql':
+                        with connection.cursor() as cursor:
+                            cursor.execute(
+                                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)",
+                                [table_name]
+                            )
+                            table_exists = cursor.fetchone()[0]
+                    elif connection.vendor == 'sqlite':
+                        with connection.cursor() as cursor:
+                            cursor.execute(
+                                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                                [table_name]
+                            )
+                            table_exists = cursor.fetchone() is not None
+                    else:
+                        # For other databases, try to query the table
+                        EmailVerification.objects.first()
+                        table_exists = True
+                except Exception:
+                    table_exists = False
+                
+                if table_exists:
+                    try:
+                        verification = EmailVerification.objects.get(user=user)
+                        if not verification.is_verified:
+                            messages.warning(
+                                request,
+                                'Please verify your email address before logging in. Check your inbox for the verification email, or request a new one.'
+                            )
+                            return redirect('verify_email_sent')
+                    except EmailVerification.DoesNotExist:
+                        # If no verification record exists, create one and send email
+                        from portfolio.utils.email_verification import create_verification_token, send_verification_email
+                        verification = create_verification_token(user)
+                        send_verification_email(user, verification.token)
+                        messages.warning(
+                            request,
+                            'Please verify your email address. A verification email has been sent to your inbox.'
+                        )
+                        return redirect('verify_email_sent')
+            except Exception as e:
+                # If table doesn't exist or any error, allow login (graceful degradation)
+                logger.debug(f"Email verification check skipped: {e}")
+            
             login(request, user)
+            
+            # Handle "Remember Me" - set session expiry
+            remember_me = request.POST.get('remember-me')
+            if remember_me == 'on':  # Checkbox returns 'on' when checked
+                # Set session to expire in 30 days
+                request.session.set_expiry(2592000)  # 30 days in seconds
+                # Also set persistent cookie
+                request.session.setdefault('remember_me', True)
+            else:
+                # Default session expiry (when browser closes)
+                request.session.set_expiry(0)
+                request.session.pop('remember_me', None)
+            
             # Redirect to next page if provided, otherwise to dashboard
             next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
             # Validate next URL to prevent open redirects
@@ -99,9 +166,11 @@ def login_view(request):
                 # Block external URLs - only allow same domain
                 if not next_url.startswith(request.build_absolute_uri('/')):
                     next_url = 'dashboard'
-            elif not next_url.startswith('/') and not next_url:
-                # If it's not a relative URL and not empty, use dashboard
+            elif next_url and not next_url.startswith('/'):
+                # If it's not a relative URL and not empty, check if it's a valid URL name
+                # For now, default to dashboard if it doesn't start with /
                 next_url = 'dashboard'
+            
             return redirect(next_url)
         else:
             messages.error(request, 'Invalid username or password.')
@@ -114,31 +183,86 @@ def login_view(request):
 
 @csrf_protect
 def register_view(request):
-    """User registration view with CSRF protection"""
+    """User registration view with CSRF protection and email verification"""
+    # If user is already authenticated, redirect to dashboard
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
             try:
-                # === EMAIL CHECK ===
-                email = form.cleaned_data.get('email', '').lower()
-                allowed_domains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com']
-                
-                domain = email.split('@')[-1] if '@' in email else ''
-                if domain not in allowed_domains:
-                    messages.error(request, 'Please use Gmail, Outlook, Hotmail, Yahoo, or iCloud for registration.')
-                    return render(request, 'register.html', {'form': form})
-                # === END CHECK ===
-                
+                # Email validation is now handled in the form's clean_email method
+                # Additional checks are done there (format, domain, disposable, etc.)
                 user = form.save()
-                login(request, user)
-                messages.success(request, 'Registration successful!')
-                return redirect('dashboard')
+                
+                # Create email verification token
+                try:
+                    from portfolio.utils.email_verification import create_verification_token, send_verification_email
+                    from portfolio.models import EmailVerification
+                    from django.db import connection
+                    
+                    # Check if EmailVerification table exists (works for both PostgreSQL and SQLite)
+                    table_name = EmailVerification._meta.db_table
+                    table_exists = False
+                    
+                    try:
+                        if connection.vendor == 'postgresql':
+                            with connection.cursor() as cursor:
+                                cursor.execute(
+                                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)",
+                                    [table_name]
+                                )
+                                table_exists = cursor.fetchone()[0]
+                        elif connection.vendor == 'sqlite':
+                            with connection.cursor() as cursor:
+                                cursor.execute(
+                                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                                    [table_name]
+                                )
+                                table_exists = cursor.fetchone() is not None
+                        else:
+                            # For other databases, try to query the table
+                            EmailVerification.objects.first()
+                            table_exists = True
+                    except Exception:
+                        table_exists = False
+                    
+                    if table_exists:
+                        verification = create_verification_token(user)
+                        email_sent = send_verification_email(user, verification.token)
+                    else:
+                        # Table doesn't exist yet - skip verification for now
+                        email_sent = False
+                        logger.warning("EmailVerification table doesn't exist yet. Skipping email verification.")
+                except Exception as e:
+                    logger.error(f"Error creating verification token: {e}")
+                    email_sent = False
+                
+                if email_sent:
+                    messages.success(
+                        request, 
+                        f'Registration successful! Please check your email ({user.email}) to verify your account. You can log in after verification.'
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        'Account created, but we couldn\'t send the verification email. Please contact support or try logging in.'
+                    )
+                
+                # Don't auto-login - user must verify email first
+                return redirect('verify_email_sent')
             except Exception as e:
                 logger.error(f"Error during user registration: {e}")
                 messages.error(request, 'An error occurred during registration. Please try again.')
         else:
             # Log form errors for debugging (not shown to user)
             logger.debug(f"Registration form errors: {form.errors}")
+            # Show user-friendly error messages
+            if 'username' in form.errors:
+                for error in form.errors['username']:
+                    if 'already exists' in str(error).lower():
+                        messages.error(request, 'This username is already taken. Please choose another.')
     else:
         form = RegistrationForm()
     
@@ -147,7 +271,146 @@ def register_view(request):
 def logout_view(request):
     """User logout view"""
     logout(request)
-    return redirect('home') 
+    return redirect('home')
+
+
+def verify_email(request, token):
+    """Verify user email with token"""
+    from portfolio.models import EmailVerification
+    from portfolio.utils.email_verification import create_verification_token, send_verification_email
+    from django.db import connection
+    
+    try:
+        # Check if table exists (works for both PostgreSQL and SQLite)
+        table_name = EmailVerification._meta.db_table
+        table_exists = False
+        
+        try:
+            if connection.vendor == 'postgresql':
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)",
+                        [table_name]
+                    )
+                    table_exists = cursor.fetchone()[0]
+            elif connection.vendor == 'sqlite':
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                        [table_name]
+                    )
+                    table_exists = cursor.fetchone() is not None
+            else:
+                # For other databases, try to query the table
+                EmailVerification.objects.first()
+                table_exists = True
+        except Exception:
+            table_exists = False
+        
+        if not table_exists:
+            messages.error(request, 'Email verification is not yet available. Please run migrations.')
+            return redirect('login')
+        
+        verification = EmailVerification.objects.get(token=token, is_verified=False)
+        
+        # Check if token is expired
+        if verification.is_expired():
+            # Generate new token and send new email
+            new_verification = create_verification_token(verification.user)
+            send_verification_email(verification.user, new_verification.token)
+            messages.error(
+                request,
+                'This verification link has expired. A new verification email has been sent to your inbox.'
+            )
+            return redirect('verify_email_sent')
+        
+        # Verify the email
+        verification.is_verified = True
+        verification.verified_at = timezone.now()
+        verification.save()
+        
+        messages.success(request, 'Email verified successfully! You can now log in to your account.')
+        return redirect('login')
+        
+    except EmailVerification.DoesNotExist:
+        messages.error(request, 'Invalid or already used verification link.')
+        return redirect('login')
+    except Exception as e:
+        logger.error(f"Error verifying email: {e}")
+        messages.error(request, 'An error occurred during verification. Please try again.')
+        return redirect('login')
+
+
+def verify_email_sent(request):
+    """Show page after registration or when verification email is sent"""
+    return render(request, 'verify_email_sent.html')
+
+
+@login_required
+def resend_verification_email(request):
+    """Resend verification email to logged-in user"""
+    from portfolio.models import EmailVerification
+    from portfolio.utils.email_verification import create_verification_token, send_verification_email
+    from django.db import connection
+    
+    try:
+        # Check if table exists (works for both PostgreSQL and SQLite)
+        table_name = EmailVerification._meta.db_table
+        table_exists = False
+        
+        try:
+            if connection.vendor == 'postgresql':
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)",
+                        [table_name]
+                    )
+                    table_exists = cursor.fetchone()[0]
+            elif connection.vendor == 'sqlite':
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                        [table_name]
+                    )
+                    table_exists = cursor.fetchone() is not None
+            else:
+                # For other databases, try to query the table
+                EmailVerification.objects.first()
+                table_exists = True
+        except Exception:
+            table_exists = False
+        
+        if not table_exists:
+            messages.error(request, 'Email verification is not yet available. Please run migrations.')
+            return redirect('dashboard')
+        
+        # Get or create verification record
+        verification, created = EmailVerification.objects.get_or_create(
+            user=request.user,
+            defaults={'is_verified': False}
+        )
+        
+        if verification.is_verified:
+            messages.info(request, 'Your email is already verified.')
+            return redirect('dashboard')
+        
+        # Generate new token
+        verification = create_verification_token(request.user)
+        
+        # Send email
+        email_sent = send_verification_email(request.user, verification.token)
+        
+        if email_sent:
+            messages.success(request, f'Verification email sent to {request.user.email}. Please check your inbox.')
+        else:
+            messages.error(request, 'Failed to send verification email. Please try again later.')
+        
+        return redirect('verify_email_sent')
+        
+    except Exception as e:
+        logger.error(f"Error resending verification email: {e}")
+        messages.error(request, 'An error occurred. Please try again.')
+        return redirect('dashboard') 
 
 def home_view(request):
     """Home page with upcoming dividends - Fully optimized"""

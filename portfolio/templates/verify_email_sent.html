@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Your Email - StockFolio{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4">
+    <div class="max-w-7xl mx-auto">
+        <div class="max-w-md mx-auto">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100 text-center">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                    Check Your Email
+                </h1>
+                
+                <p class="text-gray-600 mb-6">
+                    We've sent a verification email to your inbox. Please click the verification link in the email to activate your account.
+                </p>
+                
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6 text-left">
+                    <p class="text-sm text-blue-800">
+                        <strong>📧 What to do next:</strong>
+                    </p>
+                    <ul class="text-sm text-blue-700 mt-2 space-y-1 list-disc list-inside">
+                        <li>Check your inbox (and spam folder)</li>
+                        <li>Click the verification link in the email</li>
+                        <li>Your account will be activated immediately</li>
+                        <li>Then you can log in to StockFolio</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-6 text-left">
+                    <p class="text-sm text-yellow-800">
+                        <strong>⏰ Note:</strong> The verification link expires in 24 hours. If you don't receive the email within a few minutes, check your spam folder or request a new verification email.
+                    </p>
+                </div>
+                
+                <div class="space-y-3">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'resend_verification' %}" 
+                           class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
+                            Resend Verification Email
+                        </a>
+                        <a href="{% url 'dashboard' %}" 
+                           class="block w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-3 px-6 rounded-xl font-semibold transition-all duration-200">
+                            Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" 
+                           class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
+                            Go to Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

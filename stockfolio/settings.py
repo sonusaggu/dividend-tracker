@@ -159,16 +159,19 @@ X_FRAME_OPTIONS = 'DENY'
 def clean_email_credential(value):
     """Clean email credentials to remove non-ASCII characters that cause encoding issues"""
     if not value:
-        return value
+        return value or ''
     # Convert to string and strip whitespace
     value = str(value).strip()
+    if not value:
+        return ''
     # Remove non-breaking spaces and other problematic characters
     value = value.replace('\xa0', ' ').replace('\u00a0', ' ')
     value = value.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '')
     value = value.replace('\ufeff', '')
     # Remove any remaining non-ASCII characters that can't be encoded as ASCII
     value = value.encode('ascii', 'ignore').decode('ascii')
-    return value.strip()
+    result = value.strip()
+    return result if result else ''
 
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
@@ -176,4 +179,30 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = clean_email_credential(config('EMAIL_HOST_USER', default=''))
 EMAIL_HOST_PASSWORD = clean_email_credential(config('EMAIL_HOST_PASSWORD', default=''))
-DEFAULT_FROM_EMAIL = clean_email_credential(config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER))
+
+# Set DEFAULT_FROM_EMAIL - ensure it's never empty
+# Priority: 1) DEFAULT_FROM_EMAIL env var, 2) EMAIL_HOST_USER, 3) fallback default
+default_from_email_env = config('DEFAULT_FROM_EMAIL', default='')
+DEFAULT_FROM_EMAIL = None
+
+if default_from_email_env and default_from_email_env.strip():
+    cleaned = clean_email_credential(default_from_email_env)
+    if cleaned and cleaned.strip():
+        DEFAULT_FROM_EMAIL = cleaned
+
+if not DEFAULT_FROM_EMAIL and EMAIL_HOST_USER and EMAIL_HOST_USER.strip():
+    cleaned = clean_email_credential(EMAIL_HOST_USER)
+    if cleaned and cleaned.strip():
+        DEFAULT_FROM_EMAIL = cleaned
+
+# Final fallback - ensure DEFAULT_FROM_EMAIL is never empty
+if not DEFAULT_FROM_EMAIL or not DEFAULT_FROM_EMAIL.strip():
+    DEFAULT_FROM_EMAIL = 'noreply@dividend.forum'
+
+# Site domain for password reset emails
+if RENDER_EXTERNAL_HOSTNAME:
+    SITE_DOMAIN = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+elif 'dividend.forum' in ALLOWED_HOSTS:
+    SITE_DOMAIN = "https://dividend.forum"
+else:
+    SITE_DOMAIN = config('SITE_DOMAIN', default='http://localhost:8000')
