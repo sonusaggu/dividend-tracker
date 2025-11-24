@@ -1715,7 +1715,10 @@ def trigger_dividend_alerts(request):
     """
     API endpoint to trigger dividend alert emails
     CSRF exempt - uses secret key authentication instead
+    Runs in background thread to avoid timeout issues
     """
+    import threading
+    
     # Simple authentication (customize as needed)
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
     if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
@@ -1726,17 +1729,33 @@ def trigger_dividend_alerts(request):
     dry_run = request.POST.get('dry_run', '').lower() == 'true'
     
     try:
-        # Run the management command
-        call_command('send_dividend_alerts', dry_run=dry_run)
+        # Run the management command in background thread to avoid timeout
+        def run_alerts():
+            try:
+                logger.info(f"Starting dividend alerts processing (dry_run={dry_run})")
+                call_command('send_dividend_alerts', dry_run=dry_run)
+                logger.info(f"Dividend alerts processing completed")
+            except Exception as e:
+                logger.error(f"Error in dividend alerts processing: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
         
+        # Start background thread
+        thread = threading.Thread(target=run_alerts, daemon=True)
+        thread.start()
+        
+        # Return immediately to avoid timeout
         return JsonResponse({
-            'status': 'success', 
-            'message': 'Dividend alerts processed successfully',
-            'dry_run': dry_run
+            'status': 'accepted', 
+            'message': f'Dividend alerts processing started in background (dry_run={dry_run})',
+            'dry_run': dry_run,
+            'note': 'Alerts are being processed asynchronously. Check logs for progress.'
         })
         
     except Exception as e:
         logger.error(f"Error triggering dividend alerts: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return JsonResponse({
             'status': 'error', 
             'message': f'Error: {str(e)}'

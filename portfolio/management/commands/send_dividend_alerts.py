@@ -2,12 +2,19 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from portfolio.models import DividendAlert, Dividend
 from datetime import date, datetime
-import pytz
 import logging
 from collections import defaultdict
 from portfolio.utils.email_api import send_dividend_alert_email
 
 logger = logging.getLogger(__name__)
+
+# Try to import pytz, fallback to Django's timezone if not available
+try:
+    import pytz
+    HAS_PYTZ = True
+except ImportError:
+    HAS_PYTZ = False
+    logger.warning("pytz not available, using Django's timezone utilities")
 
 class Command(BaseCommand):
     help = 'Send dividend alert emails to users'
@@ -21,8 +28,15 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         dry_run = options['dry_run']
-        toronto_tz = pytz.timezone('America/Toronto')
-        today = timezone.now().astimezone(toronto_tz).date()
+        
+        # Get today's date in Toronto timezone
+        if HAS_PYTZ:
+            toronto_tz = pytz.timezone('America/Toronto')
+            today = timezone.now().astimezone(toronto_tz).date()
+        else:
+            # Use Django's timezone utilities (works with USE_TZ=True)
+            # Django's timezone.now() already respects TIME_ZONE setting
+            today = timezone.now().date()
 
         alerts = DividendAlert.objects.filter(is_active=True)\
             .select_related('stock', 'user')
@@ -74,7 +88,16 @@ class Command(BaseCommand):
                 raw_date = dividend.ex_dividend_date or dividend.payment_date
 
                 if isinstance(raw_date, datetime):
-                    dividend_date = raw_date.astimezone(toronto_tz).date() if timezone.is_aware(raw_date) else toronto_tz.localize(raw_date).date()
+                    if HAS_PYTZ:
+                        dividend_date = raw_date.astimezone(toronto_tz).date() if timezone.is_aware(raw_date) else toronto_tz.localize(raw_date).date()
+                    else:
+                        # Use Django's timezone utilities
+                        if timezone.is_aware(raw_date):
+                            dividend_date = timezone.localtime(raw_date).date()
+                        else:
+                            # Make naive datetime aware, then convert to local time
+                            aware_date = timezone.make_aware(raw_date)
+                            dividend_date = timezone.localtime(aware_date).date()
                 elif isinstance(raw_date, date):
                     dividend_date = raw_date
                 else:
