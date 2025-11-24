@@ -136,6 +136,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # For production deployment
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login/logout redirection settings
+LOGIN_URL = '/login/'  # URL to redirect to when login is required
 LOGIN_REDIRECT_URL = 'dashboard'  # After login, go to dashboard
 LOGOUT_REDIRECT_URL = 'home'      # After logout, go to home page
 

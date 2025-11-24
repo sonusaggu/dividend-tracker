@@ -72,26 +72,44 @@ def favicon_view(request):
 
 def login_view(request):
     """User login view with CSRF protection"""
+    # If user is already authenticated, redirect to dashboard
+    if request.user.is_authenticated:
+        next_url = request.GET.get('next', 'dashboard')
+        return redirect(next_url)
+    
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         
         if not username or not password:
             messages.error(request, 'Username and password are required.')
-            return render(request, 'login.html')
+            # Preserve next parameter in GET
+            context = {'next': request.POST.get('next') or request.GET.get('next')}
+            return render(request, 'login.html', context)
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
             # Redirect to next page if provided, otherwise to dashboard
             next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
+            # Validate next URL to prevent open redirects
+            # Only allow relative URLs (starting with /) or named URL patterns
+            if next_url.startswith('http://') or next_url.startswith('https://'):
+                # Block external URLs - only allow same domain
+                if not next_url.startswith(request.build_absolute_uri('/')):
+                    next_url = 'dashboard'
+            elif not next_url.startswith('/') and not next_url:
+                # If it's not a relative URL and not empty, use dashboard
+                next_url = 'dashboard'
             return redirect(next_url)
         else:
             messages.error(request, 'Invalid username or password.')
             # Don't reveal whether username exists
             logger.warning(f"Failed login attempt for username: {username}")
     
-    return render(request, 'login.html')
+    # Preserve next parameter for GET requests
+    context = {'next': request.GET.get('next')}
+    return render(request, 'login.html', context)
 
 @csrf_protect
 def register_view(request):

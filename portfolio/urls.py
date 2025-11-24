@@ -6,6 +6,9 @@ urlpatterns = [
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('favicon.ico', views.favicon_view, name='favicon'),
     
+    # Redirect old Django auth URLs to custom URLs
+    path('accounts/login/', views.login_view, name='django_login_redirect'),
+    
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),

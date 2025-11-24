@@ -23,6 +23,9 @@
             <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100">
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% endif %}
                     
                     {% if messages %}
                         {% for message in messages %}
