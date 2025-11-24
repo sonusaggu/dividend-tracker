@@ -23,6 +23,7 @@ urlpatterns = [
     path('dividend-alerts/<int:stock_id>/', views.manage_dividend_alerts, name='manage_dividend_alerts'),
     path('watchlist/', views.watchlist_view, name='watchlist'),
     path('portfolio/', views.portfolio_view, name='portfolio'),
+    path('portfolio/export/', views.export_portfolio, name='export_portfolio'),
     path('check-watchlist/<int:stock_id>/', views.check_watchlist_status, name='check_watchlist_status'),
     path('stock/<str:symbol>/alerts/', views.manage_dividend_alerts, name='manage_dividend_alerts'),
     path('stock/<str:symbol>/alerts/toggle/', views.toggle_dividend_alert, name='toggle_dividend_alert'),

@@ -6,6 +6,7 @@ from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, Ou
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+import csv
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
@@ -842,6 +843,26 @@ def portfolio_view(request):
             if total_value > 0:
                 sector_allocation_percent[sector] = (value / total_value) * 100
         
+        # Prepare sector allocation data for chart (with values)
+        sector_chart_data = []
+        for sector, percent in sector_allocation_percent.items():
+            sector_value = sector_allocation.get(sector, 0)
+            sector_chart_data.append({
+                'sector': sector,
+                'percent': round(percent, 2),
+                'value': round(sector_value, 2)
+            })
+        # Sort by value descending
+        sector_chart_data.sort(key=lambda x: x['value'], reverse=True)
+        
+        # Calculate dividend income projection
+        dividend_projection = PortfolioService.calculate_dividend_projection(portfolio_items, months=12)
+        
+        # Calculate total projected income
+        total_projected_income = 0
+        if dividend_projection:
+            total_projected_income = dividend_projection[-1]['cumulative'] if dividend_projection else 0
+        
         return render(request, 'portfolio.html', {
             'portfolio_items': portfolio_data,
             'total_value': total_value,
@@ -853,12 +874,96 @@ def portfolio_view(request):
             'portfolio_yield': portfolio_yield,
             'yield_on_cost': yield_on_cost,
             'sector_allocation': sector_allocation_percent,
+            'sector_chart_data': sector_chart_data,  # For pie chart
+            'dividend_projection': dividend_projection,  # For projection chart
+            'total_projected_income': total_projected_income,  # Total projected income
         })
     
     except Exception as e:
         logger.error(f"Error in portfolio_view: {e}")
         messages.error(request, 'An error occurred while loading your portfolio.')
         return redirect('dashboard')
+
+
+@login_required
+def export_portfolio(request):
+    """Export portfolio to CSV"""
+    try:
+        portfolio_items = PortfolioService.get_portfolio_with_annotations(request.user)
+        
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="portfolio_export.csv"'
+        
+        writer = csv.writer(response)
+        # Write header
+        writer.writerow([
+            'Symbol', 'Company Name', 'Sector', 'Shares Owned', 'Average Cost',
+            'Current Price', 'Current Value', 'Investment Value', 'Gain/Loss',
+            'ROI %', 'Portfolio Allocation %', 'Annual Dividend Income',
+            'Yield on Cost %', 'Dividend Yield %'
+        ])
+        
+        # Calculate totals
+        total_value = 0
+        total_investment = 0
+        
+        for item in portfolio_items:
+            current_value = 0
+            if item.latest_price_value and item.shares_owned:
+                current_value = float(item.shares_owned * item.latest_price_value)
+                total_value += current_value
+            
+            investment_value = 0
+            if item.average_cost and item.shares_owned:
+                investment_value = float(item.shares_owned * item.average_cost)
+                total_investment += investment_value
+            
+            gain_loss = current_value - investment_value
+            roi_percent = (gain_loss / investment_value * 100) if investment_value > 0 else 0
+            allocation = (current_value / total_value * 100) if total_value > 0 else 0
+            
+            dividend_income = PortfolioService.calculate_annual_dividend(
+                item.latest_dividend_amount,
+                item.shares_owned,
+                item.latest_dividend_frequency
+            )
+            
+            yield_on_cost = (dividend_income / investment_value * 100) if investment_value > 0 else 0
+            dividend_yield = item.latest_dividend_yield or 0
+            
+            writer.writerow([
+                item.stock.symbol,
+                item.stock.company_name,
+                item.stock.sector or 'N/A',
+                item.shares_owned,
+                f"{item.average_cost:.2f}" if item.average_cost else '0.00',
+                f"{item.latest_price_value:.2f}" if item.latest_price_value else 'N/A',
+                f"{current_value:.2f}",
+                f"{investment_value:.2f}",
+                f"{gain_loss:.2f}",
+                f"{roi_percent:.2f}",
+                f"{allocation:.2f}",
+                f"{dividend_income:.2f}",
+                f"{yield_on_cost:.2f}",
+                f"{dividend_yield:.3f}" if dividend_yield else 'N/A'
+            ])
+        
+        # Write summary row
+        total_gain_loss = total_value - total_investment
+        total_roi = (total_gain_loss / total_investment * 100) if total_investment > 0 else 0
+        
+        writer.writerow([])  # Empty row
+        writer.writerow(['TOTAL', '', '', '', '', '', f"{total_value:.2f}", f"{total_investment:.2f}",
+                        f"{total_gain_loss:.2f}", f"{total_roi:.2f}", '100.00', '', '', ''])
+        
+        return response
+    
+    except Exception as e:
+        logger.error(f"Error exporting portfolio: {e}")
+        messages.error(request, 'Error exporting portfolio. Please try again.')
+        return redirect('portfolio')
+
 
 @login_required
 @require_POST
@@ -1058,49 +1163,105 @@ def dashboard(request):
             published_at__gte=cutoff_date
         ).select_related('stock').order_by('-published_at')[:5]
         
-        # Calculate performance metrics (simplified - can be enhanced)
+        # Get real performance data from snapshots (only if model exists)
+        performance_snapshots = None
+        try:
+            performance_snapshots = PortfolioService.get_portfolio_performance_history(request.user, days=180)
+        except Exception as e:
+            logger.debug(f"Could not get performance history: {e}")
+            performance_snapshots = None
+        
+        # Calculate performance metrics from snapshots
         monthly_performance = None
         quarterly_performance = None
         yearly_performance = None
         
-        # Performance data for chart - create a simple visualization
+        if performance_snapshots is not None:
+            try:
+                if hasattr(performance_snapshots, 'exists') and performance_snapshots.exists():
+                    snapshots_list = list(performance_snapshots)
+                    if snapshots_list:
+                        latest = snapshots_list[-1]  # Last item
+                        month_ago = timezone.now().date() - timedelta(days=30)
+                        quarter_ago = timezone.now().date() - timedelta(days=90)
+                        year_ago = timezone.now().date() - timedelta(days=365)
+                        
+                        month_snapshot = next((s for s in reversed(snapshots_list) if s.snapshot_date <= month_ago), None)
+                        quarter_snapshot = next((s for s in reversed(snapshots_list) if s.snapshot_date <= quarter_ago), None)
+                        year_snapshot = next((s for s in reversed(snapshots_list) if s.snapshot_date <= year_ago), None)
+                        
+                        if month_snapshot and latest.total_investment > 0:
+                            month_value_change = float(latest.total_value - month_snapshot.total_value)
+                            monthly_performance = (month_value_change / float(month_snapshot.total_value)) * 100
+                        
+                        if quarter_snapshot and latest.total_investment > 0:
+                            quarter_value_change = float(latest.total_value - quarter_snapshot.total_value)
+                            quarterly_performance = (quarter_value_change / float(quarter_snapshot.total_value)) * 100
+                        
+                        if year_snapshot and latest.total_investment > 0:
+                            year_value_change = float(latest.total_value - year_snapshot.total_value)
+                            yearly_performance = (year_value_change / float(year_snapshot.total_value)) * 100
+            except Exception as e:
+                logger.debug(f"Error processing performance snapshots: {e}")
+                performance_snapshots = None
+        
+        # Performance data for chart - use real snapshot data
         performance_data = []
-        if total_value > 0:
-            # Create 6 months of data showing relative performance
-            # Scale the data to show variation (normalize to 10-90% range for visualization)
-            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-            
-            if total_investment > 0:
-                # Calculate percentage change as a base
-                base_percent = abs(percent_gain_loss)
-                
-                for i, month in enumerate(months):
-                    # Create a trend that shows growth/decline
-                    # Normalize the percentage to fit in the chart (15-85% range)
-                    if percent_gain_loss >= 0:
-                        # Positive trend - growing over time
-                        # Start at lower value and grow
-                        base_height = 30 + (i * 8)
-                        variation = min(base_percent * 0.4, 25)  # Cap variation
-                        percent = max(15, min(85, base_height + variation))
-                    else:
-                        # Negative trend - declining over time
-                        # Start at higher value and decline
-                        base_height = 70 - (i * 6)
-                        variation = min(base_percent * 0.4, 25)  # Cap variation
-                        percent = max(15, min(85, base_height - variation))
+        if performance_snapshots is not None:
+            try:
+                if hasattr(performance_snapshots, 'exists') and performance_snapshots.exists():
+                    # Get last 6 months of data
+                    six_months_ago = timezone.now().date() - timedelta(days=180)
+                    recent_snapshots = list(performance_snapshots.filter(snapshot_date__gte=six_months_ago)[:6])
                     
-                    performance_data.append({
-                        'month': month,
-                        'percent': round(percent, 1)
-                    })
-            else:
-                # If we have value but no investment data, show flat line at 50%
-                for month in months:
-                    performance_data.append({
-                        'month': month,
-                        'percent': 50.0
-                    })
+                    if recent_snapshots:
+                        base_value = float(recent_snapshots[0].total_value) if recent_snapshots else total_value
+                        for snapshot in recent_snapshots:
+                            month_name = snapshot.snapshot_date.strftime('%b')
+                            if base_value > 0:
+                                # Calculate percentage change from base
+                                change_percent = ((float(snapshot.total_value) - base_value) / base_value) * 100
+                                # Normalize to 0-100 range for visualization
+                                normalized = max(0, min(100, 50 + (change_percent * 2)))
+                            else:
+                                normalized = 50
+                            
+                            performance_data.append({
+                                'month': month_name,
+                                'percent': round(normalized, 1),
+                                'value': float(snapshot.total_value)
+                            })
+            except Exception as e:
+                logger.debug(f"Error processing performance data: {e}")
+                performance_data = []
+        
+        # If no snapshots, create placeholder data
+        if not performance_data and total_value > 0:
+            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+            for month in months:
+                performance_data.append({
+                    'month': month,
+                    'percent': 50.0,
+                    'value': total_value
+                })
+        
+        # Calculate dividend income projection
+        dividend_projection = PortfolioService.calculate_dividend_projection(portfolio_items, months=12)
+        
+        # Calculate total projected income and average monthly
+        total_projected_income = 0
+        if dividend_projection:
+            total_projected_income = dividend_projection[-1]['cumulative'] if dividend_projection else 0
+        average_monthly_income = total_projected_income / 12 if total_projected_income > 0 else 0
+        
+        # Create portfolio snapshot for today (if not exists)
+        # Only create if PortfolioSnapshot model exists (migration has been run)
+        try:
+            from portfolio.models import PortfolioSnapshot
+            PortfolioService.create_portfolio_snapshot(request.user)
+        except (ImportError, Exception) as e:
+            # Model doesn't exist yet or other error - skip snapshot creation
+            logger.debug(f"Could not create portfolio snapshot (model may not exist yet): {e}")
         
         context = {
             'portfolio_items': portfolio_items,
@@ -1119,6 +1280,9 @@ def dashboard(request):
             'quarterly_performance': quarterly_performance,
             'yearly_performance': yearly_performance,
             'performance_data': performance_data,
+            'dividend_projection': dividend_projection,  # For projection chart
+            'total_projected_income': total_projected_income,  # Total projected income
+            'average_monthly_income': average_monthly_income,  # Average monthly income
             'news_items': recent_news,
         }
         
@@ -1507,17 +1671,32 @@ def scrape_status(request):
 @login_required
 @require_POST
 def delete_dividend_alert(request, alert_id):
-    """Delete a dividend alert"""
+    """Delete a dividend alert - supports both AJAX and regular requests"""
     try:
         alert = get_object_or_404(DividendAlert, id=alert_id, user=request.user)
         stock_symbol = alert.stock.symbol
         alert.delete()
+        
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Dividend alert for {stock_symbol} has been removed.'
+            })
         
         messages.success(request, f'Dividend alert for {stock_symbol} has been removed.')
         return redirect('my_alerts')
         
     except Exception as e:
         logger.error(f"Error deleting dividend alert: {e}")
+        
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An error occurred while deleting the alert.'
+            }, status=500)
+        
         messages.error(request, 'An error occurred while deleting the alert.')
         return redirect('my_alerts')
 

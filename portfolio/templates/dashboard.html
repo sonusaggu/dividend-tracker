@@ -388,6 +388,50 @@
       </div>
     </div>
 
+    <!-- Dividend Income Projection Chart -->
+    {% if dividend_projection %}
+    <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+        <svg class="w-7 h-7 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        Dividend Income Projection (Next 12 Months)
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Chart -->
+        <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
+          <canvas id="dividendProjectionChart" height="300"></canvas>
+        </div>
+        
+        <!-- Summary Stats -->
+        <div class="space-y-4">
+          <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
+            <p class="text-sm text-green-100 mb-2">Total Projected Income</p>
+            <p class="text-4xl font-bold">${{ total_projected_income|floatformat:2|intcomma }}</p>
+            <p class="text-sm text-green-100 mt-2">Over next 12 months</p>
+          </div>
+          
+          <div class="bg-white rounded-xl p-4 border border-gray-200">
+            <p class="text-sm text-gray-600 mb-2">Average Monthly Income</p>
+            <p class="text-2xl font-bold text-gray-900">
+              ${{ average_monthly_income|floatformat:2|intcomma }}
+            </p>
+          </div>
+          
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            {% for month in dividend_projection|slice:":6" %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span class="text-sm font-medium text-gray-700">{{ month.month }}</span>
+              <span class="text-lg font-bold text-green-600">${{ month.income|floatformat:2|intcomma }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Latest News Section -->
     {% if news_items %}
     <div class="mb-8">
@@ -616,6 +660,67 @@
         }
       });
     }
+    
+    // Dividend Projection Chart
+    {% if dividend_projection %}
+    const projectionCtx = document.getElementById('dividendProjectionChart');
+    if (projectionCtx) {
+      const projectionData = [
+        {% for month in dividend_projection %}
+        {month: "{{ month.month }}", income: {{ month.income }}, cumulative: {{ month.cumulative }}}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ];
+      
+      const maxIncome = Math.max(...projectionData.map(d => d.income));
+      const maxCumulative = Math.max(...projectionData.map(d => d.cumulative));
+      
+      const canvas = projectionCtx.getContext('2d');
+      const width = projectionCtx.width;
+      const height = projectionCtx.height;
+      const padding = 40;
+      const chartWidth = width - (padding * 2);
+      const chartHeight = height - (padding * 2);
+      
+      // Draw grid
+      canvas.strokeStyle = '#E5E7EB';
+      canvas.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = padding + (chartHeight / 5) * i;
+        canvas.beginPath();
+        canvas.moveTo(padding, y);
+        canvas.lineTo(width - padding, y);
+        canvas.stroke();
+      }
+      
+      // Draw bars
+      const barWidth = chartWidth / projectionData.length * 0.6;
+      const spacing = chartWidth / projectionData.length;
+      
+      projectionData.forEach((data, index) => {
+        const x = padding + (spacing * index) + (spacing - barWidth) / 2;
+        const barHeight = (data.income / maxIncome) * chartHeight;
+        const y = padding + chartHeight - barHeight;
+        
+        // Draw bar
+        canvas.fillStyle = '#10B981';
+        canvas.fillRect(x, y, barWidth, barHeight);
+        
+        // Draw value on top
+        if (barHeight > 20) {
+          canvas.fillStyle = '#1F2937';
+          canvas.font = 'bold 10px Arial';
+          canvas.textAlign = 'center';
+          canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 5);
+        }
+        
+        // Draw month label
+        canvas.fillStyle = '#6B7280';
+        canvas.font = '11px Arial';
+        canvas.textAlign = 'center';
+        canvas.fillText(data.month, x + barWidth/2, height - 10);
+      });
+    }
+    {% endif %}
   });
 </script>
 {% endblock %}

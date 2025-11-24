@@ -274,4 +274,29 @@ class StockNews(models.Model):
         total_deleted = deleted_count + excess_deleted
         remaining = cls.objects.count()
         
-        return total_deleted, remaining    
+        return total_deleted, remaining
+
+
+class PortfolioSnapshot(models.Model):
+    """Track portfolio value over time for performance analysis"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portfolio_snapshots', db_index=True)
+    snapshot_date = models.DateField(db_index=True)
+    total_value = models.DecimalField(max_digits=12, decimal_places=2)
+    total_investment = models.DecimalField(max_digits=12, decimal_places=2)
+    total_gain_loss = models.DecimalField(max_digits=12, decimal_places=2)
+    total_roi_percent = models.DecimalField(max_digits=8, decimal_places=4)
+    annual_dividend_income = models.DecimalField(max_digits=12, decimal_places=2)
+    dividend_yield = models.DecimalField(max_digits=6, decimal_places=3)
+    total_holdings = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'snapshot_date']
+        ordering = ['-snapshot_date']
+        indexes = [
+            models.Index(fields=['user', '-snapshot_date']),
+            models.Index(fields=['snapshot_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.snapshot_date} - ${self.total_value}"    

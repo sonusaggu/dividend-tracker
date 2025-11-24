@@ -141,25 +141,48 @@
             </div>
         </div>
 
-        <!-- Sector Allocation -->
+        <!-- Sector Allocation with Pie Chart -->
         {% if sector_allocation %}
         <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-2xl mr-2">🏢</span>
-                Sector Allocation
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {% for sector, percent in sector_allocation.items %}
-                <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
-                    <p class="text-sm text-gray-600 mb-1">{{ sector }}</p>
-                    <div class="flex items-center justify-between">
-                        <p class="text-lg font-bold text-gray-900">{{ percent|floatformat:1 }}%</p>
-                        <div class="w-16 bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ percent }}%"></div>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <span class="text-2xl mr-2">🏢</span>
+                    Sector Allocation
+                </h2>
+                <a href="{% url 'export_portfolio' %}" 
+                   class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition transform hover:scale-105 shadow-lg flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export CSV
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Pie Chart -->
+                <div class="flex items-center justify-center">
+                    <canvas id="sectorPieChart" width="300" height="300"></canvas>
+                </div>
+                
+                <!-- Sector List -->
+                <div class="space-y-3">
+                    {% for item in sector_chart_data %}
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:shadow-md transition">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-900 mb-1">{{ item.sector }}</p>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-32 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ item.percent }}%"></div>
+                                </div>
+                                <span class="text-sm font-bold text-gray-700">{{ item.percent|floatformat:1 }}%</span>
+                            </div>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="text-lg font-bold text-gray-900">${{ item.value|floatformat:0|intcomma }}</p>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
         {% endif %}
@@ -168,7 +191,18 @@
         <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4 md:mb-0">Your Holdings</h2>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 flex-wrap gap-2">
+                    <!-- Search Box -->
+                    <input type="text" id="portfolioSearch" placeholder="Search stocks..." 
+                           class="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    <!-- Filter by Sector -->
+                    <select id="sectorFilter" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <option value="">All Sectors</option>
+                        {% for item in sector_chart_data %}
+                        <option value="{{ item.sector }}">{{ item.sector }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Sort Options -->
                     <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                         Sort by Symbol
                     </button>
@@ -196,7 +230,11 @@
                     </thead>
                     <tbody>
                         {% for item in portfolio_items %}
-                        <tr class="border-b hover:bg-gray-50 transition" data-symbol="{{ item.item.stock.symbol }}" data-value="{{ item.current_value }}">
+                        <tr class="border-b hover:bg-gray-50 transition portfolio-row" 
+                            data-symbol="{{ item.item.stock.symbol }}" 
+                            data-value="{{ item.current_value }}"
+                            data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
+                            data-company="{{ item.item.stock.company_name }}">
                             <td class="py-4 px-2">
                                 <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="flex items-center group">
                                     <span class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 group-hover:scale-110 transition">
@@ -295,6 +333,40 @@
                 </table>
             </div>
         </div>
+
+        <!-- Dividend Income Projection -->
+        {% if dividend_projection %}
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+                <span class="text-2xl mr-2">📈</span>
+                Dividend Income Projection (Next 12 Months)
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+                    <canvas id="portfolioDividendChart" height="250"></canvas>
+                </div>
+                
+                <!-- Monthly Breakdown -->
+                <div class="space-y-2 max-h-80 overflow-y-auto">
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-4 text-white mb-4">
+                        <p class="text-sm text-green-100 mb-1">Total Projected</p>
+                        <p class="text-3xl font-bold">${{ total_projected_income|floatformat:2|intcomma }}</p>
+                    </div>
+                    {% for month in dividend_projection %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ month.month }}</p>
+                            <p class="text-xs text-gray-600">Cumulative: ${{ month.cumulative|floatformat:2|intcomma }}</p>
+                        </div>
+                        <p class="text-lg font-bold text-green-600">${{ month.income|floatformat:2|intcomma }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Upcoming Dividends Section -->
         <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
@@ -560,8 +632,159 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 Toast.error('Error updating portfolio. Please try again.');
             });
+            });
+    }
+    
+    // Initialize pie chart
+    {% if sector_chart_data %}
+    const sectorData = [
+        {% for item in sector_chart_data %}
+        {sector: "{{ item.sector|escapejs }}", value: {{ item.value }}, percent: {{ item.percent }}}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    const ctx = document.getElementById('sectorPieChart');
+    if (ctx) {
+        // Generate colors for sectors
+        const colors = [
+            '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
+            '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#6366F1'
+        ];
+        
+        const chartData = {
+            labels: sectorData.map(item => item.sector),
+            datasets: [{
+                data: sectorData.map(item => item.value),
+                backgroundColor: colors.slice(0, sectorData.length),
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        };
+        
+        // Simple pie chart using canvas (no external library needed)
+        const centerX = ctx.width / 2;
+        const centerY = ctx.height / 2;
+        const radius = Math.min(centerX, centerY) - 20;
+        const total = sectorData.reduce((sum, item) => sum + item.value, 0);
+        
+        let currentAngle = -Math.PI / 2;
+        const canvas = ctx.getContext('2d');
+        
+        sectorData.forEach((item, index) => {
+            const sliceAngle = (item.value / total) * 2 * Math.PI;
+            
+            canvas.beginPath();
+            canvas.moveTo(centerX, centerY);
+            canvas.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+            canvas.closePath();
+            canvas.fillStyle = colors[index % colors.length];
+            canvas.fill();
+            canvas.strokeStyle = '#ffffff';
+            canvas.lineWidth = 2;
+            canvas.stroke();
+            
+            // Add label
+            const labelAngle = currentAngle + sliceAngle / 2;
+            const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+            const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+            
+            canvas.fillStyle = '#1F2937';
+            canvas.font = 'bold 12px Arial';
+            canvas.textAlign = 'center';
+            canvas.textBaseline = 'middle';
+            if (item.percent >= 5) { // Only show label if >= 5%
+                canvas.fillText(item.percent.toFixed(1) + '%', labelX, labelY);
+            }
+            
+            currentAngle += sliceAngle;
         });
     }
+    {% endif %}
+    
+    // Portfolio search and filter
+    const searchInput = document.getElementById('portfolioSearch');
+    const sectorFilter = document.getElementById('sectorFilter');
+    const portfolioRows = document.querySelectorAll('.portfolio-row');
+    
+    function filterPortfolio() {
+        const searchTerm = (searchInput?.value || '').toLowerCase();
+        const selectedSector = sectorFilter?.value || '';
+        
+        portfolioRows.forEach(row => {
+            const symbol = (row.dataset.symbol || '').toLowerCase();
+            const company = (row.dataset.company || '').toLowerCase();
+            const sector = row.dataset.sector || '';
+            
+            const matchesSearch = !searchTerm || 
+                symbol.includes(searchTerm) || 
+                company.includes(searchTerm);
+            const matchesSector = !selectedSector || sector === selectedSector;
+            
+            if (matchesSearch && matchesSector) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterPortfolio);
+    }
+    if (sectorFilter) {
+        sectorFilter.addEventListener('change', filterPortfolio);
+    }
+    
+    // Dividend Projection Chart
+    {% if dividend_projection %}
+    const dividendCtx = document.getElementById('portfolioDividendChart');
+    if (dividendCtx) {
+        const dividendData = [
+            {% for month in dividend_projection %}
+            {month: "{{ month.month }}", income: {{ month.income }}, cumulative: {{ month.cumulative }}}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        const maxIncome = Math.max(...dividendData.map(d => d.income), 1);
+        const canvas = dividendCtx.getContext('2d');
+        const width = dividendCtx.width;
+        const height = dividendCtx.height;
+        const padding = 30;
+        const chartWidth = width - (padding * 2);
+        const chartHeight = height - (padding * 2);
+        
+        // Draw bars
+        const barWidth = chartWidth / dividendData.length * 0.7;
+        const spacing = chartWidth / dividendData.length;
+        
+        dividendData.forEach((data, index) => {
+            const x = padding + (spacing * index) + (spacing - barWidth) / 2;
+            const barHeight = (data.income / maxIncome) * chartHeight;
+            const y = padding + chartHeight - barHeight;
+            
+            // Draw bar
+            canvas.fillStyle = '#10B981';
+            canvas.fillRect(x, y, barWidth, barHeight);
+            
+            // Draw value
+            if (barHeight > 15) {
+                canvas.fillStyle = '#1F2937';
+                canvas.font = 'bold 9px Arial';
+                canvas.textAlign = 'center';
+                canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 3);
+            }
+            
+            // Draw month label (rotate for readability)
+            canvas.save();
+            canvas.translate(x + barWidth/2, height - 5);
+            canvas.rotate(-Math.PI / 4);
+            canvas.fillStyle = '#6B7280';
+            canvas.font = '9px Arial';
+            canvas.textAlign = 'center';
+            canvas.fillText(data.month.split(' ')[0], 0, 0);
+            canvas.restore();
+        });
+    }
+    {% endif %}
 });
 </script>
 {% endblock %}
