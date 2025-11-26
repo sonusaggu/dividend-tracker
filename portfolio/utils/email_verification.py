@@ -27,6 +27,9 @@ def send_verification_email(user, token):
         site_domain = getattr(settings, 'SITE_DOMAIN', 'https://dividend.forum')
         verification_url = f"{site_domain}/verify-email/{token}/"
         
+        logger.info(f"Attempting to send verification email to {user.email}")
+        logger.debug(f"Verification URL: {verification_url}")
+        
         # Prepare email context
         context = {
             'user': user,
@@ -36,10 +39,18 @@ def send_verification_email(user, token):
         
         # Render email templates
         subject = 'Verify Your StockFolio Account'
-        html_message = render_to_string('email_verification.html', context)
-        plain_message = strip_tags(html_message)
+        try:
+            html_message = render_to_string('email_verification.html', context)
+            plain_message = strip_tags(html_message)
+            logger.debug(f"Email template rendered successfully")
+        except Exception as e:
+            logger.error(f"Error rendering email template: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
         
         # Use unified email service (Resend or SMTP)
+        logger.info(f"Calling send_email for {user.email}")
         success = send_email(
             to_email=user.email,
             subject=subject,
@@ -48,14 +59,14 @@ def send_verification_email(user, token):
         )
         
         if success:
-            logger.info(f"Verification email sent to {user.email}")
+            logger.info(f"✅ Verification email sent successfully to {user.email}")
             return True
         else:
-            logger.error(f"Failed to send verification email to {user.email}")
+            logger.error(f"❌ Failed to send verification email to {user.email} - send_email returned False")
             return False
         
     except Exception as e:
-        logger.error(f"Error sending verification email to {user.email}: {e}")
+        logger.error(f"❌ Exception sending verification email to {user.email}: {e}")
         import traceback
         logger.error(traceback.format_exc())
         return False
