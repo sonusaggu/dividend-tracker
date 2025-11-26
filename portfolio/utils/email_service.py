@@ -40,11 +40,13 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None):
         )
         
         if response.status_code == 200:
-            logger.info(f"Email sent via Resend to {to_email}")
+            logger.info(f"✅ Email sent via Resend to {to_email}")
+            print(f"✅ [EMAIL_SERVICE] Email sent via Resend to {to_email}")
             return True, "Success"
         else:
             error_msg = response.text
-            logger.error(f"Resend API failed ({response.status_code}): {error_msg}")
+            logger.error(f"❌ Resend API failed ({response.status_code}): {error_msg}")
+            print(f"❌ [EMAIL_SERVICE] Resend API failed ({response.status_code}): {error_msg}")
             return False, error_msg
     except Exception as e:
         logger.error(f"Resend API error: {e}")
@@ -69,6 +71,7 @@ def send_email_via_smtp(to_email, subject, html_content, text_content=None):
         email.attach_alternative(html_content, "text/html")
         email.send()
         logger.info(f"✅ Email sent via SMTP to {to_email}")
+        print(f"✅ [EMAIL_SERVICE] Email sent via SMTP to {to_email}")
         return True, "Success"
     except Exception as e:
         logger.error(f"❌ SMTP error sending to {to_email}: {e}")
@@ -82,28 +85,36 @@ def send_email(to_email, subject, html_content, text_content=None):
     Unified email sending function
     Tries Resend API first if configured, otherwise uses SMTP
     """
-    logger.info(f"Attempting to send email to {to_email} with subject: {subject}")
+    logger.info(f"📧 Attempting to send email to {to_email} with subject: {subject}")
+    print(f"📧 [EMAIL_SERVICE] Attempting to send email to {to_email} with subject: {subject}")
     logger.debug(f"Resend configured: {USE_RESEND}, RESEND_API_KEY: {'*' * 10 if RESEND_API_KEY else 'NOT SET'}, RESEND_FROM_EMAIL: {RESEND_FROM_EMAIL or 'NOT SET'}")
     
     # Try Resend API first if configured
     if USE_RESEND:
         logger.info(f"Trying Resend API for {to_email}")
+        print(f"📧 [EMAIL_SERVICE] Trying Resend API for {to_email}")
         success, message = send_email_via_resend(to_email, subject, html_content, text_content)
         if success:
             logger.info(f"✅ Email sent successfully via Resend to {to_email}")
+            print(f"✅ [EMAIL_SERVICE] Email sent successfully via Resend to {to_email}")
             return True
         else:
             logger.warning(f"⚠️ Resend failed: {message}, falling back to SMTP")
+            print(f"⚠️ [EMAIL_SERVICE] Resend failed: {message}, falling back to SMTP")
     else:
         logger.info(f"Resend not configured, trying SMTP for {to_email}")
+        print(f"📧 [EMAIL_SERVICE] Resend not configured, trying SMTP for {to_email}")
     
     # Fallback to SMTP
     logger.info(f"Trying SMTP for {to_email}")
+    print(f"📧 [EMAIL_SERVICE] Trying SMTP for {to_email}")
     logger.debug(f"SMTP settings - EMAIL_HOST: {getattr(settings, 'EMAIL_HOST', 'NOT SET')}, DEFAULT_FROM_EMAIL: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'NOT SET')}")
     success, message = send_email_via_smtp(to_email, subject, html_content, text_content)
     if success:
         logger.info(f"✅ Email sent successfully via SMTP to {to_email}")
+        print(f"✅ [EMAIL_SERVICE] Email sent successfully via SMTP to {to_email}")
         return True
     else:
         logger.error(f"❌ Both Resend and SMTP failed for {to_email}. Last error: {message}")
+        print(f"❌ [EMAIL_SERVICE] Both Resend and SMTP failed for {to_email}. Last error: {message}")
         return False

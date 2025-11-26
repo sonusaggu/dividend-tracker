@@ -27,7 +27,8 @@ def send_verification_email(user, token):
         site_domain = getattr(settings, 'SITE_DOMAIN', 'https://dividend.forum')
         verification_url = f"{site_domain}/verify-email/{token}/"
         
-        logger.info(f"Attempting to send verification email to {user.email}")
+        logger.info(f"📧 Attempting to send verification email to {user.email}")
+        print(f"📧 [EMAIL_VERIFICATION] Attempting to send verification email to {user.email}")
         logger.debug(f"Verification URL: {verification_url}")
         
         # Prepare email context
@@ -60,9 +61,11 @@ def send_verification_email(user, token):
         
         if success:
             logger.info(f"✅ Verification email sent successfully to {user.email}")
+            print(f"✅ [EMAIL_VERIFICATION] Verification email sent successfully to {user.email}")
             return True
         else:
             logger.error(f"❌ Failed to send verification email to {user.email} - send_email returned False")
+            print(f"❌ [EMAIL_VERIFICATION] Failed to send verification email to {user.email}")
             return False
         
     except Exception as e:

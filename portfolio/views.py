@@ -229,14 +229,24 @@ def register_view(request):
                         table_exists = False
                     
                     if table_exists:
+                        logger.info(f"📧 Creating verification token for user: {user.email}")
                         verification = create_verification_token(user)
+                        logger.info(f"📧 Token created, sending verification email to: {user.email}")
                         email_sent = send_verification_email(user, verification.token)
+                        if email_sent:
+                            logger.info(f"✅ Verification email sent successfully to {user.email}")
+                        else:
+                            logger.error(f"❌ Failed to send verification email to {user.email}")
                     else:
                         # Table doesn't exist yet - skip verification for now
                         email_sent = False
-                        logger.warning("EmailVerification table doesn't exist yet. Skipping email verification.")
+                        logger.warning("⚠️ EmailVerification table doesn't exist yet. Skipping email verification.")
+                        print("⚠️ EmailVerification table doesn't exist yet. Skipping email verification.")
                 except Exception as e:
-                    logger.error(f"Error creating verification token: {e}")
+                    logger.error(f"❌ Error creating verification token for {user.email}: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    print(f"❌ Error creating verification token: {e}")
                     email_sent = False
                 
                 if email_sent:
