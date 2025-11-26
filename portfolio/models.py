@@ -923,4 +923,58 @@ class CommentLike(models.Model):
         comment = self.comment
         super().delete(*args, **kwargs)
         comment.likes_count = comment.comment_likes.count()
-        comment.save(update_fields=['likes_count'])    
+        comment.save(update_fields=['likes_count'])
+
+
+class StockNote(models.Model):
+    """User notes and journal entries for stocks"""
+    NOTE_TYPE_CHOICES = [
+        ('note', 'Quick Note'),
+        ('research', 'Research'),
+        ('journal', 'Journal Entry'),
+        ('buy', 'Buy Decision'),
+        ('sell', 'Sell Decision'),
+        ('watch', 'Watch'),
+        ('analysis', 'Analysis'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stock_notes', db_index=True)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='notes', db_index=True)
+    note_type = models.CharField(max_length=20, choices=NOTE_TYPE_CHOICES, default='note', db_index=True)
+    title = models.CharField(max_length=200, blank=True, help_text="Optional title for the note")
+    content = models.TextField(help_text="Note content")
+    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags (buy, sell, research, etc.)")
+    is_private = models.BooleanField(default=True, help_text="Private notes are only visible to you")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['stock', '-created_at']),
+            models.Index(fields=['user', 'stock', '-created_at']),
+            models.Index(fields=['note_type', '-created_at']),
+        ]
+        verbose_name = "Stock Note"
+        verbose_name_plural = "Stock Notes"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.stock.symbol} - {self.note_type} ({self.created_at.date()})"
+    
+    def get_tags_list(self):
+        """Return tags as a list"""
+        if self.tags:
+            return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+        return []
+    
+    def set_tags_list(self, tags_list):
+        """Set tags from a list"""
+        self.tags = ', '.join([tag.strip() for tag in tags_list if tag.strip()])
+    
+    @property
+    def preview(self):
+        """Get a preview of the note content"""
+        if len(self.content) > 150:
+            return self.content[:150] + '...'
+        return self.content

@@ -10,6 +10,7 @@ import csv
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
+from django.db.utils import ProgrammingError, OperationalError
 from django.conf import settings
 from django.views.decorators.cache import cache_control
 from datetime import datetime, timedelta, date
@@ -20,7 +21,7 @@ import os
 
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
-from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews
+from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote
 from .services import PortfolioService, StockService, AlertService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
@@ -723,6 +724,18 @@ def stock_detail(request, symbol):
         has_dividend_alert = DividendAlert.objects.filter(
             user=request.user, stock=stock, is_active=True
         ).exists()
+        
+        # Get user's notes for this stock
+        try:
+            user_notes = StockNote.objects.filter(
+                user=request.user, stock=stock
+            ).order_by('-created_at')[:5]  # Show last 5 notes
+        except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+            # Table might not exist yet if migration hasn't been run
+            user_notes = []
+            logger.warning(f"StockNote table not found: {e}")
+    else:
+        user_notes = []
     
     context = {
         'stock': stock,
@@ -735,6 +748,7 @@ def stock_detail(request, symbol):
         'has_dividend_alert': has_dividend_alert,
         'portfolio_item': portfolio_item,
         'portfolio_total_value': portfolio_total_value,
+        'user_notes': user_notes,
         'today': timezone.now().date(),
     }
     
@@ -2949,3 +2963,194 @@ def following_list(request, username):
         'is_own_profile': request.user == user,
     }
     return render(request, 'social/following_list.html', context)
+
+
+# Stock Notes & Journal Views
+@login_required
+def stock_notes(request, symbol=None):
+    """View all notes for a user, optionally filtered by stock"""
+    try:
+        search_query = request.GET.get('search', '')
+        note_type_filter = request.GET.get('type', '')
+        tag_filter = request.GET.get('tag', '')
+        
+        notes = StockNote.objects.filter(user=request.user).select_related('stock').order_by('-created_at')
+        
+        # Filter by stock if symbol provided
+        stock = None
+        if symbol:
+            stock = get_object_or_404(Stock, symbol=symbol.upper())
+            notes = notes.filter(stock=stock)
+        
+        # Filter by search query
+        if search_query:
+            notes = notes.filter(
+                Q(title__icontains=search_query) |
+                Q(content__icontains=search_query) |
+                Q(tags__icontains=search_query) |
+                Q(stock__symbol__icontains=search_query) |
+                Q(stock__company_name__icontains=search_query)
+            )
+        
+        # Filter by note type
+        if note_type_filter:
+            notes = notes.filter(note_type=note_type_filter)
+        
+        # Filter by tag
+        if tag_filter:
+            notes = notes.filter(tags__icontains=tag_filter)
+        
+        # Get unique tags and note types for filters (before pagination)
+        all_tags = set()
+        for note in notes[:100]:  # Limit to first 100 for performance
+            all_tags.update(note.get_tags_list())
+        
+        # Pagination
+        paginator = Paginator(notes, 20)
+        page = request.GET.get('page', 1)
+        try:
+            notes_page = paginator.page(page)
+        except (EmptyPage, PageNotAnInteger):
+            notes_page = paginator.page(1)
+        
+        context = {
+            'notes': notes_page,
+            'search_query': search_query,
+            'note_type_filter': note_type_filter,
+            'tag_filter': tag_filter,
+            'all_tags': sorted(all_tags),
+            'note_types': StockNote.NOTE_TYPE_CHOICES,
+            'stock': stock,
+        }
+        
+        return render(request, 'notes/notes_list.html', context)
+    except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+        # Table might not exist yet if migration hasn't been run
+        logger.warning(f"StockNote table not found: {e}")
+        messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+        return redirect('dashboard')
+
+
+@login_required
+def create_stock_note(request, symbol):
+    """Create a new note for a stock"""
+    try:
+        stock = get_object_or_404(Stock, symbol=symbol.upper())
+    except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+        logger.warning(f"StockNote table not found: {e}")
+        messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+        return redirect('stock_detail', symbol=symbol)
+    
+    if request.method == 'POST':
+        note_type = request.POST.get('note_type', 'note')
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        tags = request.POST.get('tags', '').strip()
+        is_private = request.POST.get('is_private', 'on') == 'on'
+        
+        if not content:
+            messages.error(request, 'Note content is required.')
+            return redirect('create_stock_note', symbol=symbol)
+        
+        try:
+            note = StockNote.objects.create(
+                user=request.user,
+                stock=stock,
+                note_type=note_type,
+                title=title,
+                content=content,
+                tags=tags,
+                is_private=is_private
+            )
+            
+            messages.success(request, 'Note created successfully!')
+            return redirect('stock_detail', symbol=symbol)
+        except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+            logger.warning(f"StockNote table not found: {e}")
+            messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+            return redirect('stock_detail', symbol=symbol)
+    
+    context = {
+        'stock': stock,
+        'note_types': StockNote.NOTE_TYPE_CHOICES,
+    }
+    return render(request, 'notes/create_note.html', context)
+
+
+@login_required
+def edit_stock_note(request, note_id):
+    """Edit an existing note"""
+    try:
+        note = get_object_or_404(StockNote, id=note_id, user=request.user)
+        
+        if request.method == 'POST':
+            note.note_type = request.POST.get('note_type', note.note_type)
+            note.title = request.POST.get('title', '').strip()
+            note.content = request.POST.get('content', '').strip()
+            note.tags = request.POST.get('tags', '').strip()
+            note.is_private = request.POST.get('is_private', 'on') == 'on'
+            
+            if not note.content:
+                messages.error(request, 'Note content is required.')
+                return redirect('edit_stock_note', note_id=note_id)
+            
+            note.save()
+            messages.success(request, 'Note updated successfully!')
+            return redirect('stock_detail', symbol=note.stock.symbol)
+        
+        context = {
+            'note': note,
+            'note_types': StockNote.NOTE_TYPE_CHOICES,
+        }
+        return render(request, 'notes/edit_note.html', context)
+    except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+        logger.warning(f"StockNote table not found: {e}")
+        messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+        return redirect('dashboard')
+
+
+@login_required
+@require_POST
+def delete_stock_note(request, note_id):
+    """Delete a note"""
+    try:
+        note = get_object_or_404(StockNote, id=note_id, user=request.user)
+        stock_symbol = note.stock.symbol
+        note.delete()
+        messages.success(request, 'Note deleted successfully!')
+        return redirect('stock_detail', symbol=stock_symbol)
+    except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+        logger.warning(f"StockNote table not found: {e}")
+        messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+        return redirect('dashboard')
+
+
+@login_required
+def export_notes(request):
+    """Export all user notes to CSV"""
+    try:
+        notes = StockNote.objects.filter(user=request.user).select_related('stock').order_by('-created_at')
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="stock_notes_{request.user.username}_{timezone.now().date()}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Stock Symbol', 'Company Name', 'Note Type', 'Title', 'Content', 'Tags', 'Private'])
+        
+        for note in notes:
+            writer.writerow([
+                note.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                note.stock.symbol,
+                note.stock.company_name,
+                note.get_note_type_display(),
+                note.title,
+                note.content,
+                note.tags,
+                'Yes' if note.is_private else 'No'
+            ])
+        
+        return response
+    except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+        logger.warning(f"StockNote table not found: {e}")
+        messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
+        return redirect('dashboard')

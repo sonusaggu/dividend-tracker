@@ -470,6 +470,80 @@
                     </a>
                 </div>
                 {% endif %}
+
+                <!-- Stock Notes Section -->
+                {% if user.is_authenticated %}
+                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                            <span class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-white text-xl">📝</span>
+                            </span>
+                            My Notes & Journal
+                        </h2>
+                        <a href="{% url 'create_stock_note' stock.symbol %}" 
+                           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center">
+                            + Add Note
+                        </a>
+                    </div>
+                    
+                    {% if user_notes %}
+                    <div class="space-y-4">
+                        {% for note in user_notes %}
+                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200 hover:shadow-md transition">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">
+                                        {{ note.get_note_type_display }}
+                                    </span>
+                                    {% if note.is_private %}
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-semibold">
+                                        🔒 Private
+                                    </span>
+                                    {% endif %}
+                                    <span class="text-xs text-gray-500">{{ note.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <a href="{% url 'edit_stock_note' note.id %}" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                        Edit
+                                    </a>
+                                </div>
+                            </div>
+                            {% if note.title %}
+                            <h4 class="font-bold text-gray-900 mb-2">{{ note.title }}</h4>
+                            {% endif %}
+                            <p class="text-gray-700 text-sm mb-3 whitespace-pre-wrap line-clamp-3">{{ note.content }}</p>
+                            {% if note.get_tags_list %}
+                            <div class="flex flex-wrap gap-1">
+                                {% for tag in note.get_tags_list %}
+                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">
+                                    #{{ tag }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'stock_notes_by_symbol' stock.symbol %}" 
+                           class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                            View All Notes for {{ stock.symbol }} →
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <div class="text-4xl mb-3">📝</div>
+                        <p class="text-gray-600 mb-4">No notes yet. Start tracking your research and insights!</p>
+                        <a href="{% url 'create_stock_note' stock.symbol %}" 
+                           class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
+                            Create First Note
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

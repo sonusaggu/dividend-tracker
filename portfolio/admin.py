@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
     UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
-    AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike
+    AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike,
+    StockNote
 )
 
 
@@ -224,3 +225,21 @@ class CommentLikeAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'comment__content')
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'
+
+
+@admin.register(StockNote)
+class StockNoteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'stock', 'note_type', 'title', 'is_private', 'created_at', 'updated_at')
+    list_filter = ('note_type', 'is_private', 'created_at')
+    search_fields = ('user__username', 'stock__symbol', 'title', 'content', 'tags')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    fieldsets = (
+        ('Note Information', {
+            'fields': ('user', 'stock', 'note_type', 'title', 'content', 'tags', 'is_private')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

@@ -102,5 +102,13 @@ urlpatterns = [
     path('comments/<int:comment_id>/like/', views.like_comment, name='like_comment'),
     path('profile/<str:username>/followers/', views.followers_list, name='followers_list'),
     path('profile/<str:username>/following/', views.following_list, name='following_list'),
+    
+    # Stock Notes & Journal
+    path('notes/', views.stock_notes, name='stock_notes'),
+    path('notes/<str:symbol>/', views.stock_notes, name='stock_notes_by_symbol'),
+    path('stocks/<str:symbol>/notes/create/', views.create_stock_note, name='create_stock_note'),
+    path('notes/<int:note_id>/edit/', views.edit_stock_note, name='edit_stock_note'),
+    path('notes/<int:note_id>/delete/', views.delete_stock_note, name='delete_stock_note'),
+    path('notes/export/', views.export_notes, name='export_notes'),
 
 ]
