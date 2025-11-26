@@ -2490,3 +2490,13 @@ This email was sent from the Contact Us form on dividend.forum
 def donations(request):
     """Donations page with payment widgets"""
     return render(request, 'donations.html')
+
+
+def privacy_policy(request):
+    """Privacy Policy page"""
+    return render(request, 'privacy_policy.html')
+
+
+def terms_of_service(request):
+    """Terms of Service page"""
+    return render(request, 'terms_of_service.html')
