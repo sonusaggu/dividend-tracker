@@ -146,6 +146,9 @@
             </p>
         </div>
 
+        <!-- Sponsored Content -->
+        {% include 'components/sponsored_content.html' %}
+        
         {% if upcoming_dividends %}
         <!-- Stocks Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
@@ -264,6 +267,13 @@
             </a>
         </div>
         {% endif %}
+    </div>
+</div>
+
+<!-- Affiliate Links Section -->
+<div class="bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+    <div class="max-w-7xl mx-auto px-4">
+        {% include 'components/affiliate_links.html' %}
     </div>
 </div>
 

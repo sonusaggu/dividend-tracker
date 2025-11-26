@@ -452,7 +452,32 @@ def home_view(request):
         logger.error(f"Unexpected error in home view: {e}")
         upcoming_dividends = []
     
-    context = {'upcoming_dividends': upcoming_dividends}
+    # Get active affiliate links and sponsored content
+    from portfolio.models import AffiliateLink, SponsoredContent
+    import random
+    
+    affiliate_links = AffiliateLink.objects.filter(is_active=True).order_by('display_order')[:6]
+    
+    # Get all active sponsored content and randomly select 2-3
+    all_sponsored = SponsoredContent.objects.filter(is_active=True).order_by('display_order')
+    sponsored_content = [c for c in all_sponsored if c.is_currently_active()]
+    
+    # Randomly select 2-3 sponsored items (or all if less than 3)
+    if len(sponsored_content) > 3:
+        sponsored_content = random.sample(sponsored_content, 3)
+    elif len(sponsored_content) > 2:
+        sponsored_content = random.sample(sponsored_content, 2)
+    # If 2 or less, show all
+    
+    # Track views for sponsored content
+    for content in sponsored_content:
+        content.track_view()
+    
+    context = {
+        'upcoming_dividends': upcoming_dividends,
+        'affiliate_links': affiliate_links,
+        'sponsored_content': sponsored_content,
+    }
     return render(request, 'home.html', context)
 
 def all_stocks_view(request):
@@ -470,6 +495,15 @@ def all_stocks_view(request):
     search_query = request.GET.get('search', '').strip()
     sector_filter = request.GET.get('sector', '')
     sort_by = request.GET.get('sort_by', 'dividend_date')
+    
+    # Save recent search to session
+    if search_query:
+        recent_searches = request.session.get('recent_searches', [])
+        if search_query not in recent_searches:
+            recent_searches.insert(0, search_query)
+            recent_searches = recent_searches[:10]  # Keep only last 10
+            request.session['recent_searches'] = recent_searches
+            request.session.modified = True
 
     valid_sort_options = ['symbol', 'yield', 'sector', 'dividend_date', 'dividend_amount']
     if sort_by not in valid_sort_options:
@@ -549,7 +583,98 @@ def all_stocks_view(request):
         'sectors_count': len(sectors),
     }
 
+    # Add recent searches to context
+    context['recent_searches'] = request.session.get('recent_searches', [])
+    
+    # Get sponsored content for sidebar - randomly select 1-2 featured stocks
+    from portfolio.models import SponsoredContent
+    import random
+    
+    all_featured = SponsoredContent.objects.filter(
+        is_active=True, 
+        content_type='featured_stock'
+    ).order_by('display_order')
+    featured_stocks = [c for c in all_featured if c.is_currently_active()]
+    
+    # Randomly select 1-2 featured stocks (or all if less than 2)
+    if len(featured_stocks) > 2:
+        featured_stocks = random.sample(featured_stocks, 2)
+    # If 2 or less, show all
+    
+    context['sponsored_content'] = featured_stocks
+    
     return render(request, 'all_stocks.html', context)
+
+
+def track_affiliate_click(request, affiliate_id):
+    """Track affiliate link clicks and redirect"""
+    from portfolio.models import AffiliateLink
+    
+    try:
+        affiliate = AffiliateLink.objects.get(id=affiliate_id, is_active=True)
+        affiliate.track_click()
+        logger.info(f"Affiliate click tracked: {affiliate.name} (ID: {affiliate_id})")
+        return redirect(affiliate.affiliate_url)
+    except AffiliateLink.DoesNotExist:
+        messages.error(request, 'Invalid affiliate link.')
+        return redirect('home')
+    except Exception as e:
+        logger.error(f"Error tracking affiliate click: {e}")
+        return redirect('home')
+
+
+def track_sponsored_click(request, content_id):
+    """Track sponsored content clicks and redirect"""
+    from portfolio.models import SponsoredContent
+    
+    try:
+        content = SponsoredContent.objects.get(id=content_id)
+        if not content.is_currently_active():
+            messages.error(request, 'This content is no longer available.')
+            return redirect('home')
+        
+        content.track_click()
+        logger.info(f"Sponsored content click tracked: {content.title} (ID: {content_id})")
+        
+        if content.link_url:
+            return redirect(content.link_url)
+        elif content.stock:
+            return redirect('stock_detail', symbol=content.stock.symbol)
+        else:
+            return redirect('home')
+    except SponsoredContent.DoesNotExist:
+        messages.error(request, 'Invalid content link.')
+        return redirect('home')
+    except Exception as e:
+        logger.error(f"Error tracking sponsored click: {e}")
+        return redirect('home')
+
+
+def stock_search_autocomplete(request):
+    """API endpoint for stock search autocomplete"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    # Search stocks by symbol, code, or company name
+    stocks = Stock.objects.filter(
+        Q(symbol__icontains=query)
+        | Q(company_name__icontains=query)
+        | Q(code__icontains=query)
+    ).order_by('symbol')[:10]  # Limit to 10 results
+    
+    results = []
+    for stock in stocks:
+        results.append({
+            'symbol': stock.symbol,
+            'code': stock.code,
+            'company_name': stock.company_name,
+            'sector': stock.sector or '',
+            'url': f'/stocks/{stock.symbol}/'
+        })
+    
+    return JsonResponse({'results': results})
 
 
 def stock_detail(request, symbol):
@@ -1535,8 +1660,32 @@ def dashboard(request):
         snapshot_thread = threading.Thread(target=create_snapshot_async, daemon=True)
         snapshot_thread.start()
         
+        # Get affiliate links and sponsored content for dashboard
+        from portfolio.models import AffiliateLink, SponsoredContent
+        import random
+        
+        affiliate_links = AffiliateLink.objects.filter(is_active=True).order_by('display_order')[:3]
+        
+        # Get all active sponsored content and randomly select 2
+        all_sponsored = SponsoredContent.objects.filter(
+            is_active=True,
+            content_type__in=['featured_stock', 'educational', 'promotion']
+        ).order_by('display_order')
+        sponsored_content = [c for c in all_sponsored if c.is_currently_active()]
+        
+        # Randomly select 2 sponsored items (or all if less than 2)
+        if len(sponsored_content) > 2:
+            sponsored_content = random.sample(sponsored_content, 2)
+        # If 2 or less, show all
+        
+        # Track views for sponsored content
+        for content in sponsored_content:
+            content.track_view()
+        
         context = {
             'portfolio_items': portfolio_items,
+            'affiliate_links': affiliate_links,
+            'sponsored_content': sponsored_content,
             'total_value': total_value,
             'total_investment': total_investment,
             'total_gain_loss': total_gain_loss,

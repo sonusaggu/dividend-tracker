@@ -84,5 +84,10 @@ urlpatterns = [
     # Legal Pages
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service, name='terms_of_service'),
+    # Search improvements
+    path('api/stock-search/', views.stock_search_autocomplete, name='stock_search_autocomplete'),
+    # Affiliate and Sponsored Content
+    path('affiliate/<int:affiliate_id>/', views.track_affiliate_click, name='track_affiliate_click'),
+    path('sponsored/<int:content_id>/', views.track_sponsored_click, name='track_sponsored_click'),
 
 ]

@@ -440,4 +440,111 @@ class ScrapeStatus(models.Model):
             status='running',
             days=days,
             started_at=timezone.now()
-        )    
+        )
+
+
+class AffiliateLink(models.Model):
+    """Affiliate links for brokers and financial services"""
+    PLATFORM_CHOICES = [
+        ('broker', 'Broker'),
+        ('platform', 'Trading Platform'),
+        ('service', 'Financial Service'),
+        ('other', 'Other'),
+    ]
+    
+    name = models.CharField(max_length=200, help_text="Name of the broker/service")
+    platform_type = models.CharField(max_length=20, choices=PLATFORM_CHOICES, default='broker')
+    affiliate_url = models.URLField(help_text="Affiliate/referral link")
+    description = models.TextField(blank=True, help_text="Short description")
+    logo_url = models.URLField(blank=True, help_text="URL to logo image")
+    bonus_offer = models.CharField(max_length=200, blank=True, help_text="e.g., 'Free $50 when you sign up'")
+    is_active = models.BooleanField(default=True, db_index=True)
+    display_order = models.IntegerField(default=0, help_text="Order for display (lower = first)")
+    click_count = models.IntegerField(default=0, help_text="Total clicks tracked")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['display_order', 'name']
+        verbose_name = "Affiliate Link"
+        verbose_name_plural = "Affiliate Links"
+        indexes = [
+            models.Index(fields=['is_active', 'display_order']),
+            models.Index(fields=['platform_type']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} ({self.platform_type})"
+    
+    def track_click(self):
+        """Increment click counter"""
+        self.click_count += 1
+        self.save(update_fields=['click_count'])
+
+
+class SponsoredContent(models.Model):
+    """Sponsored content - featured stocks, educational content, etc."""
+    CONTENT_TYPE_CHOICES = [
+        ('featured_stock', 'Featured Stock'),
+        ('educational', 'Educational Content'),
+        ('promotion', 'Promotion'),
+        ('advertisement', 'Advertisement'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES, default='featured_stock')
+    description = models.TextField(help_text="Content description or body")
+    image_url = models.URLField(blank=True, help_text="URL to featured image")
+    link_url = models.URLField(blank=True, help_text="Optional link URL")
+    link_text = models.CharField(max_length=100, blank=True, help_text="Text for the link button")
+    
+    # For featured stocks
+    stock = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True, blank=True, 
+                              help_text="If content type is 'featured_stock', select a stock")
+    
+    # Display settings
+    is_active = models.BooleanField(default=True, db_index=True)
+    display_order = models.IntegerField(default=0, help_text="Order for display (lower = first)")
+    start_date = models.DateTimeField(null=True, blank=True, help_text="When to start showing")
+    end_date = models.DateTimeField(null=True, blank=True, help_text="When to stop showing")
+    
+    # Tracking
+    view_count = models.IntegerField(default=0)
+    click_count = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['display_order', '-created_at']
+        verbose_name = "Sponsored Content"
+        verbose_name_plural = "Sponsored Content"
+        indexes = [
+            models.Index(fields=['is_active', 'display_order']),
+            models.Index(fields=['content_type']),
+            models.Index(fields=['start_date', 'end_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_content_type_display()})"
+    
+    def is_currently_active(self):
+        """Check if content should be displayed based on dates"""
+        if not self.is_active:
+            return False
+        now = timezone.now()
+        if self.start_date and now < self.start_date:
+            return False
+        if self.end_date and now > self.end_date:
+            return False
+        return True
+    
+    def track_view(self):
+        """Increment view counter"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    def track_click(self):
+        """Increment click counter"""
+        self.click_count += 1
+        self.save(update_fields=['click_count'])    

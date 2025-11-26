@@ -1,0 +1,54 @@
+{% load humanize %}
+{% if affiliate_links %}
+<div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-6 border-2 border-blue-200">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+            <span class="mr-2">🤝</span>
+            Recommended Brokers & Services
+        </h3>
+        <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">Affiliate</span>
+    </div>
+    <p class="text-sm text-gray-600 mb-4">Support StockFolio by using our affiliate links. You get great deals, we get a small commission.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for affiliate in affiliate_links %}
+        <a href="{% url 'track_affiliate_click' affiliate.id %}" 
+           target="_blank" 
+           rel="noopener noreferrer sponsored"
+           class="block bg-white rounded-xl p-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105 border-2 border-gray-200 hover:border-blue-400 group">
+            <div class="flex items-start space-x-3">
+                {% if affiliate.logo_url %}
+                <img src="{{ affiliate.logo_url }}" 
+                     alt="{{ affiliate.name }}" 
+                     class="w-12 h-12 object-contain rounded-lg"
+                     onerror="this.style.display='none'">
+                {% else %}
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+                    {{ affiliate.name|slice:":1" }}
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-gray-900 group-hover:text-blue-600 transition">
+                        {{ affiliate.name }}
+                    </h4>
+                    {% if affiliate.bonus_offer %}
+                    <p class="text-xs text-green-600 font-semibold mt-1">
+                        🎁 {{ affiliate.bonus_offer }}
+                    </p>
+                    {% endif %}
+                    {% if affiliate.description %}
+                    <p class="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {{ affiliate.description }}
+                    </p>
+                    {% endif %}
+                    <span class="inline-block mt-2 text-xs text-blue-600 font-medium group-hover:underline">
+                        Learn More →
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+

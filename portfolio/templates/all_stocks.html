@@ -81,8 +81,8 @@
         </div>
 
         <!-- Enhanced Search and Filter Section -->
-        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-32 -mt-32 opacity-50"></div>
+        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-32 -mt-32 opacity-50 overflow-hidden"></div>
             <div class="relative z-10">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,20 +94,43 @@
                     <!-- Hidden field to preserve sort -->
                     <input type="hidden" name="sort_by" value="{{ sort_by }}">
                     
-                    <!-- Enhanced Search Input -->
-                    <div class="lg:col-span-2">
+                    <!-- Enhanced Search Input with Autocomplete -->
+                    <div class="lg:col-span-2 relative">
                         <label class="block text-sm font-bold text-gray-700 mb-3">🔍 Search Stocks</label>
-                        <div class="relative">
+                        <div class="relative" id="search-container">
                             <input 
                                 type="text" 
+                                id="stock-search-input"
                                 name="search" 
                                 placeholder="Search by symbol or company name..." 
                                 value="{{ search_query }}"
+                                autocomplete="off"
                                 class="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg"
                             >
-                            <svg class="absolute left-4 top-4 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="absolute left-4 top-4 w-6 h-6 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
+                            
+                            <!-- Autocomplete Dropdown -->
+                            <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-[9999] mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-96 overflow-y-auto">
+                                <!-- Results will be inserted here -->
+                            </div>
+                            
+                            <!-- Recent Searches Dropdown -->
+                            <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-[9999] mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl">
+                                <div class="p-3 border-b border-gray-200">
+                                    <h4 class="text-sm font-semibold text-gray-700">Recent Searches</h4>
+                                </div>
+                                <div id="recent-searches-list" class="p-2">
+                                    {% for search in recent_searches %}
+                                    <button type="button" class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg text-sm text-gray-700 recent-search-item" data-search="{{ search }}">
+                                        <span class="text-gray-400 mr-2">🕒</span>{{ search }}
+                                    </button>
+                                    {% empty %}
+                                    <p class="px-4 py-2 text-sm text-gray-500">No recent searches</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -185,6 +208,9 @@
             </div>
         </div>
 
+        <!-- Sponsored Content -->
+        {% include 'components/sponsored_content.html' %}
+        
         <!-- Enhanced Stocks Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
             {% for item in stocks_with_dividends %}
@@ -373,4 +399,152 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+// Search Autocomplete and Recent Searches
+(function() {
+    const searchInput = document.getElementById('stock-search-input');
+    const autocompleteResults = document.getElementById('autocomplete-results');
+    const recentSearches = document.getElementById('recent-searches');
+    const recentSearchesList = document.getElementById('recent-searches-list');
+    let autocompleteTimeout;
+    let selectedIndex = -1;
+    
+    if (!searchInput) return;
+    
+    // Show recent searches when input is focused and empty
+    searchInput.addEventListener('focus', function() {
+        if (!this.value.trim() && recentSearchesList.children.length > 0) {
+            recentSearches.classList.remove('hidden');
+            autocompleteResults.classList.add('hidden');
+        }
+    });
+    
+    // Hide dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#search-container')) {
+            autocompleteResults.classList.add('hidden');
+            recentSearches.classList.add('hidden');
+        }
+    });
+    
+    // Handle input for autocomplete
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(autocompleteTimeout);
+        
+        // Hide recent searches when typing
+        recentSearches.classList.add('hidden');
+        
+        if (query.length < 2) {
+            autocompleteResults.classList.add('hidden');
+            // Show recent searches if input is empty
+            if (query.length === 0 && recentSearchesList.children.length > 0) {
+                recentSearches.classList.remove('hidden');
+            }
+            return;
+        }
+        
+        // Debounce autocomplete requests
+        autocompleteTimeout = setTimeout(function() {
+            fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayAutocompleteResults(data.results);
+                })
+                .catch(error => {
+                    console.error('Autocomplete error:', error);
+                });
+        }, 300); // 300ms debounce
+    });
+    
+    // Handle keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+        const items = autocompleteResults.querySelectorAll('.autocomplete-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
+            e.preventDefault();
+            items[selectedIndex].click();
+        } else if (e.key === 'Escape') {
+            autocompleteResults.classList.add('hidden');
+            recentSearches.classList.add('hidden');
+        }
+    });
+    
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('bg-blue-50', 'border-blue-500');
+            } else {
+                item.classList.remove('bg-blue-50', 'border-blue-500');
+            }
+        });
+    }
+    
+    function displayAutocompleteResults(results) {
+        if (results.length === 0) {
+            autocompleteResults.classList.add('hidden');
+            return;
+        }
+        
+        autocompleteResults.innerHTML = '';
+        selectedIndex = -1;
+        
+        results.forEach((stock, index) => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item p-4 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition duration-150';
+            item.dataset.url = stock.url;
+            item.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-lg text-gray-900">${escapeHtml(stock.symbol)}</span>
+                            <span class="text-xs text-gray-500">${escapeHtml(stock.code)}</span>
+                            ${stock.sector ? `<span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">${escapeHtml(stock.company_name)}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            `;
+            
+            item.addEventListener('click', function() {
+                window.location.href = stock.url;
+            });
+            
+            autocompleteResults.appendChild(item);
+        });
+        
+        autocompleteResults.classList.remove('hidden');
+    }
+    
+    // Handle recent search clicks
+    document.querySelectorAll('.recent-search-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const searchTerm = this.dataset.search;
+            searchInput.value = searchTerm;
+            // Submit the form
+            searchInput.closest('form').submit();
+        });
+    });
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+})();
+</script>
 {% endblock %}

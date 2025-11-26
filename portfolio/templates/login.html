@@ -29,11 +29,11 @@
                     
                     {% if messages %}
                         {% for message in messages %}
-                        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="{% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-500 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700{% else %}bg-blue-50 border-l-4 border-blue-500 text-blue-700{% endif %} px-4 py-3 rounded-lg text-sm flex items-center">
+                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            {{ message }}
+                            <span>{{ message|safe }}</span>
                         </div>
                         {% endfor %}
                     {% endif %}
@@ -88,10 +88,17 @@
                             </label>
                         </div>
 
-                        <div class="text-sm">
-                            <a href="{% url 'password_reset' %}" class="text-blue-600 hover:text-blue-800 font-medium transition duration-200">
-                                Forgot password?
-                            </a>
+                        <div class="text-sm space-y-1">
+                            <div>
+                                <a href="{% url 'password_reset' %}" class="text-blue-600 hover:text-blue-800 font-medium transition duration-200">
+                                    Forgot password?
+                                </a>
+                            </div>
+                            <div>
+                                <a href="{% url 'resend_verification' %}" class="text-blue-600 hover:text-blue-800 font-medium transition duration-200 text-xs">
+                                    Resend verification email
+                                </a>
+                            </div>
                         </div>
                     </div>
 

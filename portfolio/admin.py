@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
-    UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews
+    UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
+    AffiliateLink, SponsoredContent
 )
 
 
@@ -97,3 +98,50 @@ class StockNewsAdmin(admin.ModelAdmin):
     date_hierarchy = 'published_at'
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
+
+
+@admin.register(AffiliateLink)
+class AffiliateLinkAdmin(admin.ModelAdmin):
+    list_display = ('name', 'platform_type', 'is_active', 'display_order', 'click_count', 'created_at')
+    list_filter = ('platform_type', 'is_active', 'created_at')
+    search_fields = ('name', 'description')
+    readonly_fields = ('click_count', 'created_at', 'updated_at')
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'platform_type', 'description', 'logo_url')
+        }),
+        ('Affiliate Details', {
+            'fields': ('affiliate_url', 'bonus_offer')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'display_order')
+        }),
+        ('Statistics', {
+            'fields': ('click_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(SponsoredContent)
+class SponsoredContentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'content_type', 'stock', 'is_active', 'display_order', 'view_count', 'click_count', 'created_at')
+    list_filter = ('content_type', 'is_active', 'start_date', 'end_date', 'created_at')
+    search_fields = ('title', 'description', 'stock__symbol')
+    readonly_fields = ('view_count', 'click_count', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    fieldsets = (
+        ('Content Information', {
+            'fields': ('title', 'content_type', 'description', 'image_url', 'stock')
+        }),
+        ('Link Settings', {
+            'fields': ('link_url', 'link_text')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'display_order', 'start_date', 'end_date')
+        }),
+        ('Statistics', {
+            'fields': ('view_count', 'click_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
