@@ -213,42 +213,42 @@
         </div>
 
         {% if total_value > 0 and performance_data %}
-        <div class="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-2xl p-6 h-72 mb-6 overflow-hidden flex items-center justify-center relative border-2 border-blue-200 shadow-inner">
-          <div class="absolute inset-0 flex justify-between items-end px-6 pb-6">
+        <div class="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-2xl p-4 md:p-6 h-64 md:h-72 mb-6 overflow-hidden flex items-center justify-center relative border-2 border-blue-200 shadow-inner chart-container">
+          <div class="absolute inset-0 flex justify-between items-end px-3 md:px-6 pb-4 md:pb-6">
             {% for perf in performance_data %}
-              <div class="flex flex-col items-center flex-1 mx-1">
+              <div class="flex flex-col items-center flex-1 mx-0.5 md:mx-1">
                 <div class="performance-bar bg-gradient-to-t from-blue-600 via-purple-600 to-indigo-600 w-full rounded-t-xl shadow-lg"
                      data-percent="{{ perf.percent }}"
                      style="height: 0%; min-height: 8px; max-height: 100%;">
                 </div>
-                <p class="text-sm mt-3 text-gray-700 font-bold">{{ perf.month }}</p>
+                <p class="text-xs md:text-sm mt-2 md:mt-3 text-gray-700 font-bold">{{ perf.month }}</p>
               </div>
             {% endfor %}
           </div>
           <!-- Chart label -->
-          <div class="absolute top-4 left-6 text-sm text-gray-600 font-bold">
+          <div class="absolute top-2 md:top-4 left-3 md:left-6 text-xs md:text-sm text-gray-600 font-bold">
             Portfolio Value Trend
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-4 text-center">
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
-            <p class="text-3xl font-bold {% if monthly_performance >= 0 %}text-green-600{% elif monthly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+        <div class="grid grid-cols-3 gap-2 md:gap-4 text-center">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl md:rounded-2xl p-3 md:p-5 border-2 border-gray-200">
+            <p class="text-xl md:text-3xl font-bold {% if monthly_performance >= 0 %}text-green-600{% elif monthly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if monthly_performance != None %}{{ monthly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-2 font-semibold">1 Month</p>
+            <p class="text-xs md:text-sm text-gray-600 mt-1 md:mt-2 font-semibold">1 Month</p>
           </div>
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
-            <p class="text-3xl font-bold {% if quarterly_performance >= 0 %}text-blue-600{% elif quarterly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl md:rounded-2xl p-3 md:p-5 border-2 border-gray-200">
+            <p class="text-xl md:text-3xl font-bold {% if quarterly_performance >= 0 %}text-blue-600{% elif quarterly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if quarterly_performance != None %}{{ quarterly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-2 font-semibold">3 Months</p>
+            <p class="text-xs md:text-sm text-gray-600 mt-1 md:mt-2 font-semibold">3 Months</p>
           </div>
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
-            <p class="text-3xl font-bold {% if yearly_performance >= 0 %}text-purple-600{% elif yearly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl md:rounded-2xl p-3 md:p-5 border-2 border-gray-200">
+            <p class="text-xl md:text-3xl font-bold {% if yearly_performance >= 0 %}text-purple-600{% elif yearly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
               {% if yearly_performance != None %}{{ yearly_performance|floatformat:2 }}%{% else %}--{% endif %}
             </p>
-            <p class="text-sm text-gray-600 mt-2 font-semibold">1 Year</p>
+            <p class="text-xs md:text-sm text-gray-600 mt-1 md:mt-2 font-semibold">1 Year</p>
           </div>
         </div>
         {% else %}
@@ -401,7 +401,9 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Chart -->
         <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
-          <canvas id="dividendProjectionChart" height="300"></canvas>
+          <div class="chart-wrapper w-full overflow-x-auto">
+            <canvas id="dividendProjectionChart" class="w-full" style="max-width: 100%; height: auto; min-height: 250px;"></canvas>
+          </div>
         </div>
         
         <!-- Summary Stats -->
@@ -674,10 +676,19 @@
       const maxIncome = Math.max(...projectionData.map(d => d.income));
       const maxCumulative = Math.max(...projectionData.map(d => d.cumulative));
       
+      // Make canvas responsive
+      const container = projectionCtx.parentElement;
+      const containerWidth = container.clientWidth || 600;
+      const aspectRatio = 2; // width/height ratio
+      const canvasHeight = Math.max(250, containerWidth / aspectRatio);
+      
+      projectionCtx.width = containerWidth;
+      projectionCtx.height = canvasHeight;
+      
       const canvas = projectionCtx.getContext('2d');
       const width = projectionCtx.width;
       const height = projectionCtx.height;
-      const padding = 40;
+      const padding = Math.max(30, width * 0.05); // Responsive padding
       const chartWidth = width - (padding * 2);
       const chartHeight = height - (padding * 2);
       
@@ -705,19 +716,21 @@
         canvas.fillStyle = '#10B981';
         canvas.fillRect(x, y, barWidth, barHeight);
         
-        // Draw value on top
+        // Draw value on top (responsive font size)
+        const fontSize = Math.max(9, width / 60);
         if (barHeight > 20) {
           canvas.fillStyle = '#1F2937';
-          canvas.font = 'bold 10px Arial';
+          canvas.font = `bold ${fontSize}px Arial`;
           canvas.textAlign = 'center';
           canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 5);
         }
         
-        // Draw month label
+        // Draw month label (responsive font size)
         canvas.fillStyle = '#6B7280';
-        canvas.font = '11px Arial';
+        canvas.font = `${Math.max(8, fontSize - 1)}px Arial`;
         canvas.textAlign = 'center';
-        canvas.fillText(data.month, x + barWidth/2, height - 10);
+        const monthText = width < 640 ? data.month.split(' ')[0] : data.month; // Abbreviate on mobile
+        canvas.fillText(monthText, x + barWidth/2, height - 10);
       });
     }
     {% endif %}

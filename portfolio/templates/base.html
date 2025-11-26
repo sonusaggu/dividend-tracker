@@ -199,6 +199,123 @@
                 padding: 0.875rem;
             }
         }
+        
+        /* Mobile Optimizations */
+        /* Touch-friendly buttons - minimum 44x44px tap target */
+        @media (max-width: 768px) {
+            /* Ensure all buttons are touch-friendly */
+            button, a[role="button"], .btn, input[type="submit"], input[type="button"] {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 12px 16px;
+                font-size: 16px; /* Prevents iOS zoom on focus */
+            }
+            
+            /* Larger tap targets for interactive elements */
+            .toggle-watchlist, .add-to-portfolio, .alert-toggle {
+                min-height: 48px;
+                min-width: 48px;
+                padding: 12px;
+            }
+            
+            /* Better spacing for mobile */
+            .mobile-spacing {
+                padding: 1rem;
+            }
+            
+            /* Responsive text sizes */
+            h1 {
+                font-size: 2rem;
+                line-height: 1.2;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+                line-height: 1.3;
+            }
+            
+            h3 {
+                font-size: 1.25rem;
+                line-height: 1.4;
+            }
+            
+            /* Chart container optimizations */
+            .chart-container {
+                position: relative;
+                width: 100%;
+                height: auto;
+                min-height: 250px;
+                max-height: 400px;
+            }
+            
+            canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+            
+            /* Better table scrolling on mobile */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Improved card spacing */
+            .card, .bg-white.rounded {
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+            
+            /* Better form inputs on mobile */
+            input, select, textarea {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 12px;
+                min-height: 44px;
+            }
+            
+            /* Improved grid layouts */
+            .grid {
+                gap: 1rem;
+            }
+            
+            /* Better navigation */
+            nav a {
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+        }
+        
+        /* Chart responsive behavior */
+        @media (max-width: 640px) {
+            .chart-wrapper {
+                padding: 0.5rem;
+                margin: 0.5rem 0;
+            }
+            
+            .chart-container canvas {
+                max-height: 250px;
+            }
+        }
+        
+        /* Prevent text size adjustment on iOS */
+        @media screen and (max-width: 768px) {
+            html {
+                -webkit-text-size-adjust: 100%;
+            }
+        }
+        
+        /* Touch-friendly hover states */
+        @media (hover: none) and (pointer: coarse) {
+            /* Remove hover effects on touch devices */
+            button:hover, a:hover {
+                transform: none;
+            }
+            
+            /* Add active states for touch */
+            button:active, a:active {
+                opacity: 0.8;
+                transform: scale(0.98);
+            }
+        }
     </style>
     
     {% block extra_css %}{% endblock %}

@@ -19,7 +19,7 @@
                 <p class="text-xl text-gray-600">Track your investments and dividend income</p>
             </div>
             <a href="{% url 'all_stocks' %}" 
-               class="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+               class="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
                 + Add Stock
             </a>
         </div>
@@ -160,8 +160,8 @@
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Pie Chart -->
-                <div class="flex items-center justify-center">
-                    <canvas id="sectorPieChart" width="300" height="300"></canvas>
+                <div class="flex items-center justify-center chart-wrapper w-full">
+                    <canvas id="sectorPieChart" class="w-full max-w-full" style="max-width: 100%; height: auto;"></canvas>
                 </div>
                 
                 <!-- Sector List -->
@@ -203,10 +203,10 @@
                         {% endfor %}
                     </select>
                     <!-- Sort Options -->
-                    <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition min-h-[44px]">
                         Sort by Symbol
                     </button>
-                    <button onclick="sortTable('value')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <button onclick="sortTable('value')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition min-h-[44px]">
                         Sort by Value
                     </button>
                 </div>
@@ -644,6 +644,12 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     const ctx = document.getElementById('sectorPieChart');
     if (ctx) {
+        // Make canvas responsive
+        const container = ctx.parentElement;
+        const containerSize = Math.min(container.clientWidth || 300, container.clientHeight || 300, 400);
+        ctx.width = containerSize;
+        ctx.height = containerSize;
+        
         // Generate colors for sectors
         const colors = [
             '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
@@ -663,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Simple pie chart using canvas (no external library needed)
         const centerX = ctx.width / 2;
         const centerY = ctx.height / 2;
-        const radius = Math.min(centerX, centerY) - 20;
+        const radius = Math.min(centerX, centerY) - (containerSize > 300 ? 20 : 15);
         const total = sectorData.reduce((sum, item) => sum + item.value, 0);
         
         let currentAngle = -Math.PI / 2;
@@ -682,17 +688,20 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.lineWidth = 2;
             canvas.stroke();
             
-            // Add label
-            const labelAngle = currentAngle + sliceAngle / 2;
-            const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
-            const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
-            
-            canvas.fillStyle = '#1F2937';
-            canvas.font = 'bold 12px Arial';
-            canvas.textAlign = 'center';
-            canvas.textBaseline = 'middle';
-            if (item.percent >= 5) { // Only show label if >= 5%
-                canvas.fillText(item.percent.toFixed(1) + '%', labelX, labelY);
+            // Add label (only if slice is large enough and screen is not too small)
+            if (sliceAngle > 0.2 && containerSize > 250) {
+                const labelAngle = currentAngle + sliceAngle / 2;
+                const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+                const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+                
+                canvas.fillStyle = '#1F2937';
+                const fontSize = Math.max(10, containerSize / 30);
+                canvas.font = `bold ${fontSize}px Arial`;
+                canvas.textAlign = 'center';
+                canvas.textBaseline = 'middle';
+                if (item.percent >= 5) { // Only show label if >= 5%
+                    canvas.fillText(item.percent.toFixed(1) + '%', labelX, labelY);
+                }
             }
             
             currentAngle += sliceAngle;
@@ -738,6 +747,15 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if dividend_projection %}
     const dividendCtx = document.getElementById('portfolioDividendChart');
     if (dividendCtx) {
+        // Make canvas responsive
+        const container = dividendCtx.parentElement;
+        const containerWidth = container.clientWidth || 600;
+        const aspectRatio = 2.5;
+        const canvasHeight = Math.max(200, containerWidth / aspectRatio);
+        
+        dividendCtx.width = containerWidth;
+        dividendCtx.height = canvasHeight;
+        
         const dividendData = [
             {% for month in dividend_projection %}
             {month: "{{ month.month }}", income: {{ month.income }}, cumulative: {{ month.cumulative }}}{% if not forloop.last %},{% endif %}
@@ -748,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const canvas = dividendCtx.getContext('2d');
         const width = dividendCtx.width;
         const height = dividendCtx.height;
-        const padding = 30;
+        const padding = Math.max(25, width * 0.04);
         const chartWidth = width - (padding * 2);
         const chartHeight = height - (padding * 2);
         
@@ -765,22 +783,29 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.fillStyle = '#10B981';
             canvas.fillRect(x, y, barWidth, barHeight);
             
-            // Draw value
+            // Draw value (responsive font size)
+            const fontSize = Math.max(8, width / 70);
             if (barHeight > 15) {
                 canvas.fillStyle = '#1F2937';
-                canvas.font = 'bold 9px Arial';
+                canvas.font = `bold ${fontSize}px Arial`;
                 canvas.textAlign = 'center';
                 canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 3);
             }
             
-            // Draw month label (rotate for readability)
+            // Draw month label (responsive, abbreviate on mobile)
             canvas.save();
             canvas.translate(x + barWidth/2, height - 5);
-            canvas.rotate(-Math.PI / 4);
+            if (width < 640) {
+                // Vertical text on mobile
+                canvas.rotate(-Math.PI / 2);
+            } else {
+                canvas.rotate(-Math.PI / 4);
+            }
             canvas.fillStyle = '#6B7280';
-            canvas.font = '9px Arial';
+            canvas.font = `${Math.max(7, fontSize - 1)}px Arial`;
             canvas.textAlign = 'center';
-            canvas.fillText(data.month.split(' ')[0], 0, 0);
+            const monthText = width < 640 ? data.month.split(' ')[0] : data.month;
+            canvas.fillText(monthText, 0, 0);
             canvas.restore();
         });
     }

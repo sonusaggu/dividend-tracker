@@ -289,7 +289,7 @@
                     <!-- Enhanced Action Button -->
                     <a 
                         href="{% url 'stock_detail' item.stock.symbol %}" 
-                        class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-4 px-4 rounded-xl font-bold text-base transition duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl group/btn"
+                        class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-3 md:py-4 px-4 rounded-xl font-bold text-base transition duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group/btn min-h-[44px] flex items-center justify-center"
                     >
                         <span class="flex items-center justify-center">
                             View Details
@@ -312,7 +312,7 @@
                     {% endif %}
                 </p>
                 <a href="{% url 'all_stocks' %}" 
-                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">
+                   class="inline-flex items-center px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
@@ -328,11 +328,11 @@
             <nav class="flex items-center space-x-3 bg-white rounded-3xl shadow-2xl p-4 border-2 border-gray-100">
                 {% if page_obj.has_previous %}
                 <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
                     &laquo; First
                 </a>
                 <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
                     ← Previous
                 </a>
                 {% endif %}
@@ -343,11 +343,11 @@
 
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
                     Next →
                 </a>
                 <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-5 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-500 transition duration-200 font-semibold">
+                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
                     Last &raquo;
                 </a>
                 {% endif %}
