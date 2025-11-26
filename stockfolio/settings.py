@@ -212,6 +212,9 @@ if not DEFAULT_FROM_EMAIL and EMAIL_HOST_USER and EMAIL_HOST_USER.strip():
 if not DEFAULT_FROM_EMAIL or not DEFAULT_FROM_EMAIL.strip():
     DEFAULT_FROM_EMAIL = 'noreply@dividend.forum'
 
+# Contact form recipient email (defaults to DEFAULT_FROM_EMAIL if not set)
+CONTACT_EMAIL = config('CONTACT_EMAIL', default=DEFAULT_FROM_EMAIL)
+
 # Site domain for password reset emails and verification links
 # Priority: 1. Environment variable, 2. dividend.forum, 3. Render hostname, 4. localhost
 SITE_DOMAIN = config('SITE_DOMAIN', default=None)

@@ -2377,3 +2377,111 @@ def canadian_tools(request):
             context['tool_type'] = tool_type
     
     return render(request, 'canadian_tools.html', context)
+
+
+@csrf_protect
+def contact_us(request):
+    """Contact Us page with email sending and security features"""
+    from .forms import ContactForm
+    from portfolio.utils.email_service import send_email
+    from django.conf import settings
+    from datetime import datetime, timedelta
+    
+    # Rate limiting: max 3 submissions per hour per IP
+    if request.method == 'POST':
+        session_key = f'contact_submissions_{request.META.get("REMOTE_ADDR", "unknown")}'
+        submissions = request.session.get(session_key, [])
+        
+        # Remove submissions older than 1 hour
+        now = datetime.now()
+        submissions = [s for s in submissions if (now - datetime.fromisoformat(s)).total_seconds() < 3600]
+        
+        if len(submissions) >= 3:
+            messages.error(request, 'Too many submissions. Please wait before sending another message.')
+            form = ContactForm()
+            return render(request, 'contact.html', {'form': form})
+        
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            # Check honeypot field
+            if form.cleaned_data.get('website'):
+                logger.warning(f"Spam detected from {request.META.get('REMOTE_ADDR')}")
+                messages.error(request, 'Invalid submission.')
+                form = ContactForm()
+                return render(request, 'contact.html', {'form': form})
+            
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            
+            # Get recipient email (admin email or default from email)
+            recipient_email = getattr(settings, 'CONTACT_EMAIL', None) or getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@dividend.forum')
+            
+            # Prepare email content
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">New Contact Form Submission</h2>
+                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>Name:</strong> {name}</p>
+                        <p><strong>Email:</strong> {email}</p>
+                        <p><strong>Subject:</strong> {subject}</p>
+                        <p><strong>Submitted:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                        <p><strong>IP Address:</strong> {request.META.get('REMOTE_ADDR', 'Unknown')}</p>
+                    </div>
+                    <div style="background-color: #ffffff; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0;">
+                        <h3 style="margin-top: 0;">Message:</h3>
+                        <p style="white-space: pre-wrap;">{message}</p>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="color: #6b7280; font-size: 12px;">
+                        This email was sent from the Contact Us form on dividend.forum
+                    </p>
+                </div>
+            </body>
+            </html>
+            """
+            
+            text_content = f"""
+New Contact Form Submission
+
+Name: {name}
+Email: {email}
+Subject: {subject}
+Submitted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+IP Address: {request.META.get('REMOTE_ADDR', 'Unknown')}
+
+Message:
+{message}
+
+---
+This email was sent from the Contact Us form on dividend.forum
+            """
+            
+            # Send email
+            email_subject = f"Contact Form: {subject}"
+            success = send_email(
+                to_email=recipient_email,
+                subject=email_subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+            
+            if success:
+                # Record submission for rate limiting
+                submissions.append(now.isoformat())
+                request.session[session_key] = submissions
+                request.session.modified = True
+                
+                messages.success(request, 'Thank you for contacting us! We will get back to you soon.')
+                logger.info(f"Contact form submitted successfully from {email} (IP: {request.META.get('REMOTE_ADDR')})")
+                form = ContactForm()  # Reset form
+            else:
+                messages.error(request, 'Sorry, there was an error sending your message. Please try again later.')
+                logger.error(f"Failed to send contact form email from {email}")
+    else:
+        form = ContactForm()
+    
+    return render(request, 'contact.html', {'form': form})

@@ -77,5 +77,7 @@ urlpatterns = [
     path('fetch-news/', views.fetch_news, name='fetch_news'),
     # Canadian tools
     path('tools/', views.canadian_tools, name='canadian_tools'),
+    # Contact Us
+    path('contact/', views.contact_us, name='contact_us'),
 
 ]

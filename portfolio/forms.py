@@ -64,3 +64,70 @@ class RegistrationForm(UserCreationForm):
             raise forms.ValidationError('Username can only contain letters, numbers, hyphens, and underscores.')
         
         return username
+
+
+class ContactForm(forms.Form):
+    """Contact form with security features"""
+    name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+            'placeholder': 'Your name'
+        })
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+            'placeholder': 'your.email@example.com'
+        })
+    )
+    subject = forms.CharField(
+        max_length=200,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+            'placeholder': 'Subject'
+        })
+    )
+    message = forms.CharField(
+        max_length=2000,
+        required=True,
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary',
+            'rows': 6,
+            'placeholder': 'Your message...'
+        })
+    )
+    # Honeypot field for spam protection (hidden from users)
+    website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'style': 'display:none;',
+            'tabindex': '-1',
+            'autocomplete': 'off'
+        })
+    )
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').lower().strip()
+        # Basic email validation
+        if not email:
+            raise forms.ValidationError('Email is required.')
+        return email
+    
+    def clean_message(self):
+        message = self.cleaned_data.get('message', '').strip()
+        if len(message) < 10:
+            raise forms.ValidationError('Message must be at least 10 characters long.')
+        if len(message) > 2000:
+            raise forms.ValidationError('Message must be 2000 characters or less.')
+        return message
+    
+    def clean_website(self):
+        """Honeypot field - if filled, it's spam"""
+        website = self.cleaned_data.get('website', '')
+        if website:
+            raise forms.ValidationError('Spam detected.')
+        return website
