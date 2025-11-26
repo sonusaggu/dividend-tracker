@@ -125,21 +125,16 @@ def login_view(request):
                     try:
                         verification = EmailVerification.objects.get(user=user)
                         if not verification.is_verified:
+                            # User has verification record but not verified - allow login but show warning
                             messages.warning(
                                 request,
-                                'Please verify your email address before logging in. Check your inbox for the verification email, or request a new one.'
+                                'Your email address is not yet verified. Please check your inbox for the verification email, or request a new one from your dashboard.'
                             )
-                            return redirect('verify_email_sent')
+                            logger.info(f"User {user.username} logged in with unverified email")
                     except EmailVerification.DoesNotExist:
-                        # If no verification record exists, create one and send email
-                        from portfolio.utils.email_verification import create_verification_token, send_verification_email
-                        verification = create_verification_token(user)
-                        send_verification_email(user, verification.token)
-                        messages.warning(
-                            request,
-                            'Please verify your email address. A verification email has been sent to your inbox.'
-                        )
-                        return redirect('verify_email_sent')
+                        # If no verification record exists for existing user, don't send email automatically
+                        # Only create record if user explicitly requests verification (via resend_verification_email)
+                        logger.info(f"User {user.username} logged in without EmailVerification record (existing user)")
             except Exception as e:
                 # If table doesn't exist or any error, allow login (graceful degradation)
                 logger.debug(f"Email verification check skipped: {e}")
@@ -197,6 +192,7 @@ def register_view(request):
                 user = form.save()
                 
                 # Create email verification token
+                email_sent = False
                 try:
                     from portfolio.utils.email_verification import create_verification_token, send_verification_email
                     from portfolio.models import EmailVerification
@@ -225,28 +221,24 @@ def register_view(request):
                             # For other databases, try to query the table
                             EmailVerification.objects.first()
                             table_exists = True
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"Could not check if EmailVerification table exists: {e}")
                         table_exists = False
                     
                     if table_exists:
-                        logger.info(f"📧 Creating verification token for user: {user.email}")
                         verification = create_verification_token(user)
-                        logger.info(f"📧 Token created, sending verification email to: {user.email}")
                         email_sent = send_verification_email(user, verification.token)
                         if email_sent:
-                            logger.info(f"✅ Verification email sent successfully to {user.email}")
+                            logger.info(f"Verification email sent successfully to {user.email}")
                         else:
-                            logger.error(f"❌ Failed to send verification email to {user.email}")
+                            logger.error(f"Failed to send verification email to {user.email}")
                     else:
-                        # Table doesn't exist yet - skip verification for now
                         email_sent = False
-                        logger.warning("⚠️ EmailVerification table doesn't exist yet. Skipping email verification.")
-                        print("⚠️ EmailVerification table doesn't exist yet. Skipping email verification.")
+                        logger.warning("EmailVerification table doesn't exist yet. Skipping email verification.")
                 except Exception as e:
-                    logger.error(f"❌ Error creating verification token for {user.email}: {e}")
+                    logger.error(f"Error creating verification token for {user.email}: {e}")
                     import traceback
                     logger.error(traceback.format_exc())
-                    print(f"❌ Error creating verification token: {e}")
                     email_sent = False
                 
                 if email_sent:
@@ -255,10 +247,9 @@ def register_view(request):
                         f'Registration successful! Please check your email ({user.email}) to verify your account. You can log in after verification.'
                     )
                 else:
-                    messages.warning(
-                        request,
-                        'Account created, but we couldn\'t send the verification email. Please contact support or try logging in.'
-                    )
+                    error_msg = f'Account created, but we couldn\'t send the verification email to {user.email}. Please check email configuration or contact support.'
+                    messages.warning(request, error_msg)
+                    logger.error(f"Registration succeeded but email sending failed for {user.email}")
                 
                 # Don't auto-login - user must verify email first
                 return redirect('verify_email_sent')
