@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ post.title|default:"Post" }} - StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Back Button -->
+        <a href="{% url 'posts_feed' %}" class="inline-flex items-center text-gray-600 hover:text-blue-600 mb-6">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Feed
+        </a>
+
+        <!-- Post -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+            <!-- Post Header -->
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'user_profile' post.user.username %}">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            {{ post.user.username|slice:":1"|upper }}
+                        </div>
+                    </a>
+                    <div>
+                        <a href="{% url 'user_profile' post.user.username %}" class="font-bold text-gray-900 hover:text-blue-600">
+                            {{ post.user.username }}
+                        </a>
+                        <p class="text-sm text-gray-500">{{ post.created_at|timesince }} ago</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                    {{ post.get_post_type_display }}
+                </span>
+            </div>
+
+            <!-- Stock Link -->
+            {% if post.stock %}
+            <div class="mb-3">
+                <a href="{% url 'stock_detail' post.stock.symbol %}" class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-700">
+                    📈 {{ post.stock.symbol }} - {{ post.stock.company_name }}
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Post Content -->
+            {% if post.title %}
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>
+            {% endif %}
+
+            <div class="text-gray-700 mb-6 whitespace-pre-wrap text-lg">{{ post.content }}</div>
+
+            <!-- Post Actions -->
+            <div class="flex items-center space-x-6 pt-4 border-t border-gray-200">
+                <button onclick="likePost({{ post.id }})" 
+                        class="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition {% if is_liked %}text-red-600{% endif %}">
+                    <svg class="w-5 h-5" fill="{% if is_liked %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <span id="likes-{{ post.id }}">{{ post.likes_count }}</span>
+                </button>
+                <span class="flex items-center space-x-2 text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <span id="comments-count">{{ post.comments_count }}</span>
+                </span>
+                <span class="flex items-center space-x-2 text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    <span>{{ post.views_count }}</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Comment Form -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Add a Comment</h2>
+            <form id="comment-form" onsubmit="addComment(event, {{ post.id }})">
+                {% csrf_token %}
+                <textarea name="content" 
+                          id="comment-content"
+                          required
+                          rows="4"
+                          placeholder="Write your comment..."
+                          maxlength="2000"
+                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 resize-none mb-4"></textarea>
+                <button type="submit" 
+                        class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg">
+                    Post Comment
+                </button>
+            </form>
+        </div>
+
+        <!-- Comments -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Comments ({{ post.comments_count }})</h2>
+            
+            <div id="comments-list">
+                {% for comment in comments %}
+                <div class="border-b border-gray-200 pb-4 mb-4 last:border-0 last:mb-0">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <a href="{% url 'user_profile' comment.user.username %}">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                    {{ comment.user.username|slice:":1"|upper }}
+                                </div>
+                            </a>
+                            <div>
+                                <a href="{% url 'user_profile' comment.user.username %}" class="font-bold text-gray-900 hover:text-blue-600">
+                                    {{ comment.user.username }}
+                                </a>
+                                <p class="text-xs text-gray-500">{{ comment.created_at|timesince }} ago</p>
+                            </div>
+                        </div>
+                        <button onclick="likeComment({{ comment.id }})" 
+                                class="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition {% if comment.is_liked %}text-red-600{% endif %}">
+                            <svg class="w-4 h-4" fill="{% if comment.is_liked %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            <span id="comment-likes-{{ comment.id }}">{{ comment.likes_count }}</span>
+                        </button>
+                    </div>
+                    <div class="text-gray-700 ml-13 whitespace-pre-wrap">{{ comment.content }}</div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No comments yet. Be the first to comment!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function likePost(postId) {
+    fetch(`/posts/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const likesElement = document.getElementById(`likes-${postId}`);
+            likesElement.textContent = data.likes_count;
+            const button = likesElement.parentElement;
+            if (data.action === 'liked') {
+                button.classList.add('text-red-600');
+                button.querySelector('svg').setAttribute('fill', 'currentColor');
+            } else {
+                button.classList.remove('text-red-600');
+                button.querySelector('svg').setAttribute('fill', 'none');
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function addComment(event, postId) {
+    event.preventDefault();
+    const content = document.getElementById('comment-content').value.trim();
+    
+    if (!content) return;
+    
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch(`/posts/${postId}/comment/`, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Add comment to list
+            const commentsList = document.getElementById('comments-list');
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'border-b border-gray-200 pb-4 mb-4';
+            commentDiv.innerHTML = `
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <a href="/profile/{{ user.username }}/">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {{ user.username|slice:":1"|upper }}
+                            </div>
+                        </a>
+                        <div>
+                            <a href="/profile/{{ user.username }}/" class="font-bold text-gray-900 hover:text-blue-600">
+                                {{ user.username }}
+                            </a>
+                            <p class="text-xs text-gray-500">Just now</p>
+                        </div>
+                    </div>
+                    <button onclick="likeComment(${data.comment.id})" class="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                        <span id="comment-likes-${data.comment.id}">0</span>
+                    </button>
+                </div>
+                <div class="text-gray-700 ml-13 whitespace-pre-wrap">${data.comment.content}</div>
+            `;
+            commentsList.insertBefore(commentDiv, commentsList.firstChild);
+            
+            // Clear form
+            document.getElementById('comment-content').value = '';
+            
+            // Update comment count
+            const countElement = document.getElementById('comments-count');
+            countElement.textContent = parseInt(countElement.textContent) + 1;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function likeComment(commentId) {
+    fetch(`/comments/${commentId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const likesElement = document.getElementById(`comment-likes-${commentId}`);
+            likesElement.textContent = data.likes_count;
+            const button = likesElement.parentElement;
+            if (data.action === 'liked') {
+                button.classList.add('text-red-600');
+                button.querySelector('svg').setAttribute('fill', 'currentColor');
+            } else {
+                button.classList.remove('text-red-600');
+                button.querySelector('svg').setAttribute('fill', 'none');
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}
+

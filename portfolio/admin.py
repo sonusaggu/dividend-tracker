@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
     UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
-    AffiliateLink, SponsoredContent
+    AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike
 )
 
 
@@ -145,3 +145,82 @@ class SponsoredContentAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'location', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'user__email', 'bio', 'location')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user',)
+        }),
+        ('Profile Details', {
+            'fields': ('bio', 'avatar', 'location', 'website', 'twitter_handle')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('follower', 'following', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('follower__username', 'following__username')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
+
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('user', 'post_type', 'title', 'stock', 'likes_count', 'comments_count', 'views_count', 'created_at')
+    list_filter = ('post_type', 'is_pinned', 'is_edited', 'created_at')
+    search_fields = ('user__username', 'title', 'content', 'stock__symbol')
+    readonly_fields = ('likes_count', 'comments_count', 'views_count', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    fieldsets = (
+        ('Post Information', {
+            'fields': ('user', 'post_type', 'title', 'content', 'stock')
+        }),
+        ('Engagement', {
+            'fields': ('likes_count', 'comments_count', 'views_count')
+        }),
+        ('Moderation', {
+            'fields': ('is_pinned', 'is_edited')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'post', 'likes_count', 'is_edited', 'created_at')
+    list_filter = ('is_edited', 'created_at')
+    search_fields = ('user__username', 'content', 'post__title')
+    readonly_fields = ('likes_count', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(PostLike)
+class PostLikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'post', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'post__title')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
+
+
+@admin.register(CommentLike)
+class CommentLikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'comment', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'comment__content')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'

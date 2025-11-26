@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ profile_user.username }}'s Profile - StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Profile Header -->
+        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-gray-100">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+                <div class="flex items-center space-x-6 mb-4 md:mb-0">
+                    <!-- Avatar -->
+                    {% if profile.avatar %}
+                    <img src="{{ profile.avatar }}" alt="{{ profile_user.username }}" class="w-24 h-24 rounded-full border-4 border-blue-200">
+                    {% else %}
+                    <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-blue-200">
+                        {{ profile_user.username|first|upper }}
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-1">{{ profile_user.username }}</h1>
+                        {% if profile.bio %}
+                        <p class="text-gray-600 mb-2">{{ profile.bio }}</p>
+                        {% endif %}
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                            {% if profile.location %}
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                {{ profile.location }}
+                            </span>
+                            {% endif %}
+                            {% if profile.website %}
+                            <a href="{{ profile.website }}" target="_blank" rel="noopener" class="flex items-center hover:text-blue-600">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                                Website
+                            </a>
+                            {% endif %}
+                            {% if profile.twitter_handle %}
+                            <a href="https://twitter.com/{{ profile.twitter_handle }}" target="_blank" rel="noopener" class="flex items-center hover:text-blue-600">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+                                </svg>
+                                @{{ profile.twitter_handle }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    {% if is_own_profile %}
+                    <a href="{% url 'edit_profile' %}" 
+                       class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition">
+                        Edit Profile
+                    </a>
+                    {% else %}
+                    <button onclick="followUser('{{ profile_user.username }}')" 
+                            id="follow-btn"
+                            class="px-6 py-3 rounded-xl font-semibold transition {% if is_following %}bg-gray-100 hover:bg-gray-200 text-gray-700{% else %}bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white{% endif %}">
+                        {% if is_following %}Following{% else %}Follow{% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'posts_feed' %}?user={{ profile_user.username }}" class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">{{ posts_count }}</div>
+                    <div class="text-sm text-gray-600">Posts</div>
+                </a>
+                <a href="{% url 'followers_list' profile_user.username %}" class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">{{ followers_count }}</div>
+                    <div class="text-sm text-gray-600">Followers</div>
+                </a>
+                <a href="{% url 'following_list' profile_user.username %}" class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">{{ following_count }}</div>
+                    <div class="text-sm text-gray-600">Following</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- User's Posts -->
+        <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Posts</h2>
+            
+            {% if posts %}
+            <div class="space-y-6">
+                {% for post in posts %}
+                <div class="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                {{ post.get_post_type_display }}
+                            </span>
+                            {% if post.stock %}
+                            <a href="{% url 'stock_detail' post.stock.symbol %}" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-semibold text-gray-700">
+                                📈 {{ post.stock.symbol }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm text-gray-500">{{ post.created_at|timesince }} ago</span>
+                    </div>
+                    
+                    {% if post.title %}
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">
+                        <a href="{% url 'post_detail' post.id %}" class="hover:text-blue-600">{{ post.title }}</a>
+                    </h3>
+                    {% endif %}
+                    
+                    <p class="text-gray-700 mb-4 line-clamp-3">{{ post.content }}</p>
+                    
+                    <div class="flex items-center space-x-6 text-sm text-gray-600">
+                        <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 hover:text-blue-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            <span>{{ post.likes_count }}</span>
+                        </a>
+                        <a href="{% url 'post_detail' post.id %}" class="flex items-center space-x-1 hover:text-blue-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <span>{{ post.comments_count }}</span>
+                        </a>
+                        <span class="flex items-center space-x-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <span>{{ post.views_count }}</span>
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <div class="text-6xl mb-4">📝</div>
+                <p class="text-gray-600">No posts yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function followUser(username) {
+    fetch(`/follow/${username}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const btn = document.getElementById('follow-btn');
+            if (data.action === 'follow') {
+                btn.textContent = 'Following';
+                btn.className = 'px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition';
+            } else {
+                btn.textContent = 'Follow';
+                btn.className = 'px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition';
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}
+

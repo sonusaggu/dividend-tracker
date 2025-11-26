@@ -89,5 +89,18 @@ urlpatterns = [
     # Affiliate and Sponsored Content
     path('affiliate/<int:affiliate_id>/', views.track_affiliate_click, name='track_affiliate_click'),
     path('sponsored/<int:content_id>/', views.track_sponsored_click, name='track_sponsored_click'),
+    
+    # Social Features
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/<str:username>/', views.user_profile, name='user_profile'),
+    path('follow/<str:username>/', views.follow_user, name='follow_user'),
+    path('posts/', views.posts_feed, name='posts_feed'),
+    path('posts/create/', views.create_post, name='create_post'),
+    path('posts/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('posts/<int:post_id>/like/', views.like_post, name='like_post'),
+    path('posts/<int:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('comments/<int:comment_id>/like/', views.like_comment, name='like_comment'),
+    path('profile/<str:username>/followers/', views.followers_list, name='followers_list'),
+    path('profile/<str:username>/following/', views.following_list, name='following_list'),
 
 ]

@@ -2649,3 +2649,303 @@ def privacy_policy(request):
 def terms_of_service(request):
     """Terms of Service page"""
     return render(request, 'terms_of_service.html')
+
+
+# ==================== SOCIAL FEATURES ====================
+
+@login_required
+def user_profile(request, username):
+    """View user profile"""
+    from django.contrib.auth.models import User
+    from portfolio.models import UserProfile, Post, Follow
+    
+    profile_user = get_object_or_404(User, username=username)
+    
+    # Get or create profile
+    profile, created = UserProfile.objects.get_or_create(user=profile_user)
+    
+    # Check if current user is following this user
+    is_following = False
+    if request.user.is_authenticated and request.user != profile_user:
+        is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
+    
+    # Get user's posts
+    posts = Post.objects.filter(user=profile_user).select_related('stock', 'user').prefetch_related('post_likes')[:10]
+    
+    # Get followers and following counts
+    followers_count = profile_user.followers.count()
+    following_count = profile_user.following.count()
+    posts_count = posts.count()
+    
+    context = {
+        'profile_user': profile_user,
+        'profile': profile,
+        'posts': posts,
+        'is_following': is_following,
+        'followers_count': followers_count,
+        'following_count': following_count,
+        'posts_count': posts_count,
+        'is_own_profile': request.user == profile_user,
+    }
+    return render(request, 'social/user_profile.html', context)
+
+
+@login_required
+def edit_profile(request):
+    """Edit user profile"""
+    from portfolio.models import UserProfile
+    
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        profile.bio = request.POST.get('bio', '')
+        profile.avatar = request.POST.get('avatar', '')
+        profile.location = request.POST.get('location', '')
+        profile.website = request.POST.get('website', '')
+        profile.twitter_handle = request.POST.get('twitter_handle', '')
+        profile.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('user_profile', username=request.user.username)
+    
+    context = {'profile': profile}
+    return render(request, 'social/edit_profile.html', context)
+
+
+@login_required
+@require_POST
+def follow_user(request, username):
+    """Follow or unfollow a user"""
+    from django.contrib.auth.models import User
+    from portfolio.models import Follow
+    
+    user_to_follow = get_object_or_404(User, username=username)
+    
+    if user_to_follow == request.user:
+        return JsonResponse({'status': 'error', 'message': 'Cannot follow yourself'}, status=400)
+    
+    follow, created = Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
+    
+    if created:
+        return JsonResponse({'status': 'success', 'message': f'Now following {username}', 'action': 'follow'})
+    else:
+        follow.delete()
+        return JsonResponse({'status': 'success', 'message': f'Unfollowed {username}', 'action': 'unfollow'})
+
+
+@login_required
+def posts_feed(request):
+    """View posts feed - all posts or from followed users"""
+    from portfolio.models import Post, PostLike
+    
+    feed_type = request.GET.get('feed', 'all')  # all, following, stock
+    
+    if feed_type == 'following':
+        # Get posts from users being followed
+        following_ids = request.user.following.values_list('following_id', flat=True)
+        posts = Post.objects.filter(user_id__in=following_ids).select_related('user', 'stock').prefetch_related('post_likes', 'comments')
+    elif feed_type == 'stock':
+        stock_symbol = request.GET.get('symbol')
+        if stock_symbol:
+            from portfolio.models import Stock
+            stock = get_object_or_404(Stock, symbol=stock_symbol)
+            posts = Post.objects.filter(stock=stock).select_related('user', 'stock').prefetch_related('post_likes', 'comments')
+        else:
+            posts = Post.objects.none()
+    else:
+        # All posts
+        posts = Post.objects.all().select_related('user', 'stock').prefetch_related('post_likes', 'comments')
+    
+    # Get liked posts by current user
+    liked_post_ids = set()
+    if request.user.is_authenticated:
+        liked_post_ids = set(PostLike.objects.filter(user=request.user).values_list('post_id', flat=True))
+    
+    # Pagination
+    paginator = Paginator(posts, 10)
+    page = request.GET.get('page')
+    try:
+        posts_page = paginator.page(page)
+    except PageNotAnInteger:
+        posts_page = paginator.page(1)
+    except EmptyPage:
+        posts_page = paginator.page(paginator.num_pages)
+    
+    # Mark which posts are liked
+    for post in posts_page:
+        post.is_liked = post.id in liked_post_ids
+        post.increment_views()
+    
+    context = {
+        'posts': posts_page,
+        'feed_type': feed_type,
+    }
+    return render(request, 'social/posts_feed.html', context)
+
+
+@login_required
+def create_post(request):
+    """Create a new post"""
+    from portfolio.models import Post, Stock
+    
+    if request.method == 'POST':
+        post_type = request.POST.get('post_type', 'insight')
+        title = request.POST.get('title', '')
+        content = request.POST.get('content', '')
+        stock_symbol = request.POST.get('stock_symbol', '')
+        
+        if not content:
+            messages.error(request, 'Post content is required.')
+            return redirect('posts_feed')
+        
+        stock = None
+        if stock_symbol:
+            try:
+                stock = Stock.objects.get(symbol=stock_symbol)
+            except Stock.DoesNotExist:
+                pass
+        
+        post = Post.objects.create(
+            user=request.user,
+            post_type=post_type,
+            title=title,
+            content=content,
+            stock=stock
+        )
+        
+        messages.success(request, 'Post created successfully!')
+        return redirect('posts_feed')
+    
+    # Get stocks for dropdown
+    stocks = Stock.objects.all().order_by('symbol')[:100]
+    
+    context = {'stocks': stocks}
+    return render(request, 'social/create_post.html', context)
+
+
+@login_required
+def post_detail(request, post_id):
+    """View post detail with comments"""
+    from portfolio.models import Post, PostLike, Comment, CommentLike
+    
+    post = get_object_or_404(Post.objects.select_related('user', 'stock').prefetch_related('comments__user'), id=post_id)
+    
+    # Check if liked
+    is_liked = False
+    if request.user.is_authenticated:
+        is_liked = PostLike.objects.filter(post=post, user=request.user).exists()
+    
+    # Get comments
+    comments = post.comments.all().select_related('user')
+    
+    # Get liked comment IDs
+    liked_comment_ids = set()
+    if request.user.is_authenticated:
+        liked_comment_ids = set(CommentLike.objects.filter(user=request.user, comment__in=comments).values_list('comment_id', flat=True))
+    
+    for comment in comments:
+        comment.is_liked = comment.id in liked_comment_ids
+    
+    # Increment view count
+    post.increment_views()
+    
+    context = {
+        'post': post,
+        'comments': comments,
+        'is_liked': is_liked,
+    }
+    return render(request, 'social/post_detail.html', context)
+
+
+@login_required
+@require_POST
+def like_post(request, post_id):
+    """Like or unlike a post"""
+    from portfolio.models import Post, PostLike
+    
+    post = get_object_or_404(Post, id=post_id)
+    
+    like, created = PostLike.objects.get_or_create(post=post, user=request.user)
+    
+    if created:
+        return JsonResponse({'status': 'success', 'action': 'liked', 'likes_count': post.likes_count})
+    else:
+        like.delete()
+        return JsonResponse({'status': 'success', 'action': 'unliked', 'likes_count': post.likes_count})
+
+
+@login_required
+@require_POST
+def add_comment(request, post_id):
+    """Add a comment to a post"""
+    from portfolio.models import Post, Comment
+    
+    post = get_object_or_404(Post, id=post_id)
+    content = request.POST.get('content', '').strip()
+    
+    if not content:
+        return JsonResponse({'status': 'error', 'message': 'Comment cannot be empty'}, status=400)
+    
+    comment = Comment.objects.create(post=post, user=request.user, content=content)
+    post.comments_count = post.comments.count()
+    post.save(update_fields=['comments_count'])
+    
+    return JsonResponse({
+        'status': 'success',
+        'comment': {
+            'id': comment.id,
+            'content': comment.content,
+            'user': comment.user.username,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+    })
+
+
+@login_required
+@require_POST
+def like_comment(request, comment_id):
+    """Like or unlike a comment"""
+    from portfolio.models import Comment, CommentLike
+    
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    like, created = CommentLike.objects.get_or_create(comment=comment, user=request.user)
+    
+    if created:
+        return JsonResponse({'status': 'success', 'action': 'liked', 'likes_count': comment.likes_count})
+    else:
+        like.delete()
+        return JsonResponse({'status': 'success', 'action': 'unliked', 'likes_count': comment.likes_count})
+
+
+@login_required
+def followers_list(request, username):
+    """View list of followers"""
+    from django.contrib.auth.models import User
+    from portfolio.models import Follow
+    
+    user = get_object_or_404(User, username=username)
+    followers = Follow.objects.filter(following=user).select_related('follower')[:50]
+    
+    context = {
+        'profile_user': user,
+        'followers': followers,
+        'is_own_profile': request.user == user,
+    }
+    return render(request, 'social/followers_list.html', context)
+
+
+@login_required
+def following_list(request, username):
+    """View list of users being followed"""
+    from django.contrib.auth.models import User
+    from portfolio.models import Follow
+    
+    user = get_object_or_404(User, username=username)
+    following = Follow.objects.filter(follower=user).select_related('following')[:50]
+    
+    context = {
+        'profile_user': user,
+        'following': following,
+        'is_own_profile': request.user == user,
+    }
+    return render(request, 'social/following_list.html', context)
