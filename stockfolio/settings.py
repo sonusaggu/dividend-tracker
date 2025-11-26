@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 from decouple import config  # <-- Add this import
-import dj_database_url 
+import dj_database_url
+import logging
+
+logger = logging.getLogger(__name__) 
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -173,7 +176,17 @@ def clean_email_credential(value):
     result = value.strip()
     return result if result else ''
 
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+# Resend API Configuration
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
+RESEND_FROM_EMAIL = config('RESEND_FROM_EMAIL', default='')
+USE_RESEND = bool(RESEND_API_KEY and RESEND_FROM_EMAIL)
+
+# Email backend - use Resend if configured, otherwise use SMTP
+if USE_RESEND:
+    EMAIL_BACKEND = 'portfolio.utils.email_backend.ResendEmailBackend'
+    logger.info("Using Resend email backend")
+else:
+    EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)

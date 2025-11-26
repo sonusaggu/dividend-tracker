@@ -60,10 +60,12 @@ def clean_text(text):
 
 def send_newsletter_email(user, newsletter_content):
     """
-    Send newsletter email to a single user using Django's email backend
-    Works with Gmail, Outlook, and other SMTP providers
+    Send newsletter email to a single user
+    Uses Resend API if configured, otherwise falls back to SMTP
     """
     try:
+        from portfolio.utils.email_service import send_email
+        
         # Generate HTML email content
         html_content = generate_newsletter_html(newsletter_content)
         text_content = generate_newsletter_text(newsletter_content)
@@ -72,28 +74,24 @@ def send_newsletter_email(user, newsletter_content):
         html_content = clean_text(html_content)
         text_content = clean_text(text_content)
         
-        # Create email with UTF-8 encoding
+        # Create email subject
         subject = f"Weekly Dividend Newsletter - {newsletter_content['week_start'].strftime('%B %d, %Y')}"
         subject = clean_text(subject)
         
-        email = EmailMultiAlternatives(
+        # Use unified email service (Resend or SMTP)
+        success = send_email(
+            to_email=user.email,
             subject=subject,
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]
+            html_content=html_content,
+            text_content=text_content
         )
         
-        # Set encoding explicitly
-        email.encoding = 'utf-8'
-        
-        # Attach HTML version with UTF-8 encoding
-        email.attach_alternative(html_content, "text/html; charset=utf-8")
-        
-        # Send email
-        email.send()
-        
-        logger.info(f"Newsletter sent successfully to {user.email}")
-        return True
+        if success:
+            logger.info(f"Newsletter sent to {user.email}")
+            return True
+        else:
+            logger.error(f"Failed to send newsletter to {user.email}")
+            return False
         
     except Exception as e:
         logger.error(f"Error sending newsletter to {user.email}: {e}")

@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn stockfolio.wsgi:application"
+    startCommand: "gunicorn stockfolio.wsgi:application --timeout 120 --workers 2 --threads 4"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -16,6 +16,28 @@ services:
         value: "False"
       - key: PYTHON_VERSION
         value: 3.11.5
+      # Resend API Configuration (RECOMMENDED)
+      # Get API key from https://resend.com/api-keys
+      # Note: Requires verified domain for production use
+      - key: RESEND_API_KEY
+        sync: false  # Your Resend API key from https://resend.com/api-keys
+      - key: RESEND_FROM_EMAIL
+        sync: false  # Verified sender email (e.g., noreply@yourdomain.com)
+      # Fallback: Local SMTP Configuration (if Resend not used)
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      - key: EMAIL_HOST
+        sync: false  # smtp.gmail.com (for local SMTP fallback)
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false  # Your email (for local SMTP fallback)
+      - key: EMAIL_HOST_PASSWORD
+        sync: false  # Gmail App Password (for local SMTP fallback)
+      - key: DEFAULT_FROM_EMAIL
+        sync: false  # Your email
 
   - type: postgres
     name: stockfolio-db
@@ -69,21 +91,26 @@ services:
         value: "False"
       - key: PYTHON_VERSION
         value: 3.11.5
-      # Email Configuration (set these in Render Dashboard)
+      # Resend API Configuration (RECOMMENDED)
+      - key: RESEND_API_KEY
+        sync: false  # Your Resend API key from https://resend.com/api-keys
+      - key: RESEND_FROM_EMAIL
+        sync: false  # Verified sender email (e.g., noreply@yourdomain.com)
+      # Fallback: Local SMTP (if Resend not used)
       - key: EMAIL_BACKEND
         value: "django.core.mail.backends.smtp.EmailBackend"
       - key: EMAIL_HOST
-        sync: false  # Set manually in Render Dashboard
+        sync: false  # smtp.gmail.com
       - key: EMAIL_PORT
         value: "587"
       - key: EMAIL_USE_TLS
         value: "True"
       - key: EMAIL_HOST_USER
-        sync: false  # Set manually in Render Dashboard
+        sync: false  # Your email
       - key: EMAIL_HOST_PASSWORD
-        sync: false  # Set manually in Render Dashboard (use App Password for Gmail)
+        sync: false  # Gmail App Password
       - key: DEFAULT_FROM_EMAIL
-        sync: false  # Set manually in Render Dashboard
+        sync: false  # Your email
 
   # Cron job to fetch news daily (runs every day at 8 AM UTC / 3 AM EST)
   # Automatically cleans up old news after fetching (30 days retention, 50 per stock)

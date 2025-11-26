@@ -1,13 +1,13 @@
 """
 Email verification utility for sending verification emails
+Uses Resend API if configured, otherwise falls back to SMTP
 """
 import secrets
 import logging
-from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.contrib.auth.models import User
+from portfolio.utils.email_service import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ def generate_verification_token():
 def send_verification_email(user, token):
     """
     Send email verification email to user
+    Uses Resend API if configured, otherwise falls back to SMTP
     """
     try:
         # Get site domain
@@ -38,18 +39,20 @@ def send_verification_email(user, token):
         html_message = render_to_string('email_verification.html', context)
         plain_message = strip_tags(html_message)
         
-        # Send email
-        send_mail(
+        # Use unified email service (Resend or SMTP)
+        success = send_email(
+            to_email=user.email,
             subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            html_message=html_message,
-            fail_silently=False,
+            html_content=html_message,
+            text_content=plain_message
         )
         
-        logger.info(f"Verification email sent to {user.email}")
-        return True
+        if success:
+            logger.info(f"Verification email sent to {user.email}")
+            return True
+        else:
+            logger.error(f"Failed to send verification email to {user.email}")
+            return False
         
     except Exception as e:
         logger.error(f"Error sending verification email to {user.email}: {e}")
@@ -79,4 +82,3 @@ def create_verification_token(user):
     )
     
     return verification
-

@@ -1427,9 +1427,10 @@ def dashboard(request):
         ).select_related('stock').order_by('-published_at')[:5]
         
         # Get real performance data from snapshots (only if model exists)
+        # Limit query to avoid timeout - only get last 30 days for faster response
         performance_snapshots = None
         try:
-            performance_snapshots = PortfolioService.get_portfolio_performance_history(request.user, days=180)
+            performance_snapshots = PortfolioService.get_portfolio_performance_history(request.user, days=30)
         except Exception as e:
             logger.debug(f"Could not get performance history: {e}")
             performance_snapshots = None
@@ -1469,13 +1470,14 @@ def dashboard(request):
                 performance_snapshots = None
         
         # Performance data for chart - use real snapshot data
+        # Limit to last 30 days to avoid timeout
         performance_data = []
         if performance_snapshots is not None:
             try:
                 if hasattr(performance_snapshots, 'exists') and performance_snapshots.exists():
-                    # Get last 6 months of data
-                    six_months_ago = timezone.now().date() - timedelta(days=180)
-                    recent_snapshots = list(performance_snapshots.filter(snapshot_date__gte=six_months_ago)[:6])
+                    # Get last 30 days of data (reduced from 180 to avoid timeout)
+                    thirty_days_ago = timezone.now().date() - timedelta(days=30)
+                    recent_snapshots = list(performance_snapshots.filter(snapshot_date__gte=thirty_days_ago)[:6])
                     
                     if recent_snapshots:
                         base_value = float(recent_snapshots[0].total_value) if recent_snapshots else total_value
@@ -1517,14 +1519,20 @@ def dashboard(request):
             total_projected_income = dividend_projection[-1]['cumulative'] if dividend_projection else 0
         average_monthly_income = total_projected_income / 12 if total_projected_income > 0 else 0
         
-        # Create portfolio snapshot for today (if not exists)
+        # Create portfolio snapshot for today (if not exists) - run in background to avoid timeout
         # Only create if PortfolioSnapshot model exists (migration has been run)
-        try:
-            from portfolio.models import PortfolioSnapshot
-            PortfolioService.create_portfolio_snapshot(request.user)
-        except (ImportError, Exception) as e:
-            # Model doesn't exist yet or other error - skip snapshot creation
-            logger.debug(f"Could not create portfolio snapshot (model may not exist yet): {e}")
+        import threading
+        def create_snapshot_async():
+            try:
+                from portfolio.models import PortfolioSnapshot
+                PortfolioService.create_portfolio_snapshot(request.user)
+            except (ImportError, Exception) as e:
+                # Model doesn't exist yet or other error - skip snapshot creation
+                logger.debug(f"Could not create portfolio snapshot (model may not exist yet): {e}")
+        
+        # Start snapshot creation in background thread (non-blocking)
+        snapshot_thread = threading.Thread(target=create_snapshot_async, daemon=True)
+        snapshot_thread.start()
         
         context = {
             'portfolio_items': portfolio_items,

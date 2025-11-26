@@ -1,37 +1,54 @@
-import requests
+"""
+Dividend alert email utility
+Uses Resend API if configured, otherwise falls back to SMTP
+"""
 import logging
-from django.conf import settings
-from decouple import config
+from portfolio.utils.email_service import send_email
 
-RESEND_API_KEY = config('RESEND_API_KEY', default='')
-FROM_EMAIL = config('RESEND_FROM_EMAIL', default='tritonxinc@gmail.com')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def send_dividend_alert_email(user_email, stock_symbol, dividend_date, days_advance, dividend_amount, dividend_currency, dividend_frequency):
-    try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "from": f"Dividend Alerts <{FROM_EMAIL}>",
-                "to": [user_email],
-                "subject": f"{stock_symbol} Dividend Alert ({days_advance} days early)",
-                "html": f"""
-                    <p>Hello,</p>
-                    <p>{stock_symbol} is paying a dividend of {dividend_amount} {dividend_currency} on {dividend_date}.</p>
-                    <p>This alert was sent {days_advance} days in advance.</p>
-                    <p>Frequency: {dividend_frequency}</p>
-                    <p>Best regards,<br>Your App</p>
-                """
-            }
-        )
+    """
+    Send dividend alert email using Resend API or SMTP fallback
+    """
+    subject = f"{stock_symbol} Dividend Alert ({days_advance} days early)"
+    
+    html_content = f"""
+    <html>
+    <body>
+        <p>Hello,</p>
+        <p><strong>{stock_symbol}</strong> is paying a dividend of <strong>{dividend_amount} {dividend_currency}</strong> on <strong>{dividend_date}</strong>.</p>
+        <p>This alert was sent {days_advance} days in advance.</p>
+        <p>Frequency: {dividend_frequency}</p>
+        <p>Best regards,<br>StockFolio</p>
+    </body>
+    </html>
+    """
+    
+    text_content = f"""
+Hello,
 
-        if response.status_code == 202:
-            logging.info(f"Email sent to {user_email}")
-        else:
-            logging.error(f"Failed to send email: {response.text}")
+{stock_symbol} is paying a dividend of {dividend_amount} {dividend_currency} on {dividend_date}.
 
-    except Exception as e:
-        logging.error(f"Error sending email: {str(e)}")
+This alert was sent {days_advance} days in advance.
+Frequency: {dividend_frequency}
+
+Best regards,
+StockFolio
+    """
+    
+    success = send_email(
+        to_email=user_email,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content
+    )
+    
+    if success:
+        logger.info(f"Dividend alert email sent to {user_email}")
+        return True
+    else:
+        logger.error(f"Failed to send dividend alert email to {user_email}")
+        return False
