@@ -1769,15 +1769,6 @@ def trigger_dividend_alerts(request):
             'message': f'Error: {str(e)}'
         }, status=500)
 
-# Global variable to track scraping status
-_scraping_status = {
-    'is_running': False,
-    'started_at': None,
-    'completed_at': None,
-    'days': None,
-    'last_error': None
-}
-
 @csrf_exempt
 @require_POST
 def trigger_daily_scrape(request):
@@ -1787,7 +1778,7 @@ def trigger_daily_scrape(request):
     CSRF exempt - uses secret key authentication instead
     """
     import threading
-    global _scraping_status
+    from portfolio.models import ScrapeStatus
     
     # Simple authentication
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
@@ -1796,12 +1787,14 @@ def trigger_daily_scrape(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     # Check if scraping is already running
-    if _scraping_status.get('is_running'):
+    running_scrape = ScrapeStatus.get_running()
+    if running_scrape:
         return JsonResponse({
             'status': 'busy',
             'message': 'Scraping is already running',
-            'started_at': _scraping_status.get('started_at'),
-            'days': _scraping_status.get('days')
+            'started_at': running_scrape.started_at.isoformat() if running_scrape.started_at else None,
+            'days': running_scrape.days,
+            'status_id': running_scrape.id
         }, status=409)
     
     # Get optional parameters
@@ -1816,28 +1809,18 @@ def trigger_daily_scrape(request):
         except (ValueError, TypeError):
             days = 60
         
+        # Create new scrape status
+        scrape_status = ScrapeStatus.create_new(days=days)
+        
         # Run scraping in background thread to avoid timeout
         def run_scrape():
-            global _scraping_status
             try:
-                _scraping_status['is_running'] = True
-                _scraping_status['started_at'] = timezone.now().isoformat()
-                _scraping_status['days'] = days
-                _scraping_status['last_error'] = None
-                _scraping_status['completed_at'] = None
-                
-                logger.info(f"🚀 Starting background scrape for {days} days at {_scraping_status['started_at']}")
-                call_command('daily_scrape', days=days)
-                
-                _scraping_status['is_running'] = False
-                _scraping_status['completed_at'] = timezone.now().isoformat()
-                logger.info(f"✅ Background scrape completed for {days} days at {_scraping_status['completed_at']}")
-                
+                logger.info(f"🚀 Starting background scrape for {days} days (Status ID: {scrape_status.id})")
+                call_command('daily_scrape', days=days, status_id=scrape_status.id)
+                logger.info(f"✅ Background scrape completed (Status ID: {scrape_status.id})")
             except Exception as e:
-                _scraping_status['is_running'] = False
-                _scraping_status['last_error'] = str(e)
-                _scraping_status['completed_at'] = timezone.now().isoformat()
-                logger.error(f"❌ Error in background scrape: {e}")
+                logger.error(f"❌ Error in background scrape (Status ID: {scrape_status.id}): {e}")
+                # Status will be marked as failed by the command itself
         
         # Start background thread
         thread = threading.Thread(target=run_scrape, daemon=True)
@@ -1848,7 +1831,8 @@ def trigger_daily_scrape(request):
             'status': 'accepted', 
             'message': f'Daily stock scrape started in background for {days} days',
             'days': days,
-            'started_at': _scraping_status.get('started_at'),
+            'started_at': scrape_status.started_at.isoformat() if scrape_status.started_at else None,
+            'status_id': scrape_status.id,
             'note': 'Scraping is running asynchronously. Use /scrape-status/ endpoint to check progress.'
         })
         
@@ -1913,14 +1897,16 @@ def trigger_newsletter(request):
 def scrape_status(request):
     """
     API endpoint to check scraping status
-    No authentication required for status check (or add if needed)
+    Returns the latest scrape status from database
     """
-    global _scraping_status
-    from portfolio.models import StockPrice
+    from portfolio.models import ScrapeStatus, StockPrice, Stock
     from django.utils import timezone
-    from datetime import timedelta
     
-    # Get recent stock price updates (last hour)
+    # Get latest scrape status
+    latest_status = ScrapeStatus.get_latest()
+    running_status = ScrapeStatus.get_running()
+    
+    # Get recent stock price updates (today)
     recent_updates = StockPrice.objects.filter(
         price_date=timezone.now().date()
     ).count()
@@ -1928,32 +1914,51 @@ def scrape_status(request):
     # Get total stocks
     total_stocks = Stock.objects.count()
     
-    status_data = {
-        'is_running': _scraping_status.get('is_running', False),
-        'started_at': _scraping_status.get('started_at'),
-        'completed_at': _scraping_status.get('completed_at'),
-        'days': _scraping_status.get('days'),
-        'last_error': _scraping_status.get('last_error'),
-        'database_stats': {
-            'total_stocks': total_stocks,
-            'stocks_updated_today': recent_updates,
+    # Build status data
+    if latest_status:
+        status_data = {
+            'status_id': latest_status.id,
+            'status': latest_status.status,
+            'is_running': latest_status.is_running,
+            'started_at': latest_status.started_at.isoformat() if latest_status.started_at else None,
+            'completed_at': latest_status.completed_at.isoformat() if latest_status.completed_at else None,
+            'days': latest_status.days,
+            'total_stocks': latest_status.total_stocks,
+            'success_count': latest_status.success_count,
+            'failed_count': latest_status.failed_count,
+            'success_rate': latest_status.success_rate,
+            'duration_seconds': latest_status.duration_seconds,
+            'duration_minutes': latest_status.duration_minutes,
+            'error_message': latest_status.error_message,
+            'failed_symbols': latest_status.failed_symbols[:10] if latest_status.failed_symbols else [],  # Limit to 10
+            'notes': latest_status.notes,
+            'database_stats': {
+                'total_stocks': total_stocks,
+                'stocks_updated_today': recent_updates,
+            }
         }
-    }
+        
+        # If running, calculate current duration
+        if latest_status.is_running and latest_status.started_at:
+            current_duration = (timezone.now() - latest_status.started_at).total_seconds()
+            status_data['current_duration_seconds'] = int(current_duration)
+            status_data['current_duration_minutes'] = round(current_duration / 60, 1)
+    else:
+        # No scrape status found
+        status_data = {
+            'status': 'no_data',
+            'is_running': False,
+            'message': 'No scrape status found in database',
+            'database_stats': {
+                'total_stocks': total_stocks,
+                'stocks_updated_today': recent_updates,
+            }
+        }
     
-    # Calculate duration if running
-    if _scraping_status.get('is_running') and _scraping_status.get('started_at'):
-        try:
-            # Parse ISO format datetime string
-            started_str = _scraping_status['started_at']
-            started = datetime.fromisoformat(started_str.replace('Z', '+00:00'))
-            if started.tzinfo is None:
-                started = timezone.make_aware(started)
-            duration = (timezone.now() - started).total_seconds()
-            status_data['duration_seconds'] = int(duration)
-            status_data['duration_minutes'] = round(duration / 60, 1)
-        except Exception as e:
-            logger.debug(f"Error calculating duration: {e}")
-            pass
+    # Add running status info if different from latest
+    if running_status and (not latest_status or running_status.id != latest_status.id):
+        status_data['running_status_id'] = running_status.id
+        status_data['running_started_at'] = running_status.started_at.isoformat() if running_status.started_at else None
     
     return JsonResponse(status_data)
 

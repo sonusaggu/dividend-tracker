@@ -326,4 +326,118 @@ class EmailVerification(models.Model):
         if self.is_verified:
             return False
         expiry_time = self.created_at + timedelta(hours=24)
-        return timezone.now() > expiry_time    
+        return timezone.now() > expiry_time
+
+
+class ScrapeStatus(models.Model):
+    """Track daily scrape status and results"""
+    STATUS_CHOICES = [
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='running', db_index=True)
+    started_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    days = models.IntegerField(default=60, help_text='Number of days of historical data to fetch')
+    
+    # Results
+    total_stocks = models.IntegerField(default=0, help_text='Total stocks processed')
+    success_count = models.IntegerField(default=0, help_text='Successfully updated stocks')
+    failed_count = models.IntegerField(default=0, help_text='Failed stocks')
+    
+    # Error tracking
+    error_message = models.TextField(blank=True, null=True, help_text='Error message if failed')
+    failed_symbols = models.JSONField(default=list, blank=True, help_text='List of failed stock symbols')
+    
+    # Additional info
+    duration_seconds = models.IntegerField(null=True, blank=True, help_text='Duration in seconds')
+    notes = models.TextField(blank=True, help_text='Additional notes or details')
+    
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['-started_at']),
+            models.Index(fields=['status', '-started_at']),
+        ]
+        verbose_name = 'Scrape Status'
+        verbose_name_plural = 'Scrape Statuses'
+    
+    def __str__(self):
+        return f"Scrape {self.id} - {self.status} ({self.started_at.strftime('%Y-%m-%d %H:%M:%S')})"
+    
+    @property
+    def is_running(self):
+        """Check if scrape is currently running"""
+        return self.status == 'running'
+    
+    @property
+    def success_rate(self):
+        """Calculate success rate percentage"""
+        if self.total_stocks == 0:
+            return 0.0
+        return round((self.success_count / self.total_stocks) * 100, 2)
+    
+    @property
+    def duration_minutes(self):
+        """Get duration in minutes"""
+        if self.duration_seconds:
+            return round(self.duration_seconds / 60, 1)
+        return None
+    
+    def mark_completed(self, success_count, failed_count, total_stocks, failed_symbols=None, notes=''):
+        """Mark scrape as completed"""
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        self.success_count = success_count
+        self.failed_count = failed_count
+        self.total_stocks = total_stocks
+        if failed_symbols:
+            self.failed_symbols = failed_symbols[:50]  # Limit to 50 symbols
+        self.notes = notes
+        
+        # Calculate duration
+        if self.started_at:
+            duration = (self.completed_at - self.started_at).total_seconds()
+            self.duration_seconds = int(duration)
+        
+        self.save()
+    
+    def mark_failed(self, error_message, notes=''):
+        """Mark scrape as failed"""
+        self.status = 'failed'
+        self.completed_at = timezone.now()
+        self.error_message = error_message
+        self.notes = notes
+        
+        # Calculate duration
+        if self.started_at:
+            duration = (self.completed_at - self.started_at).total_seconds()
+            self.duration_seconds = int(duration)
+        
+        self.save()
+    
+    @classmethod
+    def get_latest(cls):
+        """Get the latest scrape status"""
+        return cls.objects.first()
+    
+    @classmethod
+    def get_running(cls):
+        """Get currently running scrape if any"""
+        return cls.objects.filter(status='running').first()
+    
+    @classmethod
+    def create_new(cls, days=60):
+        """Create a new scrape status record"""
+        # Mark any existing running scrapes as cancelled
+        cls.objects.filter(status='running').update(status='cancelled', completed_at=timezone.now())
+        
+        # Create new status
+        return cls.objects.create(
+            status='running',
+            days=days,
+            started_at=timezone.now()
+        )    
