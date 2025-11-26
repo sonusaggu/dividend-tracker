@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Donate - Support StockFolio{% endblock %}
+{% block meta_description %}Support StockFolio development. Your donations help us maintain and improve the dividend tracking platform.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Support <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">StockFolio</span>
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">
+                Help us maintain and improve the platform. Every contribution makes a difference!
+            </p>
+        </div>
+
+        <!-- Why Donate Section -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Why Donate?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-4xl mb-3">🚀</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Platform Development</h3>
+                    <p class="text-sm text-gray-600">Support new features and improvements</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-3">⚡</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Server Costs</h3>
+                    <p class="text-sm text-gray-600">Help cover hosting and infrastructure</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-3">🛡️</div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Keep It Free</h3>
+                    <p class="text-sm text-gray-600">Maintain free access for all users</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buy Me a Coffee Widget -->
+        <div class="bg-white rounded-lg shadow-lg p-12 mb-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="text-5xl mr-3">☕</div>
+                    <h3 class="text-3xl font-semibold text-gray-900">Buy Me a Coffee</h3>
+                </div>
+                <p class="text-gray-600 mb-8 text-lg">
+                    Support StockFolio development with a one-time or monthly donation. Every contribution helps!
+                </p>
+                
+                <!-- Buy Me a Coffee Button -->
+                <div class="flex justify-center mb-6">
+                    <a href="https://buymeacoffee.com/saggu" target="_blank" rel="noopener noreferrer" class="inline-block">
+                        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" class="hover:opacity-90 transition duration-200">
+                    </a>
+                </div>
+                
+                <p class="text-sm text-gray-500">
+                    Secure payments via Stripe • One-time or monthly support • No account required
+                </p>
+            </div>
+        </div>
+
+        <!-- Thank You Message -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Thank You! 🙏</h3>
+            <p class="text-gray-600">
+                Your support helps us continue providing free, high-quality dividend tracking tools.
+                We truly appreciate your generosity!
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

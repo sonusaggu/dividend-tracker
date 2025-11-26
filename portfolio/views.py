@@ -2485,3 +2485,8 @@ This email was sent from the Contact Us form on dividend.forum
         form = ContactForm()
     
     return render(request, 'contact.html', {'form': form})
+
+
+def donations(request):
+    """Donations page with payment widgets"""
+    return render(request, 'donations.html')

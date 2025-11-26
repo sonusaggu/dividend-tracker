@@ -79,5 +79,7 @@ urlpatterns = [
     path('tools/', views.canadian_tools, name='canadian_tools'),
     # Contact Us
     path('contact/', views.contact_us, name='contact_us'),
+    # Donations
+    path('donate/', views.donations, name='donations'),
 
 ]
