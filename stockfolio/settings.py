@@ -212,13 +212,16 @@ if not DEFAULT_FROM_EMAIL and EMAIL_HOST_USER and EMAIL_HOST_USER.strip():
 if not DEFAULT_FROM_EMAIL or not DEFAULT_FROM_EMAIL.strip():
     DEFAULT_FROM_EMAIL = 'noreply@dividend.forum'
 
-# Site domain for password reset emails
-if RENDER_EXTERNAL_HOSTNAME:
-    SITE_DOMAIN = f"https://{RENDER_EXTERNAL_HOSTNAME}"
-elif 'dividend.forum' in ALLOWED_HOSTS:
-    SITE_DOMAIN = "https://dividend.forum"
-else:
-    SITE_DOMAIN = config('SITE_DOMAIN', default='http://localhost:8000')
+# Site domain for password reset emails and verification links
+# Priority: 1. Environment variable, 2. dividend.forum, 3. Render hostname, 4. localhost
+SITE_DOMAIN = config('SITE_DOMAIN', default=None)
+if not SITE_DOMAIN:
+    if 'dividend.forum' in ALLOWED_HOSTS:
+        SITE_DOMAIN = "https://dividend.forum"
+    elif RENDER_EXTERNAL_HOSTNAME:
+        SITE_DOMAIN = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    else:
+        SITE_DOMAIN = 'http://localhost:8000'
 
 # Logging configuration - ensures logs appear in Render
 LOGGING = {
