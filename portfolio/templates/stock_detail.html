@@ -96,6 +96,13 @@
                         </span>
                     </button>
                     
+                    <!-- Compare Button -->
+                    <a href="{% url 'stock_comparison' %}?symbol1={{ stock.symbol }}&symbol2="
+                       class="flex items-center justify-center px-4 py-3 border-2 border-purple-600 text-purple-600 bg-white rounded-xl hover:bg-purple-50 transition transform hover:scale-105 shadow-md font-medium">
+                        <span class="text-xl mr-2">📊</span>
+                        <span>Compare</span>
+                    </a>
+                    
                     <!-- Dividend Alerts Button -->
                     {% if dividend %}
                     <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 

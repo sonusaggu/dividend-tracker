@@ -50,6 +50,7 @@ urlpatterns = [
     
     path('dashboard/', views.dashboard, name='dashboard'),
     path('stocks/', views.all_stocks_view, name='all_stocks'),
+    path('stocks/compare/', views.stock_comparison, name='stock_comparison'),
     path('stocks/<str:symbol>/', views.stock_detail, name='stock_detail'),
     path('stocks/<str:symbol>/dividend-history/', views.dividend_history, name='dividend_history'),
     path('dividend-calendar/', views.dividend_calendar, name='dividend_calendar'),

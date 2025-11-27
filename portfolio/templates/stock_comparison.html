@@ -1,0 +1,733 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Stock Comparison Tool - Compare Stocks Side-by-Side | StockFolio{% endblock %}
+{% block meta_title %}Stock Comparison Tool - Compare Dividend Stocks{% endblock %}
+{% block meta_description %}Compare up to 3 stocks side-by-side. Compare dividend yield, P/E ratio, growth, price, and more. Make informed investment decisions.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Modern Header with Animated Background -->
+        <div class="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 rounded-3xl shadow-2xl p-8 md:p-12 mb-8 border border-white/50 backdrop-blur-sm overflow-hidden">
+            <!-- Animated Background Elements -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
+                <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-gradient-to-br from-indigo-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+            </div>
+            
+            <!-- Content -->
+            <div class="relative z-10">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <!-- Left Section -->
+                    <div class="flex-1">
+                        <!-- Badge -->
+                        <div class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-4 border border-blue-200/50">
+                            <svg class="w-4 h-4 text-blue-600 mr-2 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <span class="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Smart Comparison Tool
+                            </span>
+                        </div>
+                        
+                        <!-- Title -->
+                        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
+                            <span class="inline-block transform hover:scale-105 transition-transform duration-300">Stock</span>
+                            <span class="inline-block transform hover:scale-105 transition-transform duration-300" style="animation-delay: 0.1s;"> Comparison</span>
+                        </h1>
+                        
+                        <!-- Description -->
+                        <p class="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed max-w-2xl">
+                            Compare up to <span class="font-bold text-blue-600">3 stocks</span> side-by-side with real-time data. Analyze dividend yields, P/E ratios, growth metrics, and more to make <span class="font-semibold text-purple-600">informed investment decisions</span>.
+                        </p>
+                        
+                        <!-- Feature Pills -->
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
+                                📊 Visual Charts
+                            </span>
+                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
+                                💰 Dividend Analysis
+                            </span>
+                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
+                                📈 Growth Metrics
+                            </span>
+                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
+                                ⚡ Real-time Data
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Section - Action Button -->
+                    <div class="flex-shrink-0">
+                        <a href="{% url 'all_stocks' %}" 
+                           class="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl font-semibold text-lg shadow-lg relative overflow-hidden">
+                            <!-- Animated background on hover -->
+                            <span class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <!-- Content -->
+                            <span class="relative z-10 flex items-center">
+                                <svg class="w-6 h-6 mr-3 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Browse Stocks
+                                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stock Selector Form -->
+        <form method="get" action="{% url 'stock_comparison' %}" class="bg-white/80 backdrop-blur-lg rounded-2xl p-6 md:p-8 border border-white/50 shadow-xl mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="relative">
+                        <label for="symbol1" class="block text-sm font-medium text-gray-700 mb-2">Stock 1</label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="symbol1" 
+                                   name="symbol1" 
+                                   value="{{ symbols.0|default:'' }}" 
+                                   placeholder="Search stock symbol or name..."
+                                   autocomplete="off"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                   required>
+                            <div id="autocomplete-results-1" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <label for="symbol2" class="block text-sm font-medium text-gray-700 mb-2">Stock 2</label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="symbol2" 
+                                   name="symbol2" 
+                                   value="{{ symbols.1|default:'' }}" 
+                                   placeholder="Search stock symbol or name..."
+                                   autocomplete="off"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                   required>
+                            <div id="autocomplete-results-2" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <label for="symbol3" class="block text-sm font-medium text-gray-700 mb-2">Stock 3 (Optional)</label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="symbol3" 
+                                   name="symbol3" 
+                                   value="{{ symbols.2|default:'' }}" 
+                                   placeholder="Search stock symbol or name..."
+                                   autocomplete="off"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <div id="autocomplete-results-3" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
+                        </div>
+                    </div>
+            </div>
+            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                <button type="submit" 
+                        class="flex-1 sm:flex-none px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 font-semibold shadow-lg">
+                    Compare Stocks
+                </button>
+                <button type="button" 
+                        id="reset-form-btn"
+                        class="flex-1 sm:flex-none px-8 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition transform hover:scale-105 font-semibold shadow-md flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Reset
+                </button>
+            </div>
+        </form>
+        
+        {% if stocks_data %}
+        <!-- Comparison Results -->
+        <div class="space-y-8">
+            <!-- Price Comparison Chart -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="text-2xl mr-3">📈</span>
+                    Price Comparison
+                </h2>
+                <canvas id="priceChart" height="80"></canvas>
+            </div>
+            
+            <!-- Dividend Yield Comparison Chart -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="text-2xl mr-3">💰</span>
+                    Dividend Yield Comparison
+                </h2>
+                <canvas id="yieldChart" height="80"></canvas>
+            </div>
+            
+            <!-- Side-by-Side Comparison Table -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 overflow-x-auto">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="text-2xl mr-3">📋</span>
+                    Detailed Comparison
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Metric</th>
+                                {% for data in stocks_data %}
+                                <th class="text-center py-4 px-4 font-semibold text-gray-700">
+                                    <div class="flex flex-col items-center">
+                                        <a href="{% url 'stock_detail' symbol=data.stock.symbol %}" 
+                                           class="text-xl font-bold text-blue-600 hover:text-blue-800 hover:underline">
+                                            {{ data.stock.symbol }}
+                                        </a>
+                                        <span class="text-sm text-gray-500 mt-1">{{ data.stock.company_name|truncatewords:4 }}</span>
+                                    </div>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <!-- Current Price -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Current Price</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.latest_price %}
+                                        <span class="text-xl font-bold text-gray-900">${{ data.latest_price.last_price|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- 52-Week Range -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">52-Week Range</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.latest_price and data.latest_price.fiftytwo_week_low and data.latest_price.fiftytwo_week_high %}
+                                        <div class="text-sm">
+                                            <div class="font-semibold text-gray-900">${{ data.latest_price.fiftytwo_week_low|floatformat:2 }} - ${{ data.latest_price.fiftytwo_week_high|floatformat:2 }}</div>
+                                            {% if data.price_change_52w %}
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                {{ data.price_change_52w|floatformat:1 }}% from low
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Dividend Yield -->
+                            <tr class="hover:bg-gray-50 bg-green-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Dividend Yield</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.dividend and data.dividend.yield_percent %}
+                                        <span class="text-xl font-bold text-green-600">{{ data.dividend.yield_percent|floatformat:2 }}%</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Dividend Amount -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Dividend Amount</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.dividend %}
+                                        <span class="text-lg font-semibold text-gray-900">${{ data.dividend.amount|floatformat:4 }}</span>
+                                        {% if data.dividend.frequency %}
+                                        <div class="text-xs text-gray-500 mt-1">{{ data.dividend.frequency }}</div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- P/E Ratio -->
+                            <tr class="hover:bg-gray-50 bg-purple-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">P/E Ratio</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.valuation and data.valuation.pe_ratio %}
+                                        <span class="text-xl font-bold text-purple-600">{{ data.valuation.pe_ratio|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- EPS -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Earnings Per Share (EPS)</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.valuation and data.valuation.eps %}
+                                        <span class="text-lg font-semibold text-gray-900">${{ data.valuation.eps|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Market Cap -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Market Cap</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.valuation and data.valuation.market_cap %}
+                                        <span class="text-lg font-semibold text-gray-900">{{ data.valuation.market_cap }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- 3-Year Growth -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">3-Year Growth</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.valuation and data.valuation.growth_3_year %}
+                                        <span class="text-lg font-semibold {% if data.valuation.growth_3_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ data.valuation.growth_3_year|floatformat:2 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- 5-Year Growth -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">5-Year Growth</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.valuation and data.valuation.growth_5_year %}
+                                        <span class="text-lg font-semibold {% if data.valuation.growth_5_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ data.valuation.growth_5_year|floatformat:2 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Sector -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Sector</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.stock.sector %}
+                                        <span class="text-sm font-medium text-gray-700 bg-blue-100 px-3 py-1 rounded-full">{{ data.stock.sector }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Industry -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Industry</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.stock.industry %}
+                                        <span class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">{{ data.stock.industry }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Analyst Rating -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Analyst Rating</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center">
+                                    {% if data.analyst_rating and data.analyst_rating.analyst_rating %}
+                                        <span class="text-lg font-semibold text-gray-900">{{ data.analyst_rating.analyst_rating }}</span>
+                                        {% if data.analyst_rating.buy_count or data.analyst_rating.hold_count or data.analyst_rating.sell_count %}
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            Buy: {{ data.analyst_rating.buy_count|default:0 }}, 
+                                            Hold: {{ data.analyst_rating.hold_count|default:0 }}, 
+                                            Sell: {{ data.analyst_rating.sell_count|default:0 }}
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+    @keyframes spin-slow {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .animate-spin-slow {
+        animation: spin-slow 3s linear infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .animation-delay-100 {
+        animation-delay: 0.1s;
+    }
+    
+    .animation-delay-200 {
+        animation-delay: 0.2s;
+    }
+</style>
+
+<script>
+// Stock Search Autocomplete for Comparison Tool
+(function() {
+    // Initialize autocomplete for each input field
+    ['symbol1', 'symbol2', 'symbol3'].forEach(function(fieldId, index) {
+        const input = document.getElementById(fieldId);
+        const resultsContainer = document.getElementById(`autocomplete-results-${index + 1}`);
+        let autocompleteTimeout;
+        let selectedIndex = -1;
+        let isSelecting = false; // Flag to prevent dropdown from reopening after selection
+        
+        if (!input || !resultsContainer) return;
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Handle input for autocomplete
+        input.addEventListener('input', function() {
+            // Don't show autocomplete if we just selected an item
+            if (isSelecting) {
+                isSelecting = false;
+                return;
+            }
+            
+            const query = this.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(autocompleteTimeout);
+            
+            if (query.length < 2) {
+                resultsContainer.classList.add('hidden');
+                selectedIndex = -1;
+                return;
+            }
+            
+            // Debounce autocomplete requests
+            autocompleteTimeout = setTimeout(function() {
+                fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayAutocompleteResults(data.results, resultsContainer, input);
+                    })
+                    .catch(error => {
+                        console.error('Autocomplete error:', error);
+                    });
+            }, 300); // 300ms debounce
+        });
+        
+        // Handle keyboard navigation
+        input.addEventListener('keydown', function(e) {
+            const items = resultsContainer.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(items);
+            } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
+                e.preventDefault();
+                selectStock(items[selectedIndex], input, e);
+            } else if (e.key === 'Escape') {
+                resultsContainer.classList.add('hidden');
+                selectedIndex = -1;
+            }
+        });
+        
+        // Show autocomplete on focus if there's text
+        input.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) {
+                const query = this.value.trim();
+                fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayAutocompleteResults(data.results, resultsContainer, input);
+                    })
+                    .catch(error => {
+                        console.error('Autocomplete error:', error);
+                    });
+            }
+        });
+        
+        // Hide dropdown when clicking outside
+        const inputContainer = input.closest('.relative');
+        let clickOutsideHandler = function(e) {
+            if (inputContainer && !inputContainer.contains(e.target)) {
+                resultsContainer.classList.add('hidden');
+                selectedIndex = -1;
+            }
+        };
+        // Use capture phase to handle clicks before they bubble
+        document.addEventListener('click', clickOutsideHandler, true);
+        
+        function updateSelection(items) {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('bg-blue-50', 'border-blue-500');
+                } else {
+                    item.classList.remove('bg-blue-50', 'border-blue-500');
+                }
+            });
+        }
+        
+        function selectStock(item, inputField, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const symbol = item.dataset.symbol;
+            isSelecting = true; // Set flag to prevent dropdown from reopening
+            inputField.value = symbol;
+            resultsContainer.classList.add('hidden');
+            selectedIndex = -1;
+            // Clear any pending autocomplete requests
+            clearTimeout(autocompleteTimeout);
+        }
+        
+        function displayAutocompleteResults(results, container, inputField) {
+            if (results.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.innerHTML = '';
+            selectedIndex = -1;
+            
+            results.forEach((stock) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item p-4 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition duration-150';
+                item.dataset.symbol = stock.symbol;
+                item.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-lg text-gray-900">${escapeHtml(stock.symbol)}</span>
+                                <span class="text-xs text-gray-500">${escapeHtml(stock.code)}</span>
+                                ${stock.sector ? `<span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${escapeHtml(stock.company_name)}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                `;
+                
+                item.addEventListener('click', function(e) {
+                    selectStock(item, inputField, e);
+                });
+                
+                // Also handle mousedown to prevent focus issues
+                item.addEventListener('mousedown', function(e) {
+                    e.preventDefault(); // Prevent input from losing focus
+                });
+                
+                container.appendChild(item);
+            });
+            
+            container.classList.remove('hidden');
+        }
+    });
+})();
+
+// Reset Form Button
+(function() {
+    const resetBtn = document.getElementById('reset-form-btn');
+    const symbol1Input = document.getElementById('symbol1');
+    const symbol2Input = document.getElementById('symbol2');
+    const symbol3Input = document.getElementById('symbol3');
+    const autocompleteResults1 = document.getElementById('autocomplete-results-1');
+    const autocompleteResults2 = document.getElementById('autocomplete-results-2');
+    const autocompleteResults3 = document.getElementById('autocomplete-results-3');
+    
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            // Clear all input fields
+            if (symbol1Input) symbol1Input.value = '';
+            if (symbol2Input) symbol2Input.value = '';
+            if (symbol3Input) symbol3Input.value = '';
+            
+            // Hide all autocomplete dropdowns
+            if (autocompleteResults1) autocompleteResults1.classList.add('hidden');
+            if (autocompleteResults2) autocompleteResults2.classList.add('hidden');
+            if (autocompleteResults3) autocompleteResults3.classList.add('hidden');
+            
+            // Focus on first input
+            if (symbol1Input) symbol1Input.focus();
+            
+            // Scroll to top of form
+            resetBtn.closest('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+})();
+
+{% if stocks_data %}
+// Price Comparison Chart
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+const priceChart = new Chart(priceCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for data in stocks_data %}'{{ data.stock.symbol }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Current Price ($)',
+            data: [{% for data in stocks_data %}{% if data.latest_price %}{{ data.latest_price.last_price }}{% else %}0{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)'
+            ],
+            borderColor: [
+                'rgba(59, 130, 246, 1)',
+                'rgba(139, 92, 246, 1)',
+                'rgba(236, 72, 153, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return '$' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Dividend Yield Comparison Chart
+const yieldCtx = document.getElementById('yieldChart').getContext('2d');
+const yieldChart = new Chart(yieldCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for data in stocks_data %}'{{ data.stock.symbol }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Dividend Yield (%)',
+            data: [{% for data in stocks_data %}{% if data.dividend and data.dividend.yield_percent %}{{ data.dividend.yield_percent }}{% else %}0{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(5, 150, 105, 0.8)'
+            ],
+            borderColor: [
+                'rgba(34, 197, 94, 1)',
+                'rgba(16, 185, 129, 1)',
+                'rgba(5, 150, 105, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.parsed.y.toFixed(2) + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(2) + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
+

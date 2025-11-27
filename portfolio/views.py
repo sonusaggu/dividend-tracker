@@ -755,6 +755,79 @@ def stock_detail(request, symbol):
     return render(request, 'stock_detail.html', context)
 
 
+def stock_comparison(request):
+    """Compare 2-3 stocks side-by-side"""
+    from django.db.models import Prefetch
+    
+    # Get stock symbols from query parameters (symbol1, symbol2, symbol3)
+    symbol1 = request.GET.get('symbol1', '').upper().strip()
+    symbol2 = request.GET.get('symbol2', '').upper().strip()
+    symbol3 = request.GET.get('symbol3', '').upper().strip()
+    
+    # Collect valid symbols
+    symbols = [s for s in [symbol1, symbol2, symbol3] if s]
+    
+    # Validate: need at least 2 symbols, max 3
+    if len(symbols) < 2:
+        messages.warning(request, 'Please select at least 2 stocks to compare.')
+        return render(request, 'stock_comparison.html', {
+            'stocks_data': [],
+            'symbols': symbols,
+        })
+    
+    if len(symbols) > 3:
+        messages.warning(request, 'You can compare up to 3 stocks at a time.')
+        symbols = symbols[:3]
+    
+    # Fetch all stocks with related data in optimized queries
+    stocks = Stock.objects.filter(symbol__in=symbols).prefetch_related(
+        Prefetch('prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices'),
+        Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='latest_dividends'),
+        Prefetch('valuations', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
+        Prefetch('analyst_ratings', queryset=AnalystRating.objects.order_by('-rating_date'), to_attr='latest_ratings'),
+    )
+    
+    # Create a dictionary for quick lookup
+    stocks_dict = {stock.symbol: stock for stock in stocks}
+    
+    # Build comparison data
+    stocks_data = []
+    for symbol in symbols:
+        if symbol not in stocks_dict:
+            messages.error(request, f'Stock {symbol} not found.')
+            continue
+        
+        stock = stocks_dict[symbol]
+        latest_price = stock.latest_prices[0] if stock.latest_prices else None
+        dividend = stock.latest_dividends[0] if stock.latest_dividends else None
+        valuation = stock.latest_valuations[0] if stock.latest_valuations else None
+        analyst_rating = stock.latest_ratings[0] if stock.latest_ratings else None
+        
+        # Calculate price change if we have 52-week data
+        price_change_52w = None
+        if latest_price and latest_price.fiftytwo_week_high and latest_price.fiftytwo_week_low:
+            if latest_price.last_price:
+                range_size = float(latest_price.fiftytwo_week_high) - float(latest_price.fiftytwo_week_low)
+                if range_size > 0:
+                    price_change_52w = ((float(latest_price.last_price) - float(latest_price.fiftytwo_week_low)) / range_size) * 100
+        
+        stocks_data.append({
+            'stock': stock,
+            'latest_price': latest_price,
+            'dividend': dividend,
+            'valuation': valuation,
+            'analyst_rating': analyst_rating,
+            'price_change_52w': price_change_52w,
+        })
+    
+    context = {
+        'stocks_data': stocks_data,
+        'symbols': symbols,
+    }
+    
+    return render(request, 'stock_comparison.html', context)
+
+
 def dividend_history(request, symbol):
     """Display dividend history for a stock"""
     # Validate symbol format
