@@ -120,6 +120,69 @@ class UserPortfolio(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.stock.symbol}"
 
+class Transaction(models.Model):
+    """Track buy/sell transactions for cost basis calculation"""
+    TRANSACTION_TYPES = [
+        ('BUY', 'Buy'),
+        ('SELL', 'Sell'),
+        ('DIVIDEND', 'Dividend Reinvestment'),
+        ('SPLIT', 'Stock Split'),
+        ('MERGER', 'Merger/Acquisition'),
+    ]
+    
+    COST_BASIS_METHODS = [
+        ('FIFO', 'First In First Out'),
+        ('LIFO', 'Last In First Out'),
+        ('AVERAGE', 'Average Cost'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions', db_index=True)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='transactions', db_index=True)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, db_index=True)
+    transaction_date = models.DateField(db_index=True)
+    shares = models.DecimalField(max_digits=12, decimal_places=6)
+    price_per_share = models.DecimalField(max_digits=10, decimal_places=4)
+    fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    notes = models.TextField(blank=True)
+    # For sell transactions, track which buy transactions were used (for FIFO/LIFO)
+    cost_basis_method = models.CharField(max_length=10, choices=COST_BASIS_METHODS, default='FIFO')
+    realized_gain_loss = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    # Track if this transaction has been used in cost basis calculation
+    is_processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-transaction_date', '-created_at']
+        indexes = [
+            models.Index(fields=['user', 'stock', '-transaction_date']),
+            models.Index(fields=['user', '-transaction_date']),
+            models.Index(fields=['transaction_type', 'transaction_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.transaction_type} {self.shares} {self.stock.symbol} @ ${self.price_per_share} on {self.transaction_date}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate total amount
+        if not self.total_amount:
+            self.total_amount = (self.shares * self.price_per_share) + self.fees
+        super().save(*args, **kwargs)
+    
+    @property
+    def net_amount(self):
+        """Net amount after fees"""
+        return self.total_amount - self.fees
+    
+    def calculate_realized_gain_loss(self, cost_basis):
+        """Calculate realized gain/loss for sell transactions"""
+        if self.transaction_type == 'SELL':
+            proceeds = float(self.shares * self.price_per_share) - float(self.fees)
+            self.realized_gain_loss = proceeds - cost_basis
+            return self.realized_gain_loss
+        return None
+
 class UserAlert(models.Model):
     ALERT_TYPES = [
         ('ex_date', 'Ex-Dividend Date'),

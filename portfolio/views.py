@@ -21,8 +21,8 @@ import os
 
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
-from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote
-from .services import PortfolioService, StockService, AlertService
+from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote, Transaction
+from .services import PortfolioService, StockService, AlertService, TransactionService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
 from .utils.canadian_tax_calculator import CanadianTaxCalculator
@@ -1214,6 +1214,34 @@ def portfolio_view(request):
             else:
                 data['portfolio_allocation'] = 0
         
+        # Get realized gains from transactions
+        try:
+            from django.db import DatabaseError, ProgrammingError, OperationalError
+            realized_gains_data = TransactionService.get_realized_gains(request.user)
+            total_realized_gain = realized_gains_data['total_realized_gain']
+            
+            # Add unrealized gains to each portfolio item
+            for data in portfolio_data:
+                unrealized = TransactionService.get_unrealized_gains(request.user, data['item'].stock)
+                if unrealized:
+                    data['unrealized_gain'] = unrealized['unrealized_gain']
+                    data['unrealized_gain_percent'] = unrealized['unrealized_gain_percent']
+                else:
+                    data['unrealized_gain'] = data['gain_loss']  # Fallback to calculated gain_loss
+                    data['unrealized_gain_percent'] = data['roi_percent']
+        except (ProgrammingError, OperationalError, DatabaseError):
+            # Transaction table might not exist yet
+            total_realized_gain = 0
+            for data in portfolio_data:
+                data['unrealized_gain'] = data['gain_loss']
+                data['unrealized_gain_percent'] = data['roi_percent']
+        except Exception as e:
+            logger.warning(f"Error getting transaction gains: {e}")
+            total_realized_gain = 0
+            for data in portfolio_data:
+                data['unrealized_gain'] = data['gain_loss']
+                data['unrealized_gain_percent'] = data['roi_percent']
+        
         # Calculate overall metrics
         total_gain_loss = total_value - total_investment
         total_roi_percent = 0
@@ -1269,6 +1297,7 @@ def portfolio_view(request):
         return render(request, 'portfolio.html', {
             'portfolio_items': portfolio_data,
             'total_value': total_value,
+            'total_realized_gain': total_realized_gain,
             'total_investment': total_investment,
             'total_gain_loss': total_gain_loss,
             'total_roi_percent': total_roi_percent,
@@ -1366,6 +1395,426 @@ def export_portfolio(request):
         logger.error(f"Error exporting portfolio: {e}")
         messages.error(request, 'Error exporting portfolio. Please try again.')
         return redirect('portfolio')
+
+
+@login_required
+def transactions_list(request, symbol=None):
+    """List all transactions for the user, optionally filtered by stock"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        transactions = Transaction.objects.filter(user=request.user).select_related('stock').order_by('-transaction_date', '-created_at')
+        
+        if symbol:
+            stock = get_object_or_404(Stock, symbol=symbol.upper())
+            transactions = transactions.filter(stock=stock)
+        
+        # Pagination
+        paginator = Paginator(transactions, 25)
+        page = request.GET.get('page', 1)
+        try:
+            transactions_page = paginator.page(page)
+        except PageNotAnInteger:
+            transactions_page = paginator.page(1)
+        except EmptyPage:
+            transactions_page = paginator.page(paginator.num_pages)
+        
+        # Calculate summary statistics
+        total_realized = TransactionService.get_realized_gains(request.user)
+        total_buys = transactions.filter(transaction_type='BUY').count()
+        total_sells = transactions.filter(transaction_type='SELL').count()
+        
+        context = {
+            'transactions': transactions_page,
+            'symbol': symbol,
+            'stock': stock if symbol else None,
+            'total_realized_gain': total_realized['total_realized_gain'],
+            'total_buys': total_buys,
+            'total_sells': total_sells,
+        }
+        
+        return render(request, 'transactions/list.html', context)
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error in transactions_list: {e}")
+        messages.error(request, 'An error occurred while loading transactions.')
+        return redirect('portfolio')
+
+
+@login_required
+def create_transaction(request, symbol=None):
+    """Create a new transaction"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        stock = None
+        if symbol:
+            stock = get_object_or_404(Stock, symbol=symbol.upper())
+        
+        if request.method == 'POST':
+            try:
+                stock_symbol = request.POST.get('stock_symbol', symbol or '').upper()
+                if not stock_symbol:
+                    messages.error(request, 'Stock symbol is required.')
+                    return redirect('transactions_list')
+                
+                stock = get_object_or_404(Stock, symbol=stock_symbol)
+                transaction_type = request.POST.get('transaction_type')
+                transaction_date = request.POST.get('transaction_date')
+                shares = float(request.POST.get('shares', 0))
+                price_per_share = float(request.POST.get('price_per_share', 0))
+                fees = float(request.POST.get('fees', 0))
+                notes = request.POST.get('notes', '')
+                cost_basis_method = request.POST.get('cost_basis_method', 'FIFO')
+                
+                if transaction_type not in ['BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'MERGER']:
+                    messages.error(request, 'Invalid transaction type.')
+                    return redirect('create_transaction', symbol=stock_symbol if symbol else '')
+                
+                if shares <= 0 or price_per_share <= 0:
+                    messages.error(request, 'Shares and price must be positive numbers.')
+                    return redirect('create_transaction', symbol=stock_symbol if symbol else '')
+                
+                # Create transaction
+                transaction = Transaction.objects.create(
+                    user=request.user,
+                    stock=stock,
+                    transaction_type=transaction_type,
+                    transaction_date=transaction_date,
+                    shares=shares,
+                    price_per_share=price_per_share,
+                    fees=fees,
+                    notes=notes,
+                    cost_basis_method=cost_basis_method
+                )
+                
+                # For sell transactions, calculate realized gain/loss
+                if transaction_type == 'SELL':
+                    cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                        request.user, stock, shares, cost_basis_method
+                    )
+                    if error:
+                        messages.warning(request, f'Transaction created but cost basis calculation failed: {error}')
+                    else:
+                        transaction.calculate_realized_gain_loss(cost_basis)
+                        transaction.save()
+                
+                # Update portfolio from transactions
+                TransactionService.update_portfolio_from_transactions(request.user, stock)
+                
+                messages.success(request, f'Transaction added successfully!')
+                return redirect('transactions_list', symbol=stock_symbol)
+                
+            except ValueError as e:
+                messages.error(request, f'Invalid input: {str(e)}')
+            except Exception as e:
+                logger.error(f"Error creating transaction: {e}")
+                messages.error(request, 'An error occurred while creating the transaction.')
+        
+        # Get all stocks for dropdown
+        stocks = Stock.objects.all().order_by('symbol')
+        
+        context = {
+            'stock': stock,
+            'stocks': stocks,
+            'transaction_types': Transaction.TRANSACTION_TYPES,
+            'cost_basis_methods': Transaction.COST_BASIS_METHODS,
+        }
+        
+        return render(request, 'transactions/create.html', context)
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error in create_transaction: {e}")
+        messages.error(request, 'An error occurred.')
+        return redirect('transactions_list')
+
+
+@login_required
+def edit_transaction(request, transaction_id):
+    """Edit an existing transaction"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
+        stock = transaction.stock
+        
+        if request.method == 'POST':
+            try:
+                transaction_type = request.POST.get('transaction_type')
+                transaction_date = request.POST.get('transaction_date')
+                shares = float(request.POST.get('shares', 0))
+                price_per_share = float(request.POST.get('price_per_share', 0))
+                fees = float(request.POST.get('fees', 0))
+                notes = request.POST.get('notes', '')
+                cost_basis_method = request.POST.get('cost_basis_method', 'FIFO')
+                
+                if shares <= 0 or price_per_share <= 0:
+                    messages.error(request, 'Shares and price must be positive numbers.')
+                    return redirect('edit_transaction', transaction_id=transaction_id)
+                
+                # Update transaction
+                transaction.transaction_type = transaction_type
+                transaction.transaction_date = transaction_date
+                transaction.shares = shares
+                transaction.price_per_share = price_per_share
+                transaction.fees = fees
+                transaction.notes = notes
+                transaction.cost_basis_method = cost_basis_method
+                transaction.is_processed = False  # Reset processed flag
+                transaction.save()
+                
+                # Recalculate realized gain/loss for sell transactions
+                if transaction_type == 'SELL':
+                    cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                        request.user, stock, shares, cost_basis_method
+                    )
+                    if not error:
+                        transaction.calculate_realized_gain_loss(cost_basis)
+                        transaction.save()
+                
+                # Update portfolio from transactions
+                TransactionService.update_portfolio_from_transactions(request.user, stock)
+                
+                messages.success(request, 'Transaction updated successfully!')
+                return redirect('transactions_list', symbol=stock.symbol)
+                
+            except ValueError as e:
+                messages.error(request, f'Invalid input: {str(e)}')
+            except Exception as e:
+                logger.error(f"Error updating transaction: {e}")
+                messages.error(request, 'An error occurred while updating the transaction.')
+        
+        context = {
+            'transaction': transaction,
+            'transaction_types': Transaction.TRANSACTION_TYPES,
+            'cost_basis_methods': Transaction.COST_BASIS_METHODS,
+        }
+        
+        return render(request, 'transactions/edit.html', context)
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error in edit_transaction: {e}")
+        messages.error(request, 'An error occurred.')
+        return redirect('transactions_list')
+
+
+@login_required
+@require_POST
+def delete_transaction(request, transaction_id):
+    """Delete a transaction"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
+        stock = transaction.stock
+        symbol = stock.symbol
+        
+        transaction.delete()
+        
+        # Update portfolio from transactions
+        TransactionService.update_portfolio_from_transactions(request.user, stock)
+        
+        messages.success(request, 'Transaction deleted successfully!')
+        return redirect('transactions_list', symbol=symbol)
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error deleting transaction: {e}")
+        messages.error(request, 'An error occurred while deleting the transaction.')
+        return redirect('transactions_list')
+
+
+@login_required
+def import_wealthsimple_csv(request):
+    """Import transactions from Wealthsimple CSV export"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        import io
+        
+        if request.method == 'POST':
+            if 'csv_file' not in request.FILES:
+                messages.error(request, 'Please select a CSV file to upload.')
+                return redirect('import_wealthsimple_csv')
+            
+            csv_file = request.FILES['csv_file']
+            
+            # Read CSV file
+            try:
+                decoded_file = csv_file.read().decode('utf-8')
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                
+                imported_count = 0
+                errors = []
+                
+                for row_num, row in enumerate(reader, start=2):  # Start at 2 because row 1 is header
+                    try:
+                        # Wealthsimple CSV format may vary, try to parse common fields
+                        # Common column names: Date, Symbol, Type, Quantity, Price, Fees, etc.
+                        date_str = row.get('Date') or row.get('Transaction Date') or row.get('date')
+                        symbol = row.get('Symbol') or row.get('Stock') or row.get('symbol')
+                        trans_type = row.get('Type') or row.get('Transaction Type') or row.get('type')
+                        quantity = row.get('Quantity') or row.get('Shares') or row.get('quantity')
+                        price = row.get('Price') or row.get('Price per Share') or row.get('price')
+                        fees = row.get('Fees') or row.get('Commission') or row.get('fees', '0')
+                        
+                        if not all([date_str, symbol, trans_type, quantity, price]):
+                            errors.append(f"Row {row_num}: Missing required fields")
+                            continue
+                        
+                        # Parse date
+                        try:
+                            transaction_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                        except:
+                            try:
+                                transaction_date = datetime.strptime(date_str, '%m/%d/%Y').date()
+                            except:
+                                errors.append(f"Row {row_num}: Invalid date format: {date_str}")
+                                continue
+                        
+                        # Get or create stock
+                        stock, created = Stock.objects.get_or_create(
+                            symbol=symbol.upper(),
+                            defaults={'code': symbol.upper(), 'company_name': symbol.upper()}
+                        )
+                        
+                        # Map transaction type
+                        type_mapping = {
+                            'Buy': 'BUY',
+                            'Sell': 'SELL',
+                            'Dividend': 'DIVIDEND',
+                            'buy': 'BUY',
+                            'sell': 'SELL',
+                            'dividend': 'DIVIDEND',
+                        }
+                        transaction_type = type_mapping.get(trans_type, 'BUY')
+                        
+                        # Parse numeric values
+                        shares = float(quantity)
+                        price_per_share = float(price)
+                        fees_amount = float(fees) if fees else 0.0
+                        
+                        # Create transaction
+                        transaction = Transaction.objects.create(
+                            user=request.user,
+                            stock=stock,
+                            transaction_type=transaction_type,
+                            transaction_date=transaction_date,
+                            shares=shares,
+                            price_per_share=price_per_share,
+                            fees=fees_amount,
+                            notes=f"Imported from Wealthsimple CSV"
+                        )
+                        
+                        # For sell transactions, calculate realized gain/loss
+                        if transaction_type == 'SELL':
+                            cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                                request.user, stock, shares, 'FIFO'
+                            )
+                            if not error:
+                                transaction.calculate_realized_gain_loss(cost_basis)
+                                transaction.save()
+                        
+                        imported_count += 1
+                        
+                    except Exception as e:
+                        errors.append(f"Row {row_num}: {str(e)}")
+                        logger.error(f"Error importing row {row_num}: {e}")
+                
+                # Update portfolio for all affected stocks
+                affected_stocks = Transaction.objects.filter(
+                    user=request.user,
+                    transaction_date__gte=timezone.now().date() - timedelta(days=365)
+                ).values_list('stock', flat=True).distinct()
+                
+                for stock_id in affected_stocks:
+                    stock = Stock.objects.get(id=stock_id)
+                    TransactionService.update_portfolio_from_transactions(request.user, stock)
+                
+                if imported_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} transactions!')
+                if errors:
+                    messages.warning(request, f'{len(errors)} errors occurred during import. Check the logs for details.')
+                
+                return redirect('transactions_list')
+                
+            except Exception as e:
+                logger.error(f"Error reading CSV file: {e}")
+                messages.error(request, f'Error reading CSV file: {str(e)}')
+                return redirect('import_wealthsimple_csv')
+        
+        return render(request, 'transactions/import.html')
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error in import_wealthsimple_csv: {e}")
+        messages.error(request, 'An error occurred.')
+        return redirect('transactions_list')
+
+
+@login_required
+def export_transactions(request):
+    """Export transactions to CSV for tax purposes"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        year = request.GET.get('year', timezone.now().year)
+        symbol = request.GET.get('symbol', None)
+        
+        transactions = Transaction.objects.filter(user=request.user).select_related('stock').order_by('transaction_date', 'created_at')
+        
+        if year:
+            transactions = transactions.filter(transaction_date__year=year)
+        
+        if symbol:
+            stock = get_object_or_404(Stock, symbol=symbol.upper())
+            transactions = transactions.filter(stock=stock)
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="transactions_{year}_{request.user.username}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Date', 'Symbol', 'Type', 'Shares', 'Price per Share', 'Fees',
+            'Total Amount', 'Realized Gain/Loss', 'Cost Basis Method', 'Notes'
+        ])
+        
+        for transaction in transactions:
+            writer.writerow([
+                transaction.transaction_date.strftime('%Y-%m-%d'),
+                transaction.stock.symbol,
+                transaction.get_transaction_type_display(),
+                f"{transaction.shares:.6f}",
+                f"{transaction.price_per_share:.4f}",
+                f"{transaction.fees:.2f}",
+                f"{transaction.total_amount:.2f}",
+                f"{transaction.realized_gain_loss:.2f}" if transaction.realized_gain_loss else '',
+                transaction.get_cost_basis_method_display(),
+                transaction.notes
+            ])
+        
+        return response
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error exporting transactions: {e}")
+        messages.error(request, 'An error occurred while exporting transactions.')
+        return redirect('transactions_list')
 
 
 @login_required

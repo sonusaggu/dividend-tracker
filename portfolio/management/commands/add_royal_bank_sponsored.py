@@ -71,3 +71,4 @@ class Command(BaseCommand):
             self.stdout.write('  - All Stocks page (before stocks grid)')
             self.stdout.write('  - Dashboard (at the bottom)')
 
+

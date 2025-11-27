@@ -18,10 +18,16 @@
                 </h1>
                 <p class="text-xl text-gray-600">Track your investments and dividend income</p>
             </div>
-            <a href="{% url 'all_stocks' %}" 
-               class="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
-                + Add Stock
-            </a>
+            <div class="flex gap-3 mt-4 md:mt-0">
+                <a href="{% url 'transactions_list' %}" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
+                    📊 Transactions
+                </a>
+                <a href="{% url 'all_stocks' %}" 
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
+                    + Add Stock
+                </a>
+            </div>
         </div>
 
         {% if portfolio_items %}

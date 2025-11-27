@@ -195,3 +195,4 @@ class CommentLike(models.Model):
         comment.likes_count = comment.comment_likes.count()
         comment.save(update_fields=['likes_count'])
 
+

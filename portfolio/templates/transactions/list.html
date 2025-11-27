@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Transaction History - StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Transaction History
+                </h1>
+                <p class="text-xl text-gray-600">Track your buy/sell transactions and cost basis</p>
+            </div>
+            <div class="flex gap-3 mt-4 md:mt-0">
+                <a href="{% url 'create_transaction' %}{% if symbol %}{{ symbol }}/{% endif %}" 
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
+                    + Add Transaction
+                </a>
+                <a href="{% url 'import_wealthsimple_csv' %}" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
+                    📥 Import CSV
+                </a>
+                <a href="{% url 'export_transactions' %}{% if symbol %}?symbol={{ symbol }}{% endif %}" 
+                   class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
+                    📤 Export CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <p class="text-sm text-gray-600 mb-1">Total Realized Gain/Loss</p>
+                <p class="text-2xl font-bold {% if total_realized_gain >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    ${{ total_realized_gain|floatformat:2|intcomma }}
+                </p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <p class="text-sm text-gray-600 mb-1">Buy Transactions</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_buys }}</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <p class="text-sm text-gray-600 mb-1">Sell Transactions</p>
+                <p class="text-2xl font-bold text-gray-900">{{ total_sells }}</p>
+            </div>
+        </div>
+
+        <!-- Filter by Stock -->
+        {% if symbol %}
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <p class="text-sm text-blue-800">
+                Showing transactions for <strong>{{ stock.symbol }} - {{ stock.company_name }}</strong>
+                <a href="{% url 'transactions_list' %}" class="text-blue-600 hover:underline ml-2">View All</a>
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-blue-600 to-purple-600">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Shares</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Price</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Fees</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Gain/Loss</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for transaction in transactions %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.transaction_date|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="{% url 'stock_detail' transaction.stock.symbol %}" class="text-blue-600 hover:underline font-semibold">
+                                    {{ transaction.stock.symbol }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold {% if transaction.transaction_type == 'BUY' %}bg-green-100 text-green-800{% elif transaction.transaction_type == 'SELL' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ transaction.get_transaction_type_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.shares|floatformat:6 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.price_per_share|floatformat:4 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.fees|floatformat:2 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${{ transaction.total_amount|floatformat:2 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if transaction.realized_gain_loss and transaction.realized_gain_loss >= 0 %}text-green-600{% elif transaction.realized_gain_loss %}text-red-600{% else %}text-gray-500{% endif %}">
+                                {% if transaction.realized_gain_loss %}
+                                    ${{ transaction.realized_gain_loss|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <div class="flex gap-2">
+                                    <a href="{% url 'edit_transaction' transaction.id %}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                                    <form method="post" action="{% url 'delete_transaction' transaction.id %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                                <p class="text-lg mb-2">No transactions found</p>
+                                <a href="{% url 'create_transaction' %}" class="text-blue-600 hover:underline">Add your first transaction</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if transactions.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex gap-2">
+                {% if transactions.has_previous %}
+                <a href="?page={{ transactions.previous_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">Previous</a>
+                {% endif %}
+                <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">{{ transactions.number }} of {{ transactions.paginator.num_pages }}</span>
+                {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50">Next</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

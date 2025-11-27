@@ -43,3 +43,4 @@ class Command(BaseCommand):
             self.stdout.write(f'  URL: {affiliate.affiliate_url}')
             self.stdout.write(f'  Active: {affiliate.is_active}')
 
+

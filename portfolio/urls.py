@@ -110,5 +110,15 @@ urlpatterns = [
     path('notes/<int:note_id>/edit/', views.edit_stock_note, name='edit_stock_note'),
     path('notes/<int:note_id>/delete/', views.delete_stock_note, name='delete_stock_note'),
     path('notes/export/', views.export_notes, name='export_notes'),
+    
+    # Transaction History & Cost Basis Tracking
+    path('transactions/', views.transactions_list, name='transactions_list'),
+    path('transactions/<str:symbol>/', views.transactions_list, name='transactions_list_by_symbol'),
+    path('transactions/create/', views.create_transaction, name='create_transaction'),
+    path('transactions/<str:symbol>/create/', views.create_transaction, name='create_transaction_by_symbol'),
+    path('transactions/<int:transaction_id>/edit/', views.edit_transaction, name='edit_transaction'),
+    path('transactions/<int:transaction_id>/delete/', views.delete_transaction, name='delete_transaction'),
+    path('transactions/import/', views.import_wealthsimple_csv, name='import_wealthsimple_csv'),
+    path('transactions/export/', views.export_transactions, name='export_transactions'),
 
 ]

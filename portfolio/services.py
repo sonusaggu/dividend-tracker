@@ -8,7 +8,7 @@ from datetime import timedelta
 from decimal import Decimal
 from .models import (
     Stock, StockPrice, Dividend, UserPortfolio, 
-    Watchlist, DividendAlert, ValuationMetric, AnalystRating
+    Watchlist, DividendAlert, ValuationMetric, AnalystRating, Transaction
 )
 # PortfolioSnapshot imported conditionally to handle migration timing
 
@@ -363,5 +363,214 @@ class AlertService:
                 .order_by('-ex_dividend_date').values('frequency')[:1]
             ),
         )
+
+
+class TransactionService:
+    """Service for transaction and cost basis calculation"""
+    
+    @staticmethod
+    def calculate_cost_basis_fifo(user, stock, shares_to_sell):
+        """Calculate cost basis using FIFO (First In First Out) method"""
+        buy_transactions = Transaction.objects.filter(
+            user=user,
+            stock=stock,
+            transaction_type='BUY',
+            is_processed=False
+        ).order_by('transaction_date', 'created_at')
+        
+        remaining_shares = float(shares_to_sell)
+        total_cost_basis = Decimal('0.00')
+        transactions_used = []
+        
+        for transaction in buy_transactions:
+            if remaining_shares <= 0:
+                break
+            
+            available_shares = float(transaction.shares)
+            shares_to_use = min(remaining_shares, available_shares)
+            
+            cost_per_share = transaction.price_per_share + (transaction.fees / transaction.shares)
+            cost_basis = Decimal(str(shares_to_use)) * cost_per_share
+            total_cost_basis += cost_basis
+            
+            transactions_used.append({
+                'transaction': transaction,
+                'shares_used': shares_to_use
+            })
+            
+            remaining_shares -= shares_to_use
+        
+        if remaining_shares > 0:
+            # Not enough shares in buy transactions
+            return None, None, f"Insufficient shares. Need {remaining_shares} more shares."
+        
+        return total_cost_basis, transactions_used, None
+    
+    @staticmethod
+    def calculate_cost_basis_lifo(user, stock, shares_to_sell):
+        """Calculate cost basis using LIFO (Last In First Out) method"""
+        buy_transactions = Transaction.objects.filter(
+            user=user,
+            stock=stock,
+            transaction_type='BUY',
+            is_processed=False
+        ).order_by('-transaction_date', '-created_at')
+        
+        remaining_shares = float(shares_to_sell)
+        total_cost_basis = Decimal('0.00')
+        transactions_used = []
+        
+        for transaction in buy_transactions:
+            if remaining_shares <= 0:
+                break
+            
+            available_shares = float(transaction.shares)
+            shares_to_use = min(remaining_shares, available_shares)
+            
+            cost_per_share = transaction.price_per_share + (transaction.fees / transaction.shares)
+            cost_basis = Decimal(str(shares_to_use)) * cost_per_share
+            total_cost_basis += cost_basis
+            
+            transactions_used.append({
+                'transaction': transaction,
+                'shares_used': shares_to_use
+            })
+            
+            remaining_shares -= shares_to_use
+        
+        if remaining_shares > 0:
+            return None, None, f"Insufficient shares. Need {remaining_shares} more shares."
+        
+        return total_cost_basis, transactions_used, None
+    
+    @staticmethod
+    def calculate_cost_basis_average(user, stock, shares_to_sell):
+        """Calculate cost basis using Average Cost method"""
+        buy_transactions = Transaction.objects.filter(
+            user=user,
+            stock=stock,
+            transaction_type='BUY',
+            is_processed=False
+        )
+        
+        total_shares = Decimal('0.00')
+        total_cost = Decimal('0.00')
+        
+        for transaction in buy_transactions:
+            total_shares += transaction.shares
+            total_cost += (transaction.shares * transaction.price_per_share) + transaction.fees
+        
+        if total_shares == 0:
+            return None, None, "No buy transactions found."
+        
+        average_cost_per_share = total_cost / total_shares
+        cost_basis = Decimal(str(shares_to_sell)) * average_cost_per_share
+        
+        return cost_basis, [], None
+    
+    @staticmethod
+    def calculate_cost_basis(user, stock, shares_to_sell, method='FIFO'):
+        """Calculate cost basis using specified method"""
+        if method == 'FIFO':
+            return TransactionService.calculate_cost_basis_fifo(user, stock, shares_to_sell)
+        elif method == 'LIFO':
+            return TransactionService.calculate_cost_basis_lifo(user, stock, shares_to_sell)
+        elif method == 'AVERAGE':
+            return TransactionService.calculate_cost_basis_average(user, stock, shares_to_sell)
+        else:
+            return None, None, f"Unknown cost basis method: {method}"
+    
+    @staticmethod
+    def get_unrealized_gains(user, stock):
+        """Calculate unrealized gains for a stock"""
+        try:
+            portfolio_item = UserPortfolio.objects.get(user=user, stock=stock)
+            if not portfolio_item.shares_owned or not portfolio_item.average_cost:
+                return None
+            
+            # Get latest price
+            latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
+            if not latest_price:
+                return None
+            
+            current_value = float(portfolio_item.shares_owned) * float(latest_price.last_price)
+            cost_basis = float(portfolio_item.shares_owned) * float(portfolio_item.average_cost)
+            unrealized_gain = current_value - cost_basis
+            
+            return {
+                'unrealized_gain': unrealized_gain,
+                'unrealized_gain_percent': (unrealized_gain / cost_basis * 100) if cost_basis > 0 else 0,
+                'current_value': current_value,
+                'cost_basis': cost_basis
+            }
+        except UserPortfolio.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def get_realized_gains(user, stock=None, year=None):
+        """Get realized gains from sell transactions"""
+        transactions = Transaction.objects.filter(
+            user=user,
+            transaction_type='SELL',
+            realized_gain_loss__isnull=False
+        )
+        
+        if stock:
+            transactions = transactions.filter(stock=stock)
+        
+        if year:
+            transactions = transactions.filter(transaction_date__year=year)
+        
+        total_realized = sum(float(t.realized_gain_loss) for t in transactions if t.realized_gain_loss)
+        
+        return {
+            'total_realized_gain': total_realized,
+            'transactions': transactions,
+            'count': transactions.count()
+        }
+    
+    @staticmethod
+    def update_portfolio_from_transactions(user, stock):
+        """Update UserPortfolio based on transactions"""
+        buy_transactions = Transaction.objects.filter(
+            user=user,
+            stock=stock,
+            transaction_type='BUY',
+            is_processed=False
+        )
+        
+        sell_transactions = Transaction.objects.filter(
+            user=user,
+            stock=stock,
+            transaction_type='SELL',
+            is_processed=False
+        )
+        
+        total_shares = Decimal('0.00')
+        total_cost = Decimal('0.00')
+        
+        # Calculate from buy transactions
+        for transaction in buy_transactions:
+            total_shares += transaction.shares
+            total_cost += (transaction.shares * transaction.price_per_share) + transaction.fees
+        
+        # Subtract sell transactions
+        for transaction in sell_transactions:
+            total_shares -= transaction.shares
+        
+        # Update or create portfolio item
+        if total_shares > 0:
+            average_cost = total_cost / total_shares if total_shares > 0 else Decimal('0.00')
+            UserPortfolio.objects.update_or_create(
+                user=user,
+                stock=stock,
+                defaults={
+                    'shares_owned': int(total_shares),
+                    'average_cost': average_cost
+                }
+            )
+        else:
+            # Remove from portfolio if no shares left
+            UserPortfolio.objects.filter(user=user, stock=stock).delete()
 
 

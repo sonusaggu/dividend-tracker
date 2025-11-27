@@ -3,7 +3,7 @@ from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
     UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
     AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike,
-    StockNote
+    StockNote, Transaction
 )
 
 
@@ -237,6 +237,30 @@ class StockNoteAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Note Information', {
             'fields': ('user', 'stock', 'note_type', 'title', 'content', 'tags', 'is_private')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'stock', 'transaction_type', 'transaction_date', 'shares', 'price_per_share', 'total_amount', 'realized_gain_loss', 'created_at')
+    list_filter = ('transaction_type', 'cost_basis_method', 'transaction_date', 'is_processed')
+    search_fields = ('user__username', 'stock__symbol', 'stock__company_name', 'notes')
+    date_hierarchy = 'transaction_date'
+    readonly_fields = ('created_at', 'updated_at', 'total_amount')
+    fieldsets = (
+        ('Transaction Information', {
+            'fields': ('user', 'stock', 'transaction_type', 'transaction_date', 'shares', 'price_per_share', 'fees', 'total_amount')
+        }),
+        ('Cost Basis & Gains', {
+            'fields': ('cost_basis_method', 'realized_gain_loss', 'is_processed')
+        }),
+        ('Additional Information', {
+            'fields': ('notes',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
