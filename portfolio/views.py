@@ -1403,11 +1403,28 @@ def transactions_list(request, symbol=None):
     try:
         from django.db import DatabaseError, ProgrammingError, OperationalError
         
+        # Test if Transaction model is accessible
+        try:
+            test_query = Transaction.objects.all()
+        except (ProgrammingError, OperationalError, DatabaseError) as db_error:
+            logger.error(f"Database error accessing Transaction: {db_error}")
+            messages.error(request, f'Transaction table does not exist. Please run: python manage.py migrate. Error: {str(db_error)}')
+            return redirect('portfolio')
+        except Exception as model_error:
+            logger.error(f"Model error: {model_error}")
+            messages.error(request, f'Error accessing Transaction model: {str(model_error)}')
+            return redirect('portfolio')
+        
         transactions = Transaction.objects.filter(user=request.user).select_related('stock').order_by('-transaction_date', '-created_at')
         
+        stock = None
         if symbol:
-            stock = get_object_or_404(Stock, symbol=symbol.upper())
-            transactions = transactions.filter(stock=stock)
+            try:
+                stock = Stock.objects.get(symbol=symbol.upper())
+                transactions = transactions.filter(stock=stock)
+            except Stock.DoesNotExist:
+                messages.warning(request, f'Stock "{symbol}" not found. Showing all transactions.')
+                symbol = None  # Reset symbol so we show all transactions
         
         # Pagination
         paginator = Paginator(transactions, 25)
@@ -1420,27 +1437,33 @@ def transactions_list(request, symbol=None):
             transactions_page = paginator.page(paginator.num_pages)
         
         # Calculate summary statistics
-        total_realized = TransactionService.get_realized_gains(request.user)
+        try:
+            total_realized = TransactionService.get_realized_gains(request.user)
+            total_realized_gain = total_realized.get('total_realized_gain', 0)
+        except Exception as e:
+            logger.warning(f"Error calculating realized gains: {e}")
+            total_realized_gain = 0
+        
         total_buys = transactions.filter(transaction_type='BUY').count()
         total_sells = transactions.filter(transaction_type='SELL').count()
         
         context = {
             'transactions': transactions_page,
             'symbol': symbol,
-            'stock': stock if symbol else None,
-            'total_realized_gain': total_realized['total_realized_gain'],
+            'stock': stock,
+            'total_realized_gain': total_realized_gain,
             'total_buys': total_buys,
             'total_sells': total_sells,
         }
         
         return render(request, 'transactions/list.html', context)
     except (ProgrammingError, OperationalError, DatabaseError) as e:
-        logger.warning(f"Transaction table not found: {e}")
-        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        logger.error(f"Transaction table not found: {e}", exc_info=True)
+        messages.error(request, f'Transaction feature is not available. Please run: python manage.py migrate. Error: {str(e)}')
         return redirect('portfolio')
     except Exception as e:
-        logger.error(f"Error in transactions_list: {e}")
-        messages.error(request, 'An error occurred while loading transactions.')
+        logger.error(f"Error in transactions_list: {e}", exc_info=True)
+        messages.error(request, f'An error occurred while loading transactions: {str(e)}')
         return redirect('portfolio')
 
 
@@ -1450,9 +1473,25 @@ def create_transaction(request, symbol=None):
     try:
         from django.db import DatabaseError, ProgrammingError, OperationalError
         
+        # Test if Transaction model is accessible
+        try:
+            Transaction.objects.model
+        except (ProgrammingError, OperationalError, DatabaseError) as db_error:
+            logger.error(f"Database error accessing Transaction: {db_error}")
+            messages.error(request, f'Transaction table does not exist. Please run: python manage.py migrate. Error: {str(db_error)}')
+            return redirect('portfolio')
+        except Exception as model_error:
+            logger.error(f"Model error: {model_error}")
+            messages.error(request, f'Error accessing Transaction model: {str(model_error)}')
+            return redirect('portfolio')
+        
         stock = None
         if symbol:
-            stock = get_object_or_404(Stock, symbol=symbol.upper())
+            try:
+                stock = Stock.objects.get(symbol=symbol.upper())
+            except Stock.DoesNotExist:
+                messages.error(request, f'Stock "{symbol}" not found. Please select a stock from the dropdown.')
+                symbol = None  # Reset to allow user to select from dropdown
         
         if request.method == 'POST':
             try:
@@ -1472,11 +1511,15 @@ def create_transaction(request, symbol=None):
                 
                 if transaction_type not in ['BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'MERGER']:
                     messages.error(request, 'Invalid transaction type.')
-                    return redirect('create_transaction', symbol=stock_symbol if symbol else '')
+                    if symbol:
+                        return redirect('create_transaction_by_symbol', symbol=stock_symbol)
+                    return redirect('create_transaction')
                 
                 if shares <= 0 or price_per_share <= 0:
                     messages.error(request, 'Shares and price must be positive numbers.')
-                    return redirect('create_transaction', symbol=stock_symbol if symbol else '')
+                    if symbol:
+                        return redirect('create_transaction_by_symbol', symbol=stock_symbol)
+                    return redirect('create_transaction')
                 
                 # Create transaction
                 transaction = Transaction.objects.create(
@@ -1506,13 +1549,20 @@ def create_transaction(request, symbol=None):
                 TransactionService.update_portfolio_from_transactions(request.user, stock)
                 
                 messages.success(request, f'Transaction added successfully!')
-                return redirect('transactions_list', symbol=stock_symbol)
+                # Redirect to transactions list, optionally filtered by symbol
+                if symbol:
+                    return redirect('transactions_list_by_symbol', symbol=stock_symbol)
+                return redirect('transactions_list')
                 
             except ValueError as e:
                 messages.error(request, f'Invalid input: {str(e)}')
+                logger.error(f"ValueError in create_transaction: {e}")
+            except Stock.DoesNotExist:
+                messages.error(request, f'Stock "{stock_symbol}" not found. Please select a valid stock.')
+                logger.error(f"Stock not found: {stock_symbol}")
             except Exception as e:
-                logger.error(f"Error creating transaction: {e}")
-                messages.error(request, 'An error occurred while creating the transaction.')
+                logger.error(f"Error creating transaction: {e}", exc_info=True)
+                messages.error(request, f'An error occurred while creating the transaction: {str(e)}')
         
         # Get all stocks for dropdown
         stocks = Stock.objects.all().order_by('symbol')
@@ -1649,61 +1699,185 @@ def import_wealthsimple_csv(request):
             
             csv_file = request.FILES['csv_file']
             
-            # Read CSV file
+            # Check file extension
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, 'Please upload a CSV file.')
+                return redirect('import_wealthsimple_csv')
+            
+            # Read CSV file with encoding detection
             try:
-                decoded_file = csv_file.read().decode('utf-8')
+                # Read file content
+                file_content = csv_file.read()
+                
+                # Try to detect encoding (optional - chardet may not be installed)
+                encoding = 'utf-8'
+                try:
+                    import chardet
+                    detected = chardet.detect(file_content)
+                    if detected and detected.get('encoding'):
+                        encoding = detected.get('encoding')
+                except ImportError:
+                    # chardet not installed, use default
+                    pass
+                except Exception:
+                    # Detection failed, use default
+                    pass
+                
+                # Try multiple encodings
+                decoded_file = None
+                for enc in [encoding, 'utf-8', 'utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1']:
+                    try:
+                        decoded_file = file_content.decode(enc)
+                        break
+                    except UnicodeDecodeError:
+                        continue
+                
+                if decoded_file is None:
+                    messages.error(request, 'Could not decode CSV file. Please ensure it is a valid CSV file.')
+                    return redirect('import_wealthsimple_csv')
+                
+                # Handle BOM (Byte Order Mark) if present
+                if decoded_file.startswith('\ufeff'):
+                    decoded_file = decoded_file[1:]
+                
                 io_string = io.StringIO(decoded_file)
                 reader = csv.DictReader(io_string)
+                
+                # Check if we have any rows
+                if not reader.fieldnames:
+                    messages.error(request, 'CSV file appears to be empty or invalid.')
+                    return redirect('import_wealthsimple_csv')
+                
+                # Log available columns for debugging
+                logger.info(f"CSV columns detected: {reader.fieldnames}")
                 
                 imported_count = 0
                 errors = []
                 
                 for row_num, row in enumerate(reader, start=2):  # Start at 2 because row 1 is header
                     try:
-                        # Wealthsimple CSV format may vary, try to parse common fields
-                        # Common column names: Date, Symbol, Type, Quantity, Price, Fees, etc.
-                        date_str = row.get('Date') or row.get('Transaction Date') or row.get('date')
-                        symbol = row.get('Symbol') or row.get('Stock') or row.get('symbol')
-                        trans_type = row.get('Type') or row.get('Transaction Type') or row.get('type')
-                        quantity = row.get('Quantity') or row.get('Shares') or row.get('quantity')
-                        price = row.get('Price') or row.get('Price per Share') or row.get('price')
-                        fees = row.get('Fees') or row.get('Commission') or row.get('fees', '0')
-                        
-                        if not all([date_str, symbol, trans_type, quantity, price]):
-                            errors.append(f"Row {row_num}: Missing required fields")
+                        # Skip empty rows
+                        if not any(row.values()):
                             continue
                         
-                        # Parse date
-                        try:
-                            transaction_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                        except:
+                        # Wealthsimple CSV format may vary, try to parse common fields
+                        # Try multiple column name variations (case-insensitive)
+                        date_str = None
+                        symbol = None
+                        trans_type = None
+                        quantity = None
+                        price = None
+                        fees = '0'
+                        
+                        # Case-insensitive column matching
+                        row_lower = {k.lower().strip(): v for k, v in row.items() if k}
+                        
+                        # Date
+                        for key in ['date', 'transaction date', 'transaction_date', 'trade date', 'trade_date']:
+                            if key in row_lower and row_lower[key]:
+                                date_str = row_lower[key].strip()
+                                break
+                        
+                        # Symbol
+                        for key in ['symbol', 'stock', 'ticker', 'security', 'instrument']:
+                            if key in row_lower and row_lower[key]:
+                                symbol = row_lower[key].strip()
+                                break
+                        
+                        # Type
+                        for key in ['type', 'transaction type', 'transaction_type', 'action', 'side']:
+                            if key in row_lower and row_lower[key]:
+                                trans_type = row_lower[key].strip()
+                                break
+                        
+                        # Quantity/Shares
+                        for key in ['quantity', 'shares', 'qty', 'amount', 'units']:
+                            if key in row_lower and row_lower[key]:
+                                quantity = row_lower[key].strip()
+                                break
+                        
+                        # Price
+                        for key in ['price', 'price per share', 'price_per_share', 'unit price', 'unit_price', 'cost']:
+                            if key in row_lower and row_lower[key]:
+                                price = row_lower[key].strip()
+                                break
+                        
+                        # Fees
+                        for key in ['fees', 'commission', 'fee', 'charges']:
+                            if key in row_lower and row_lower[key]:
+                                fees = row_lower[key].strip() or '0'
+                                break
+                        
+                        # Validate required fields
+                        if not all([date_str, symbol, trans_type, quantity, price]):
+                            missing = []
+                            if not date_str: missing.append('Date')
+                            if not symbol: missing.append('Symbol')
+                            if not trans_type: missing.append('Type')
+                            if not quantity: missing.append('Quantity')
+                            if not price: missing.append('Price')
+                            errors.append(f"Row {row_num}: Missing fields: {', '.join(missing)}. Available columns: {', '.join(reader.fieldnames)}")
+                            continue
+                        
+                        # Parse date - try multiple formats
+                        transaction_date = None
+                        date_formats = [
+                            '%Y-%m-%d',
+                            '%m/%d/%Y',
+                            '%d/%m/%Y',
+                            '%Y/%m/%d',
+                            '%m-%d-%Y',
+                            '%d-%m-%Y',
+                            '%Y-%m-%d %H:%M:%S',
+                            '%m/%d/%Y %H:%M:%S',
+                        ]
+                        
+                        for date_format in date_formats:
                             try:
-                                transaction_date = datetime.strptime(date_str, '%m/%d/%Y').date()
-                            except:
-                                errors.append(f"Row {row_num}: Invalid date format: {date_str}")
+                                transaction_date = datetime.strptime(date_str.strip(), date_format).date()
+                                break
+                            except ValueError:
                                 continue
                         
+                        if transaction_date is None:
+                            errors.append(f"Row {row_num}: Could not parse date '{date_str}'. Supported formats: YYYY-MM-DD, MM/DD/YYYY")
+                            continue
+                        
                         # Get or create stock
+                        symbol_upper = symbol.upper().strip()
                         stock, created = Stock.objects.get_or_create(
-                            symbol=symbol.upper(),
-                            defaults={'code': symbol.upper(), 'company_name': symbol.upper()}
+                            symbol=symbol_upper,
+                            defaults={'code': symbol_upper, 'company_name': symbol_upper}
                         )
                         
-                        # Map transaction type
+                        # Map transaction type (case-insensitive)
                         type_mapping = {
-                            'Buy': 'BUY',
-                            'Sell': 'SELL',
-                            'Dividend': 'DIVIDEND',
                             'buy': 'BUY',
                             'sell': 'SELL',
                             'dividend': 'DIVIDEND',
+                            'purchase': 'BUY',
+                            'sale': 'SELL',
+                            'deposit': 'BUY',
+                            'withdrawal': 'SELL',
                         }
-                        transaction_type = type_mapping.get(trans_type, 'BUY')
+                        transaction_type = type_mapping.get(trans_type.lower().strip(), 'BUY')
                         
-                        # Parse numeric values
-                        shares = float(quantity)
-                        price_per_share = float(price)
-                        fees_amount = float(fees) if fees else 0.0
+                        # Parse numeric values - handle commas and currency symbols
+                        try:
+                            quantity_clean = quantity.replace(',', '').replace('$', '').strip()
+                            price_clean = price.replace(',', '').replace('$', '').strip()
+                            fees_clean = fees.replace(',', '').replace('$', '').strip() if fees else '0'
+                            
+                            shares = float(quantity_clean)
+                            price_per_share = float(price_clean)
+                            fees_amount = float(fees_clean) if fees_clean else 0.0
+                            
+                            if shares <= 0 or price_per_share <= 0:
+                                errors.append(f"Row {row_num}: Invalid values - shares: {shares}, price: {price_per_share}")
+                                continue
+                        except ValueError as e:
+                            errors.append(f"Row {row_num}: Could not parse numeric values - Quantity: '{quantity}', Price: '{price}', Fees: '{fees}'")
+                            continue
                         
                         # Create transaction
                         transaction = Transaction.objects.create(
@@ -1719,39 +1893,64 @@ def import_wealthsimple_csv(request):
                         
                         # For sell transactions, calculate realized gain/loss
                         if transaction_type == 'SELL':
-                            cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
-                                request.user, stock, shares, 'FIFO'
-                            )
-                            if not error:
-                                transaction.calculate_realized_gain_loss(cost_basis)
-                                transaction.save()
+                            try:
+                                cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                                    request.user, stock, shares, 'FIFO'
+                                )
+                                if not error:
+                                    transaction.calculate_realized_gain_loss(cost_basis)
+                                    transaction.save()
+                            except Exception as e:
+                                logger.warning(f"Could not calculate cost basis for row {row_num}: {e}")
+                                # Continue anyway - transaction is created
                         
                         imported_count += 1
                         
                     except Exception as e:
-                        errors.append(f"Row {row_num}: {str(e)}")
-                        logger.error(f"Error importing row {row_num}: {e}")
+                        error_msg = f"Row {row_num}: {str(e)}"
+                        errors.append(error_msg)
+                        logger.error(f"Error importing row {row_num}: {e}", exc_info=True)
                 
                 # Update portfolio for all affected stocks
-                affected_stocks = Transaction.objects.filter(
-                    user=request.user,
-                    transaction_date__gte=timezone.now().date() - timedelta(days=365)
-                ).values_list('stock', flat=True).distinct()
-                
-                for stock_id in affected_stocks:
-                    stock = Stock.objects.get(id=stock_id)
-                    TransactionService.update_portfolio_from_transactions(request.user, stock)
-                
                 if imported_count > 0:
-                    messages.success(request, f'Successfully imported {imported_count} transactions!')
+                    try:
+                        affected_stocks = Transaction.objects.filter(
+                            user=request.user,
+                            transaction_date__gte=timezone.now().date() - timedelta(days=365)
+                        ).values_list('stock', flat=True).distinct()
+                        
+                        for stock_id in affected_stocks:
+                            try:
+                                stock = Stock.objects.get(id=stock_id)
+                                TransactionService.update_portfolio_from_transactions(request.user, stock)
+                            except Exception as e:
+                                logger.error(f"Error updating portfolio for stock {stock_id}: {e}")
+                    except Exception as e:
+                        logger.error(f"Error updating portfolios: {e}")
+                
+                # Show results
+                if imported_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} transaction(s)!')
+                else:
+                    messages.warning(request, 'No transactions were imported. Please check your CSV format.')
+                
                 if errors:
-                    messages.warning(request, f'{len(errors)} errors occurred during import. Check the logs for details.')
+                    error_summary = f'{len(errors)} error(s) occurred. '
+                    if len(errors) <= 5:
+                        error_summary += 'Errors: ' + '; '.join(errors[:5])
+                    else:
+                        error_summary += f'First 5 errors: ' + '; '.join(errors[:5]) + f' (and {len(errors)-5} more)'
+                    messages.warning(request, error_summary)
                 
                 return redirect('transactions_list')
                 
+            except csv.Error as e:
+                logger.error(f"CSV parsing error: {e}")
+                messages.error(request, f'CSV parsing error: {str(e)}. Please ensure your file is a valid CSV.')
+                return redirect('import_wealthsimple_csv')
             except Exception as e:
-                logger.error(f"Error reading CSV file: {e}")
-                messages.error(request, f'Error reading CSV file: {str(e)}')
+                logger.error(f"Error reading CSV file: {e}", exc_info=True)
+                messages.error(request, f'Error reading CSV file: {str(e)}. Please check the file format and try again.')
                 return redirect('import_wealthsimple_csv')
         
         return render(request, 'transactions/import.html')
@@ -1760,8 +1959,8 @@ def import_wealthsimple_csv(request):
         messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
         return redirect('portfolio')
     except Exception as e:
-        logger.error(f"Error in import_wealthsimple_csv: {e}")
-        messages.error(request, 'An error occurred.')
+        logger.error(f"Error in import_wealthsimple_csv: {e}", exc_info=True)
+        messages.error(request, f'An error occurred: {str(e)}')
         return redirect('transactions_list')
 
 
@@ -1809,11 +2008,11 @@ def export_transactions(request):
         return response
     except (ProgrammingError, OperationalError, DatabaseError) as e:
         logger.warning(f"Transaction table not found: {e}")
-        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations: python manage.py migrate')
         return redirect('portfolio')
     except Exception as e:
-        logger.error(f"Error exporting transactions: {e}")
-        messages.error(request, 'An error occurred while exporting transactions.')
+        logger.error(f"Error exporting transactions: {e}", exc_info=True)
+        messages.error(request, f'An error occurred while exporting transactions: {str(e)}')
         return redirect('transactions_list')
 
 
