@@ -11,6 +11,16 @@
                 Edit Transaction
             </h1>
 
+            {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800{% else %}bg-green-50 border-green-200 text-green-800{% endif %} border rounded-xl p-4 mb-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
@@ -93,7 +103,7 @@
                             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
                         Update Transaction
                     </button>
-                    <a href="{% url 'transactions_list' symbol=transaction.stock.symbol %}" 
+                    <a href="{% url 'transactions_list_by_symbol' symbol=transaction.stock.symbol %}" 
                        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition min-h-[44px] flex items-center justify-center">
                         Cancel
                     </a>

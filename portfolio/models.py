@@ -178,9 +178,22 @@ class Transaction(models.Model):
     def calculate_realized_gain_loss(self, cost_basis):
         """Calculate realized gain/loss for sell transactions"""
         if self.transaction_type == 'SELL':
-            proceeds = float(self.shares * self.price_per_share) - float(self.fees)
-            self.realized_gain_loss = proceeds - cost_basis
-            return self.realized_gain_loss
+            from decimal import Decimal
+            # Convert all values to Decimal for precise calculation
+            shares_decimal = Decimal(str(self.shares))
+            price_decimal = Decimal(str(self.price_per_share))
+            fees_decimal = Decimal(str(self.fees))
+            cost_basis_decimal = Decimal(str(cost_basis)) if cost_basis is not None else Decimal('0')
+            
+            # Calculate proceeds: (shares * price) - fees
+            proceeds = (shares_decimal * price_decimal) - fees_decimal
+            
+            # Calculate gain/loss: proceeds - cost_basis
+            gain_loss = proceeds - cost_basis_decimal
+            
+            # Convert to Decimal field format
+            self.realized_gain_loss = gain_loss
+            return float(gain_loss)
         return None
 
 class UserAlert(models.Model):

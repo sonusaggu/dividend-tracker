@@ -26,7 +26,7 @@
                 <p class="text-xl text-gray-600">Track your buy/sell transactions and cost basis</p>
             </div>
             <div class="flex gap-3 mt-4 md:mt-0">
-                <a href="{% url 'create_transaction' %}{% if symbol %}{{ symbol }}/{% endif %}" 
+                <a href="{% if symbol %}{% url 'create_transaction_with_symbol' symbol=symbol %}{% else %}{% url 'create_transaction' %}{% endif %}" 
                    class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
                     + Add Transaction
                 </a>
@@ -104,9 +104,11 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.price_per_share|floatformat:4 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.fees|floatformat:2 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${{ transaction.total_amount|floatformat:2 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if transaction.realized_gain_loss and transaction.realized_gain_loss >= 0 %}text-green-600{% elif transaction.realized_gain_loss %}text-red-600{% else %}text-gray-500{% endif %}">
-                                {% if transaction.realized_gain_loss %}
-                                    ${{ transaction.realized_gain_loss|floatformat:2 }}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if transaction.realized_gain_loss is not None %}{% if transaction.realized_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}{% else %}text-gray-500{% endif %}">
+                                {% if transaction.realized_gain_loss is not None %}
+                                    ${{ transaction.realized_gain_loss|floatformat:2|intcomma }}
+                                {% elif transaction.transaction_type == 'SELL' %}
+                                    <span class="text-xs text-gray-400">No buy transactions</span>
                                 {% else %}
                                     -
                                 {% endif %}

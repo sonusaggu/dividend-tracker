@@ -378,7 +378,8 @@ class TransactionService:
             is_processed=False
         ).order_by('transaction_date', 'created_at')
         
-        remaining_shares = float(shares_to_sell)
+        # Convert to Decimal for precise calculation
+        remaining_shares = Decimal(str(shares_to_sell))
         total_cost_basis = Decimal('0.00')
         transactions_used = []
         
@@ -386,23 +387,30 @@ class TransactionService:
             if remaining_shares <= 0:
                 break
             
-            available_shares = float(transaction.shares)
+            # Convert all to Decimal
+            available_shares = Decimal(str(transaction.shares))
             shares_to_use = min(remaining_shares, available_shares)
             
-            cost_per_share = transaction.price_per_share + (transaction.fees / transaction.shares)
-            cost_basis = Decimal(str(shares_to_use)) * cost_per_share
+            # Calculate cost per share: (price * shares + fees) / shares
+            price_decimal = Decimal(str(transaction.price_per_share))
+            fees_decimal = Decimal(str(transaction.fees))
+            total_cost = (price_decimal * available_shares) + fees_decimal
+            cost_per_share = total_cost / available_shares if available_shares > 0 else Decimal('0')
+            
+            # Cost basis for shares being sold
+            cost_basis = shares_to_use * cost_per_share
             total_cost_basis += cost_basis
             
             transactions_used.append({
                 'transaction': transaction,
-                'shares_used': shares_to_use
+                'shares_used': float(shares_to_use)
             })
             
             remaining_shares -= shares_to_use
         
         if remaining_shares > 0:
             # Not enough shares in buy transactions
-            return None, None, f"Insufficient shares. Need {remaining_shares} more shares."
+            return None, None, f"Insufficient shares. Need {float(remaining_shares):.6f} more shares."
         
         return total_cost_basis, transactions_used, None
     
@@ -416,7 +424,8 @@ class TransactionService:
             is_processed=False
         ).order_by('-transaction_date', '-created_at')
         
-        remaining_shares = float(shares_to_sell)
+        # Convert to Decimal for precise calculation
+        remaining_shares = Decimal(str(shares_to_sell))
         total_cost_basis = Decimal('0.00')
         transactions_used = []
         
@@ -424,22 +433,29 @@ class TransactionService:
             if remaining_shares <= 0:
                 break
             
-            available_shares = float(transaction.shares)
+            # Convert all to Decimal
+            available_shares = Decimal(str(transaction.shares))
             shares_to_use = min(remaining_shares, available_shares)
             
-            cost_per_share = transaction.price_per_share + (transaction.fees / transaction.shares)
-            cost_basis = Decimal(str(shares_to_use)) * cost_per_share
+            # Calculate cost per share: (price * shares + fees) / shares
+            price_decimal = Decimal(str(transaction.price_per_share))
+            fees_decimal = Decimal(str(transaction.fees))
+            total_cost = (price_decimal * available_shares) + fees_decimal
+            cost_per_share = total_cost / available_shares if available_shares > 0 else Decimal('0')
+            
+            # Cost basis for shares being sold
+            cost_basis = shares_to_use * cost_per_share
             total_cost_basis += cost_basis
             
             transactions_used.append({
                 'transaction': transaction,
-                'shares_used': shares_to_use
+                'shares_used': float(shares_to_use)
             })
             
             remaining_shares -= shares_to_use
         
         if remaining_shares > 0:
-            return None, None, f"Insufficient shares. Need {remaining_shares} more shares."
+            return None, None, f"Insufficient shares. Need {float(remaining_shares):.6f} more shares."
         
         return total_cost_basis, transactions_used, None
     
@@ -457,14 +473,20 @@ class TransactionService:
         total_cost = Decimal('0.00')
         
         for transaction in buy_transactions:
-            total_shares += transaction.shares
-            total_cost += (transaction.shares * transaction.price_per_share) + transaction.fees
+            # Convert all to Decimal for precise calculation
+            shares_decimal = Decimal(str(transaction.shares))
+            price_decimal = Decimal(str(transaction.price_per_share))
+            fees_decimal = Decimal(str(transaction.fees))
+            
+            total_shares += shares_decimal
+            total_cost += (shares_decimal * price_decimal) + fees_decimal
         
         if total_shares == 0:
             return None, None, "No buy transactions found."
         
         average_cost_per_share = total_cost / total_shares
-        cost_basis = Decimal(str(shares_to_sell)) * average_cost_per_share
+        shares_to_sell_decimal = Decimal(str(shares_to_sell))
+        cost_basis = shares_to_sell_decimal * average_cost_per_share
         
         return cost_basis, [], None
     

@@ -114,6 +114,7 @@ urlpatterns = [
     # Transaction History & Cost Basis Tracking
     # IMPORTANT: Specific paths must come before generic <str:symbol> path
     path('transactions/create/', views.create_transaction, name='create_transaction'),
+    path('transactions/create/<str:symbol>/', views.create_transaction, name='create_transaction_with_symbol'),
     path('transactions/import/', views.import_wealthsimple_csv, name='import_wealthsimple_csv'),
     path('transactions/export/', views.export_transactions, name='export_transactions'),
     path('transactions/<int:transaction_id>/edit/', views.edit_transaction, name='edit_transaction'),

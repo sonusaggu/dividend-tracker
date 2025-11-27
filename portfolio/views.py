@@ -1536,13 +1536,25 @@ def create_transaction(request, symbol=None):
                 
                 # For sell transactions, calculate realized gain/loss
                 if transaction_type == 'SELL':
-                    cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
-                        request.user, stock, shares, cost_basis_method
-                    )
-                    if error:
-                        messages.warning(request, f'Transaction created but cost basis calculation failed: {error}')
-                    else:
-                        transaction.calculate_realized_gain_loss(cost_basis)
+                    try:
+                        cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                            request.user, stock, shares, cost_basis_method
+                        )
+                        if error:
+                            messages.warning(request, f'Transaction created but cost basis calculation failed: {error}. Gain/loss will be calculated when you have buy transactions.')
+                            # Set to None so it shows as "-" in the list
+                            transaction.realized_gain_loss = None
+                        else:
+                            # Ensure cost_basis is not None
+                            if cost_basis is not None:
+                                transaction.calculate_realized_gain_loss(cost_basis)
+                            else:
+                                transaction.realized_gain_loss = None
+                        transaction.save()
+                    except Exception as e:
+                        logger.error(f"Error calculating gain/loss for sell transaction: {e}", exc_info=True)
+                        messages.warning(request, f'Transaction created but gain/loss calculation failed: {str(e)}')
+                        transaction.realized_gain_loss = None
                         transaction.save()
                 
                 # Update portfolio from transactions
@@ -1591,6 +1603,18 @@ def edit_transaction(request, transaction_id):
     try:
         from django.db import DatabaseError, ProgrammingError, OperationalError
         
+        # Test if Transaction model is accessible
+        try:
+            Transaction.objects.model
+        except (ProgrammingError, OperationalError, DatabaseError) as db_error:
+            logger.error(f"Database error accessing Transaction: {db_error}")
+            messages.error(request, f'Transaction table does not exist. Please run: python manage.py migrate. Error: {str(db_error)}')
+            return redirect('portfolio')
+        except Exception as model_error:
+            logger.error(f"Model error: {model_error}")
+            messages.error(request, f'Error accessing Transaction model: {str(model_error)}')
+            return redirect('portfolio')
+        
         transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
         stock = transaction.stock
         
@@ -1604,41 +1628,60 @@ def edit_transaction(request, transaction_id):
                 notes = request.POST.get('notes', '')
                 cost_basis_method = request.POST.get('cost_basis_method', 'FIFO')
                 
-                if shares <= 0 or price_per_share <= 0:
+                if transaction_type not in ['BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'MERGER']:
+                    messages.error(request, 'Invalid transaction type.')
+                    # Stay on edit page to show error
+                elif shares <= 0 or price_per_share <= 0:
                     messages.error(request, 'Shares and price must be positive numbers.')
-                    return redirect('edit_transaction', transaction_id=transaction_id)
-                
-                # Update transaction
-                transaction.transaction_type = transaction_type
-                transaction.transaction_date = transaction_date
-                transaction.shares = shares
-                transaction.price_per_share = price_per_share
-                transaction.fees = fees
-                transaction.notes = notes
-                transaction.cost_basis_method = cost_basis_method
-                transaction.is_processed = False  # Reset processed flag
-                transaction.save()
-                
-                # Recalculate realized gain/loss for sell transactions
-                if transaction_type == 'SELL':
-                    cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
-                        request.user, stock, shares, cost_basis_method
-                    )
-                    if not error:
-                        transaction.calculate_realized_gain_loss(cost_basis)
-                        transaction.save()
-                
-                # Update portfolio from transactions
-                TransactionService.update_portfolio_from_transactions(request.user, stock)
-                
-                messages.success(request, 'Transaction updated successfully!')
-                return redirect('transactions_list', symbol=stock.symbol)
+                    # Stay on edit page to show error
+                else:
+                    # Update transaction
+                    transaction.transaction_type = transaction_type
+                    transaction.transaction_date = transaction_date
+                    transaction.shares = shares
+                    transaction.price_per_share = price_per_share
+                    transaction.fees = fees
+                    transaction.notes = notes
+                    transaction.cost_basis_method = cost_basis_method
+                    transaction.is_processed = False  # Reset processed flag
+                    transaction.save()
+                    
+                    # Recalculate realized gain/loss for sell transactions
+                    if transaction_type == 'SELL':
+                        try:
+                            cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
+                                request.user, stock, shares, cost_basis_method
+                            )
+                            if error:
+                                messages.warning(request, f'Transaction updated but cost basis calculation failed: {error}')
+                                transaction.realized_gain_loss = None
+                            else:
+                                if cost_basis is not None:
+                                    transaction.calculate_realized_gain_loss(cost_basis)
+                                else:
+                                    transaction.realized_gain_loss = None
+                            transaction.save()
+                        except Exception as e:
+                            logger.error(f"Error calculating gain/loss for sell transaction: {e}", exc_info=True)
+                            messages.warning(request, f'Transaction updated but gain/loss calculation failed: {str(e)}')
+                            transaction.realized_gain_loss = None
+                            transaction.save()
+                    
+                    # Update portfolio from transactions
+                    TransactionService.update_portfolio_from_transactions(request.user, stock)
+                    
+                    messages.success(request, 'Transaction updated successfully!')
+                    # Redirect to transactions list, optionally filtered by symbol
+                    return redirect('transactions_list_by_symbol', symbol=stock.symbol)
                 
             except ValueError as e:
                 messages.error(request, f'Invalid input: {str(e)}')
+                logger.error(f"ValueError in edit_transaction: {e}")
+                # Stay on edit page to show error
             except Exception as e:
-                logger.error(f"Error updating transaction: {e}")
-                messages.error(request, 'An error occurred while updating the transaction.')
+                logger.error(f"Error updating transaction: {e}", exc_info=True)
+                messages.error(request, f'An error occurred while updating the transaction: {str(e)}')
+                # Stay on edit page to show error
         
         context = {
             'transaction': transaction,
@@ -1648,12 +1691,12 @@ def edit_transaction(request, transaction_id):
         
         return render(request, 'transactions/edit.html', context)
     except (ProgrammingError, OperationalError, DatabaseError) as e:
-        logger.warning(f"Transaction table not found: {e}")
-        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        logger.error(f"Transaction table not found: {e}", exc_info=True)
+        messages.error(request, f'Transaction feature is not available. Please run: python manage.py migrate. Error: {str(e)}')
         return redirect('portfolio')
     except Exception as e:
-        logger.error(f"Error in edit_transaction: {e}")
-        messages.error(request, 'An error occurred.')
+        logger.error(f"Error in edit_transaction: {e}", exc_info=True)
+        messages.error(request, f'An error occurred: {str(e)}')
         return redirect('transactions_list')
 
 
@@ -1897,11 +1940,18 @@ def import_wealthsimple_csv(request):
                                 cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
                                     request.user, stock, shares, 'FIFO'
                                 )
-                                if not error:
-                                    transaction.calculate_realized_gain_loss(cost_basis)
-                                    transaction.save()
+                                if error:
+                                    transaction.realized_gain_loss = None
+                                else:
+                                    if cost_basis is not None:
+                                        transaction.calculate_realized_gain_loss(cost_basis)
+                                    else:
+                                        transaction.realized_gain_loss = None
+                                transaction.save()
                             except Exception as e:
-                                logger.warning(f"Could not calculate cost basis for row {row_num}: {e}")
+                                logger.warning(f"Could not calculate cost basis for row {row_num}: {e}", exc_info=True)
+                                transaction.realized_gain_loss = None
+                                transaction.save()
                                 # Continue anyway - transaction is created
                         
                         imported_count += 1
