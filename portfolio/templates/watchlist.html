@@ -31,7 +31,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Total Stocks</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ watchlist_items|length }}</p>
+                        <p class="text-2xl font-bold text-gray-900" data-stat="total">{{ watchlist_items|length }}</p>
                         <p class="text-xs text-gray-500 mt-1">of 10 limit</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -44,7 +44,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Dividend Stocks</p>
-                        <p class="text-2xl font-bold text-green-600">{{ dividend_stocks_count }}</p>
+                        <p class="text-2xl font-bold text-green-600" data-stat="dividend">{{ dividend_stocks_count }}</p>
                         <p class="text-xs text-gray-500 mt-1">with dividends</p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -94,7 +94,7 @@
                         <option value="price">Sort by Price</option>
                         <option value="sector">Sort by Sector</option>
                     </select>
-                    <button onclick="clearAllWatchlist()" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <button onclick="showClearAllConfirm()" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm font-medium transition">
                         Clear All
                     </button>
                 </div>
@@ -108,7 +108,8 @@
                  data-symbol="{{ item.stock.symbol }}" 
                  data-dividend="{% if item.latest_dividend %}{{ item.latest_dividend.amount }}{% else %}0{% endif %}"
                  data-price="{% if item.latest_price %}{{ item.latest_price.last_price }}{% else %}0{% endif %}"
-                 data-sector="{{ item.stock.sector|default:'' }}">
+                 data-sector="{{ item.stock.sector|default:'' }}"
+                 data-stock-id="{{ item.stock.id }}">
                 <div class="p-6">
                     <!-- Stock Header -->
                     <div class="flex items-center justify-between mb-4">
@@ -202,9 +203,10 @@
                                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-2.5 px-3 rounded-xl font-medium transition transform hover:scale-105 shadow-md">
                                 View Details
                             </a>
-                            <button onclick="toggleWatchlist({{ item.stock.id }})" 
+                            <button onclick="showRemoveConfirm({{ item.stock.id }}, '{{ item.stock.symbol }}')" 
                                     class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white py-2.5 px-4 rounded-xl font-medium transition transform hover:scale-105 shadow-md"
-                                    title="Remove from watchlist">
+                                    title="Remove from watchlist"
+                                    id="removeBtn{{ item.stock.id }}">
                                 ✕
                             </button>
                         </div>
@@ -268,27 +270,212 @@
     </div>
 </div>
 
+<!-- Remove Confirmation Modal -->
+<div id="removeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Remove from Watchlist?</h3>
+                <p class="text-sm text-gray-600" id="removeModalText">Are you sure you want to remove this stock from your watchlist?</p>
+            </div>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="closeRemoveModal()" 
+                    class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                Cancel
+            </button>
+            <button onclick="confirmRemove()" 
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Clear All Confirmation Modal -->
+<div id="clearAllModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Clear All Watchlist?</h3>
+                <p class="text-sm text-gray-600">Are you sure you want to remove all {{ watchlist_items|length }} stock{{ watchlist_items|length|pluralize }} from your watchlist? This action cannot be undone.</p>
+            </div>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="closeClearAllModal()" 
+                    class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                Cancel
+            </button>
+            <button onclick="confirmClearAll()" 
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                Clear All
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-function toggleWatchlist(stockId) {
+let currentRemoveStockId = null;
+
+function showRemoveConfirm(stockId, symbol) {
+    currentRemoveStockId = stockId;
+    document.getElementById('removeModalText').textContent = `Are you sure you want to remove ${symbol} from your watchlist?`;
+    document.getElementById('removeModal').classList.remove('hidden');
+}
+
+function closeRemoveModal() {
+    document.getElementById('removeModal').classList.add('hidden');
+    currentRemoveStockId = null;
+}
+
+function confirmRemove() {
+    if (!currentRemoveStockId) return;
+    
+    const stockId = currentRemoveStockId;
+    closeRemoveModal();
+    
+    // Show loading state
+    const card = document.querySelector(`[data-stock-id="${stockId}"]`);
+    const button = document.getElementById(`removeBtn${stockId}`);
+    
+    if (card) {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+    }
+    if (button) {
+        button.disabled = true;
+        button.textContent = '...';
+    }
+    
     fetch(`/watchlist/toggle/${stockId}/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'removed') {
-            Toast.success(data.message || 'Removed from watchlist');
-            setTimeout(() => location.reload(), 1000);
-        } else if (data.status === 'added') {
-            Toast.success(data.message || 'Added to watchlist');
+            // Remove card with animation
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.transform = 'scale(0.8)';
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.remove();
+                    updateWatchlistStats();
+                    // Check if watchlist is now empty
+                    const remainingCards = document.querySelectorAll('.watchlist-card');
+                    if (remainingCards.length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            } else {
+                location.reload();
+            }
+            showNotification(data.message || 'Removed from watchlist', 'success');
+        } else if (data.status === 'error') {
+            if (card) {
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            }
+            if (button) {
+                button.disabled = false;
+                button.textContent = '✕';
+            }
+            showNotification(data.message || 'Error removing from watchlist', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        Toast.error('Error updating watchlist. Please try again.');
+        if (card) {
+            card.style.opacity = '1';
+            card.style.pointerEvents = 'auto';
+        }
+        if (button) {
+            button.disabled = false;
+            button.textContent = '✕';
+        }
+        showNotification('An error occurred while removing from watchlist.', 'error');
+    });
+}
+
+function showClearAllConfirm() {
+    document.getElementById('clearAllModal').classList.remove('hidden');
+}
+
+function closeClearAllModal() {
+    document.getElementById('clearAllModal').classList.add('hidden');
+}
+
+function confirmClearAll() {
+    closeClearAllModal();
+    
+    const cards = document.querySelectorAll('.watchlist-card');
+    const stockIds = Array.from(cards).map(card => card.dataset.stockId);
+    
+    if (stockIds.length === 0) {
+        showNotification('Watchlist is already empty', 'info');
+        return;
+    }
+    
+    // Show loading state
+    cards.forEach(card => {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+    });
+    
+    // Remove all cards one by one with delay
+    let delay = 0;
+    stockIds.forEach((stockId, index) => {
+        setTimeout(() => {
+            fetch(`/watchlist/toggle/${stockId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const card = document.querySelector(`[data-stock-id="${stockId}"]`);
+                if (card) {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.transform = 'scale(0.8)';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 300);
+                }
+                
+                // If this is the last one, reload or show empty state
+                if (index === stockIds.length - 1) {
+                    setTimeout(() => {
+                        updateWatchlistStats();
+                        const remainingCards = document.querySelectorAll('.watchlist-card');
+                        if (remainingCards.length === 0) {
+                            location.reload();
+                        } else {
+                            showNotification('Watchlist cleared successfully!', 'success');
+                        }
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                console.error(`Error removing stock ${stockId}:`, error);
+            });
+        }, delay);
+        delay += 100; // Stagger the requests
     });
 }
 
@@ -310,12 +497,63 @@ function sortWatchlist() {
         return 0;
     });
     
-    cards.forEach(card => grid.appendChild(card));
+    // Animate the reordering
+    cards.forEach((card, index) => {
+        card.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+            grid.appendChild(card);
+        }, index * 50);
+    });
 }
 
-function clearAllWatchlist() {
-    if (confirm('Are you sure you want to remove all stocks from your watchlist?')) {
-        Toast.warning('This feature is coming soon!');
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    // Simple notification - you can enhance this with a toast library
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.3s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function updateWatchlistStats() {
+    const cards = document.querySelectorAll('.watchlist-card');
+    const totalCount = cards.length;
+    
+    // Update total stocks count
+    const totalCountEl = document.querySelector('[data-stat="total"]');
+    if (totalCountEl) {
+        totalCountEl.textContent = totalCount;
+    }
+    
+    // Update other stats if needed
+    const dividendCount = Array.from(cards).filter(card => parseFloat(card.dataset.dividend) > 0).length;
+    const dividendCountEl = document.querySelector('[data-stat="dividend"]');
+    if (dividendCountEl) {
+        dividendCountEl.textContent = dividendCount;
     }
 }
 </script>
