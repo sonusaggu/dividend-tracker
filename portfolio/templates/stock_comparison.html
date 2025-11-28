@@ -166,14 +166,15 @@
             </div>
             
             <!-- Side-by-Side Comparison Table -->
-            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 overflow-x-auto">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <span class="text-2xl mr-3">📋</span>
+            <div class="bg-white rounded-2xl shadow-xl p-4 md:p-8 border border-gray-100">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+                    <span class="text-xl md:text-2xl mr-3">📋</span>
                     Detailed Comparison
                 </h2>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[800px]">
+                <div class="overflow-x-auto -mx-4 md:mx-0" style="-webkit-overflow-scrolling: touch;">
+                    <div class="inline-block min-w-full align-middle px-4 md:px-0">
+                        <table class="w-full min-w-[800px] md:min-w-0">
                         <thead>
                             <tr class="border-b-2 border-gray-200">
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700">Metric</th>
@@ -381,7 +382,9 @@
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
+                <p class="text-xs text-gray-500 mt-2 text-center md:hidden">← Swipe horizontally to see more columns →</p>
             </div>
         </div>
         {% endif %}

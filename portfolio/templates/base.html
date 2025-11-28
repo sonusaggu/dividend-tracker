@@ -3,7 +3,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    
+    <!-- Mobile Web App Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StockFolio">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
     
     <!-- Primary Meta Tags -->
     <title>{% block title %}StockFolio - Dividend Tracker & Portfolio Manager{% endblock %}</title>
@@ -204,18 +212,24 @@
         /* Touch-friendly buttons - minimum 44x44px tap target */
         @media (max-width: 768px) {
             /* Ensure all buttons are touch-friendly */
-            button, a[role="button"], .btn, input[type="submit"], input[type="button"] {
+            button, a[role="button"], .btn, input[type="submit"], input[type="button"], 
+            .button, [class*="button"], a.button {
                 min-height: 44px;
                 min-width: 44px;
                 padding: 12px 16px;
                 font-size: 16px; /* Prevents iOS zoom on focus */
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+                touch-action: manipulation;
             }
             
             /* Larger tap targets for interactive elements */
-            .toggle-watchlist, .add-to-portfolio, .alert-toggle {
+            .toggle-watchlist, .add-to-portfolio, .alert-toggle, 
+            [onclick], [data-action], .clickable {
                 min-height: 48px;
                 min-width: 48px;
                 padding: 12px;
+                cursor: pointer;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
             }
             
             /* Better spacing for mobile */
@@ -240,27 +254,36 @@
             }
             
             /* Chart container optimizations */
-            .chart-container {
+            .chart-container, .chart-wrapper {
                 position: relative;
                 width: 100%;
                 height: auto;
                 min-height: 250px;
                 max-height: 400px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
             
             canvas {
                 max-width: 100%;
                 height: auto !important;
+                touch-action: pan-x pan-y;
             }
             
             /* Better table scrolling on mobile */
-            .table-container {
+            .table-container, table, .overflow-x-auto {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                display: block;
+                width: 100%;
+            }
+            
+            table {
+                min-width: 600px; /* Ensure table doesn't get too narrow */
             }
             
             /* Improved card spacing */
-            .card, .bg-white.rounded {
+            .card, .bg-white.rounded, .rounded-xl, .rounded-2xl, .rounded-3xl {
                 margin-bottom: 1rem;
                 padding: 1rem;
             }
@@ -270,6 +293,9 @@
                 font-size: 16px; /* Prevents iOS zoom */
                 padding: 12px;
                 min-height: 44px;
+                width: 100%;
+                -webkit-appearance: none;
+                border-radius: 8px;
             }
             
             /* Improved grid layouts */
@@ -278,9 +304,96 @@
             }
             
             /* Better navigation */
-            nav a {
+            nav a, nav button {
                 padding: 12px 16px;
                 min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            /* Safe area insets for iOS */
+            body {
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            /* Better modal/dropdown positioning on mobile */
+            .modal, .dropdown, [class*="dropdown"], [class*="menu"] {
+                max-width: calc(100vw - 2rem);
+                margin: 1rem;
+            }
+            
+            /* Improve image loading on mobile */
+            img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+            }
+            
+            /* Better padding for mobile containers */
+            .container, .max-w-7xl, .max-w-6xl, .max-w-5xl {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            /* Stack flex items on mobile */
+            .flex-row {
+                flex-direction: column;
+            }
+            
+            .md\:flex-row {
+                flex-direction: column;
+            }
+            
+            /* Better spacing between stacked items */
+            .space-x-2 > * + *, .space-x-3 > * + *, .space-x-4 > * + * {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+            
+            .text-5xl {
+                font-size: 2rem;
+            }
+            
+            .text-4xl {
+                font-size: 1.75rem;
+            }
+            
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+            
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+            
+            .px-8 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .py-8 {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+            
+            .p-8 {
+                padding: 1rem;
+            }
+            
+            .p-6 {
+                padding: 0.75rem;
             }
         }
         
@@ -306,15 +419,57 @@
         /* Touch-friendly hover states */
         @media (hover: none) and (pointer: coarse) {
             /* Remove hover effects on touch devices */
-            button:hover, a:hover {
-                transform: none;
+            button:hover, a:hover, [class*="hover:"] {
+                transform: none !important;
             }
             
             /* Add active states for touch */
-            button:active, a:active {
+            button:active, a:active, .clickable:active {
                 opacity: 0.8;
                 transform: scale(0.98);
+                transition: all 0.1s ease;
             }
+        }
+        
+        /* Improve scrolling on mobile */
+        @media (max-width: 768px) {
+            html, body {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            /* Better scrollbar on mobile */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+        }
+        
+        /* Prevent text selection on buttons (mobile UX) */
+        button, .btn, a.button, [role="button"] {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Better focus states for accessibility */
+        button:focus-visible, a:focus-visible, input:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
         }
     </style>
     

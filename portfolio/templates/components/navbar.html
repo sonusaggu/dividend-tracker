@@ -110,9 +110,15 @@
                 {% include 'components/navbar_user_menu.html' %}
 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-button" class="md:hidden text-gray-600 hover:text-blue-600 transition p-2 rounded-lg hover:bg-gray-100">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="mobile-menu-button" 
+                        class="md:hidden text-gray-600 hover:text-blue-600 active:text-blue-700 transition p-3 rounded-lg hover:bg-gray-100 active:bg-gray-200 touch-manipulation"
+                        aria-label="Toggle mobile menu"
+                        aria-expanded="false">
+                    <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
@@ -211,16 +217,24 @@
         const mobileMenu = document.getElementById('mobile-menu');
         
         if (mobileMenuButton && mobileMenu) {
-            mobileMenuButton.addEventListener('click', function() {
+            mobileMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isHidden = mobileMenu.classList.contains('hidden');
                 mobileMenu.classList.toggle('hidden');
                 
-                // Animate menu icon
-                const icon = mobileMenuButton.querySelector('svg');
-                if (icon) {
-                    if (mobileMenu.classList.contains('hidden')) {
-                        icon.style.transform = 'rotate(0deg)';
+                // Update aria-expanded
+                mobileMenuButton.setAttribute('aria-expanded', !isHidden);
+                
+                // Toggle menu icons
+                const menuIcon = document.getElementById('menu-icon');
+                const closeIcon = document.getElementById('close-icon');
+                if (menuIcon && closeIcon) {
+                    if (isHidden) {
+                        menuIcon.classList.add('hidden');
+                        closeIcon.classList.remove('hidden');
                     } else {
-                        icon.style.transform = 'rotate(90deg)';
+                        menuIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
                     }
                 }
             });
