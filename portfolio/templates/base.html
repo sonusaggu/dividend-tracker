@@ -125,23 +125,27 @@
             scroll-behavior: smooth;
         }
         
-        /* Text wrapping and overflow handling */
-        * {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        
-        /* Prevent horizontal overflow */
+        /* Text wrapping and overflow handling - exclude navigation */
         body, html {
             max-width: 100%;
             overflow-x: hidden;
         }
         
-        /* Better text wrapping for long words */
-        p, span, div, h1, h2, h3, h4, h5, h6, a, button {
+        /* Better text wrapping for content areas only */
+        main p, main span, main div, main li, main td, main th,
+        .content p, .content span, .content div {
             word-break: break-word;
             overflow-wrap: break-word;
             hyphens: auto;
+        }
+        
+        /* Navigation should not wrap - desktop only */
+        @media (min-width: 768px) {
+            nav, nav *, nav a, nav button, nav span {
+                word-break: normal;
+                overflow-wrap: normal;
+                white-space: nowrap;
+            }
         }
         
         /* Loading spinner */
@@ -283,17 +287,24 @@
                 overflow-wrap: break-word;
             }
             
-            /* Better text wrapping for all text elements */
-            p, span, div, li, td, th {
+            /* Better text wrapping for content areas on mobile */
+            main p, main span, main div, main li, main td, main th,
+            .content p, .content span, .content div {
                 word-wrap: break-word;
                 overflow-wrap: break-word;
                 hyphens: auto;
             }
             
-            /* Long URLs and text */
-            a, .text-break {
+            /* Long URLs and text in content */
+            main a, .content a, .text-break {
                 word-break: break-all;
                 overflow-wrap: anywhere;
+            }
+            
+            /* Navigation text handling on mobile - allow truncation */
+            nav a span, nav button span {
+                word-break: break-word;
+                overflow-wrap: break-word;
             }
             
             /* Chart container optimizations */
@@ -347,7 +358,7 @@
                 gap: 1rem;
             }
             
-            /* Better navigation */
+            /* Better navigation - mobile only */
             nav {
                 overflow-x: hidden;
                 width: 100%;
@@ -358,9 +369,6 @@
                 min-height: 44px;
                 display: flex;
                 align-items: center;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
             }
             
             /* Navbar container fixes */
@@ -372,14 +380,6 @@
             nav .flex {
                 flex-wrap: nowrap;
                 min-width: 0;
-            }
-            
-            /* Logo text wrapping */
-            nav a[href*="home"] span {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 120px;
             }
             
             /* Safe area insets for iOS */
