@@ -17,21 +17,38 @@ logger = logging.getLogger(__name__)
 
 def get_site_url():
     """Get the site URL from settings or environment"""
+    # First, try to get SITE_DOMAIN from settings (this is the primary source)
+    site_domain = getattr(settings, 'SITE_DOMAIN', None)
+    if site_domain:
+        # Ensure it has protocol
+        if not site_domain.startswith('http://') and not site_domain.startswith('https://'):
+            # Default to https unless explicitly http
+            site_domain = f"https://{site_domain}"
+        return site_domain
+    
     # Try to get from environment (Render.com sets this)
     render_url = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
     if render_url:
         return f"https://{render_url}"
     
-    # Fallback to ALLOWED_HOSTS or default
+    # Fallback to ALLOWED_HOSTS
     allowed_hosts = getattr(settings, 'ALLOWED_HOSTS', [])
     if allowed_hosts and allowed_hosts[0] != '*':
         host = allowed_hosts[0]
-        # Remove port if present
-        host = host.split(':')[0]
-        return f"https://{host}"
+        # Skip localhost and 127.0.0.1
+        if host not in ['localhost', '127.0.0.1']:
+            # Remove port if present
+            host = host.split(':')[0]
+            # Check if it's a domain (not localhost)
+            if '.' in host or host.startswith('dividend.forum'):
+                return f"https://{host}"
     
-    # Default fallback
-    return "https://your-app-name.onrender.com"
+    # Default fallback - use dividend.forum if available
+    if 'dividend.forum' in allowed_hosts:
+        return "https://dividend.forum"
+    
+    # Last resort - should not happen in production
+    return "https://dividend.forum"
 
 
 def clean_text(text):
