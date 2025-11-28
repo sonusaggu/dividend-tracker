@@ -69,6 +69,7 @@ urlpatterns = [
     path('trigger-newsletter/', views.trigger_newsletter, name='trigger_newsletter'),
     path('scrape-status/', views.scrape_status, name='scrape_status'),
     path('delete-alert/<int:alert_id>/', views.delete_dividend_alert, name='delete_dividend_alert'),
+    path('toggle-alert-status/<int:alert_id>/', views.toggle_alert_status, name='toggle_alert_status'),
     path('newsletter/', views.newsletter_subscription, name='newsletter_subscription'),
     # News aggregation routes
     path('news/', views.all_news, name='all_news'),

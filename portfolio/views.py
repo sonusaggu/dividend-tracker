@@ -2748,7 +2748,50 @@ def toggle_dividend_alert(request, symbol):
             )
             messages.success(request, f'Dividend alerts for {stock.symbol} have been enabled.')
     
+    # Check if this is an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'status': 'success',
+            'is_active': existing_alert.is_active if existing_alert else True,
+            'message': f'Dividend alerts for {stock.symbol} have been {"enabled" if (existing_alert and existing_alert.is_active) or not existing_alert else "disabled"}.'
+        })
+    
     return redirect('stock_detail', symbol=symbol)
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_alert_status(request, alert_id):
+    """Toggle alert active status by alert ID - for use from alerts page"""
+    try:
+        alert = get_object_or_404(DividendAlert, id=alert_id, user=request.user)
+        alert.is_active = not alert.is_active
+        alert.save()
+        
+        status = "enabled" if alert.is_active else "disabled"
+        
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'is_active': alert.is_active,
+                'message': f'Alert for {alert.stock.symbol} has been {status}.'
+            })
+        
+        messages.success(request, f'Alert for {alert.stock.symbol} has been {status}.')
+        return redirect('my_alerts')
+        
+    except Exception as e:
+        logger.error(f"Error toggling alert status: {e}")
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An error occurred while updating the alert.'
+            }, status=500)
+        
+        messages.error(request, 'An error occurred while updating the alert.')
+        return redirect('my_alerts')
 
 @login_required
 def my_alerts(request):
