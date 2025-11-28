@@ -651,6 +651,159 @@ def track_sponsored_click(request, content_id):
         return redirect('home')
 
 
+@csrf_exempt
+def health_check(request):
+    """
+    Health check API endpoint for monitoring
+    Returns system health status including database connectivity and key services
+    """
+    from django.db import connection
+    from django.core.cache import cache
+    
+    health_status = {
+        'status': 'healthy',
+        'timestamp': timezone.now().isoformat(),
+        'version': '1.0.0',
+        'checks': {}
+    }
+    
+    overall_healthy = True
+    http_status = 200
+    
+    # Check Database Connectivity
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        health_status['checks']['database'] = {
+            'status': 'healthy',
+            'message': 'Database connection successful'
+        }
+    except Exception as e:
+        health_status['checks']['database'] = {
+            'status': 'unhealthy',
+            'message': f'Database connection failed: {str(e)}'
+        }
+        overall_healthy = False
+        http_status = 503
+    
+    # Check Key Models/Tables
+    try:
+        stock_count = Stock.objects.count()
+        health_status['checks']['stocks_table'] = {
+            'status': 'healthy',
+            'message': f'Stocks table accessible',
+            'count': stock_count
+        }
+    except Exception as e:
+        health_status['checks']['stocks_table'] = {
+            'status': 'unhealthy',
+            'message': f'Stocks table error: {str(e)}'
+        }
+        overall_healthy = False
+        http_status = 503
+    
+    # Check StockPrice table
+    try:
+        price_count = StockPrice.objects.count()
+        latest_price = StockPrice.objects.order_by('-price_date').first()
+        health_status['checks']['stock_prices_table'] = {
+            'status': 'healthy',
+            'message': 'Stock prices table accessible',
+            'count': price_count,
+            'latest_price_date': latest_price.price_date.isoformat() if latest_price else None
+        }
+    except Exception as e:
+        health_status['checks']['stock_prices_table'] = {
+            'status': 'unhealthy',
+            'message': f'Stock prices table error: {str(e)}'
+        }
+        overall_healthy = False
+        http_status = 503
+    
+    # Check Dividends table
+    try:
+        dividend_count = Dividend.objects.count()
+        health_status['checks']['dividends_table'] = {
+            'status': 'healthy',
+            'message': 'Dividends table accessible',
+            'count': dividend_count
+        }
+    except Exception as e:
+        health_status['checks']['dividends_table'] = {
+            'status': 'unhealthy',
+            'message': f'Dividends table error: {str(e)}'
+        }
+        overall_healthy = False
+        http_status = 503
+    
+    # Check Cache (if available)
+    try:
+        test_key = 'health_check_test'
+        cache.set(test_key, 'test_value', 10)
+        cached_value = cache.get(test_key)
+        cache.delete(test_key)
+        health_status['checks']['cache'] = {
+            'status': 'healthy' if cached_value == 'test_value' else 'degraded',
+            'message': 'Cache is operational' if cached_value == 'test_value' else 'Cache may not be working properly'
+        }
+    except Exception as e:
+        health_status['checks']['cache'] = {
+            'status': 'degraded',
+            'message': f'Cache check failed: {str(e)}'
+        }
+        # Cache failure doesn't make the system unhealthy, just degraded
+    
+    # Check User Authentication System
+    try:
+        from django.contrib.auth.models import User
+        user_count = User.objects.count()
+        health_status['checks']['authentication'] = {
+            'status': 'healthy',
+            'message': 'Authentication system accessible',
+            'user_count': user_count
+        }
+    except Exception as e:
+        health_status['checks']['authentication'] = {
+            'status': 'unhealthy',
+            'message': f'Authentication system error: {str(e)}'
+        }
+        overall_healthy = False
+        http_status = 503
+    
+    # Check Recent Data Activity (last 24 hours)
+    try:
+        from datetime import timedelta
+        yesterday = timezone.now() - timedelta(days=1)
+        recent_prices = StockPrice.objects.filter(price_date__gte=yesterday.date()).count()
+        health_status['checks']['recent_activity'] = {
+            'status': 'healthy' if recent_prices > 0 else 'warning',
+            'message': f'Recent price updates: {recent_prices} in last 24 hours',
+            'count': recent_prices
+        }
+    except Exception as e:
+        health_status['checks']['recent_activity'] = {
+            'status': 'degraded',
+            'message': f'Could not check recent activity: {str(e)}'
+        }
+    
+    # Set overall status
+    if not overall_healthy:
+        health_status['status'] = 'unhealthy'
+    elif any(check.get('status') == 'degraded' for check in health_status['checks'].values()):
+        health_status['status'] = 'degraded'
+    
+    # Add summary
+    health_status['summary'] = {
+        'total_checks': len(health_status['checks']),
+        'healthy_checks': sum(1 for check in health_status['checks'].values() if check.get('status') == 'healthy'),
+        'unhealthy_checks': sum(1 for check in health_status['checks'].values() if check.get('status') == 'unhealthy'),
+        'degraded_checks': sum(1 for check in health_status['checks'].values() if check.get('status') == 'degraded')
+    }
+    
+    return JsonResponse(health_status, status=http_status)
+
+
 def stock_search_autocomplete(request):
     """API endpoint for stock search autocomplete"""
     query = request.GET.get('q', '').strip()
