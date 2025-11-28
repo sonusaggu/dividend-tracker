@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Website Analytics - IP & User Details | StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        📊 Website Analytics
+                    </h1>
+                    <p class="text-xl text-gray-600">IP addresses, user details, and website metrics</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <form method="get" class="flex items-center gap-3">
+                        <label class="text-sm text-gray-600">Last</label>
+                        <select name="days" onchange="this.form.submit()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                            <option value="1" {% if days == 1 %}selected{% endif %}>1 day</option>
+                            <option value="7" {% if days == 7 %}selected{% endif %}>7 days</option>
+                            <option value="30" {% if days == 30 %}selected{% endif %}>30 days</option>
+                            <option value="90" {% if days == 90 %}selected{% endif %}>90 days</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Total Visits</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ total_visits|intcomma }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">👥</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Unique IPs</p>
+                        <p class="text-3xl font-bold text-green-600">{{ unique_ips|intcomma }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🌐</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Authenticated Users</p>
+                        <p class="text-3xl font-bold text-purple-600">{{ unique_users|intcomma }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">👤</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Avg Response Time</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ avg_response_time }}ms</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Top IP Addresses -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">🌐 Top IP Addresses</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visits</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for ip in top_ips %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-mono text-gray-900">{{ ip.ip_address }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ ip.visit_count|intcomma }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ ip.user_count|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-4 py-8 text-center text-gray-500">No IP data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Users -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">👤 Top Users</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visits</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPs</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in top_users %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm">
+                                    <div class="font-medium text-gray-900">{{ user.user__username|default:"N/A" }}</div>
+                                    <div class="text-xs text-gray-500">{{ user.user__email|default:"" }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ user.visit_count|intcomma }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ user.unique_ips|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-4 py-8 text-center text-gray-500">No user data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">📋 Recent Activity</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Path</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for activity in recent_activity %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ activity.timestamp|date:"M d, Y H:i" }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                {% if activity.user %}
+                                    <span class="font-medium text-gray-900">{{ activity.user.username }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">Anonymous</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm font-mono text-gray-600">{{ activity.ip_address|default:"N/A" }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ activity.path|truncatechars:40 }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="px-2 py-1 rounded text-xs font-medium {% if activity.method == 'GET' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ activity.method }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="px-2 py-1 rounded text-xs font-medium {% if activity.status_code == 200 %}bg-green-100 text-green-800{% elif activity.status_code >= 400 %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ activity.status_code }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                {% if activity.is_mobile %}
+                                    <span class="px-2 py-1 rounded text-xs bg-purple-100 text-purple-800">📱 Mobile</span>
+                                {% elif activity.is_bot %}
+                                    <span class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800">🤖 Bot</span>
+                                {% else %}
+                                    <span class="px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">💻 Desktop</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">No recent activity</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Device Breakdown</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Mobile:</span>
+                        <span class="font-semibold">{{ mobile_visits|intcomma }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bots:</span>
+                        <span class="font-semibold">{{ bot_visits|intcomma }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Authenticated:</span>
+                        <span class="font-semibold">{{ authenticated_visits|intcomma }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Top Pages</h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for page in top_pages|slice:":10" %}
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 truncate">{{ page.path|truncatechars:30 }}</span>
+                        <span class="font-semibold">{{ page.view_count|intcomma }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No page data</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Sessions</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Unique Sessions:</span>
+                        <span class="font-semibold">{{ unique_sessions|intcomma }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

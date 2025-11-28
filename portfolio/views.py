@@ -4165,3 +4165,84 @@ def export_notes(request):
         logger.warning(f"StockNote table not found: {e}")
         messages.error(request, 'Notes feature is not available yet. Please run migrations: python manage.py migrate')
         return redirect('dashboard')
+
+@login_required
+def website_analytics(request):
+    """View website analytics - IP addresses, user details, and metrics"""
+    # Only allow staff/superusers to view analytics
+    if not request.user.is_staff:
+        messages.error(request, 'You do not have permission to view analytics.')
+        return redirect('dashboard')
+    
+    from datetime import timedelta
+    from django.db.models import Count, Q, Avg
+    from portfolio.models import WebsiteMetric, UserSession
+    
+    # Get date range from query params (default: last 7 days)
+    days = int(request.GET.get('days', 7))
+    start_date = timezone.now() - timedelta(days=days)
+    
+    # Get metrics
+    metrics = WebsiteMetric.objects.filter(timestamp__gte=start_date).select_related('user')
+    
+    # Statistics
+    total_visits = metrics.count()
+    unique_ips = metrics.exclude(ip_address=None).values('ip_address').distinct().count()
+    unique_users = metrics.exclude(user=None).values('user').distinct().count()
+    unique_sessions = metrics.exclude(session_key='').values('session_key').distinct().count()
+    
+    # Device breakdown
+    mobile_visits = metrics.filter(is_mobile=True).count()
+    bot_visits = metrics.filter(is_bot=True).count()
+    authenticated_visits = metrics.filter(is_authenticated=True).count()
+    
+    # Top IPs
+    top_ips = metrics.exclude(ip_address=None).values('ip_address').annotate(
+        visit_count=Count('id'),
+        user_count=Count('user', distinct=True)
+    ).order_by('-visit_count')[:20]
+    
+    # Top users
+    top_users = metrics.exclude(user=None).values('user__username', 'user__email', 'user__id').annotate(
+        visit_count=Count('id'),
+        unique_ips=Count('ip_address', distinct=True)
+    ).order_by('-visit_count')[:20]
+    
+    # Top pages
+    top_pages = metrics.values('path').annotate(
+        view_count=Count('id'),
+        unique_visitors=Count('ip_address', distinct=True)
+    ).order_by('-view_count')[:20]
+    
+    # Recent activity
+    recent_activity = metrics.select_related('user').order_by('-timestamp')[:50]
+    
+    # Average response time
+    avg_response_time = metrics.exclude(response_time_ms=None).aggregate(
+        avg=Avg('response_time_ms')
+    )['avg'] or 0
+    
+    # Country breakdown (if available)
+    country_stats = metrics.exclude(country='').values('country').annotate(
+        visit_count=Count('id')
+    ).order_by('-visit_count')[:20]
+    
+    context = {
+        'total_visits': total_visits,
+        'unique_ips': unique_ips,
+        'unique_users': unique_users,
+        'unique_sessions': unique_sessions,
+        'mobile_visits': mobile_visits,
+        'bot_visits': bot_visits,
+        'authenticated_visits': authenticated_visits,
+        'top_ips': top_ips,
+        'top_users': top_users,
+        'top_pages': top_pages,
+        'recent_activity': recent_activity,
+        'avg_response_time': round(avg_response_time, 2),
+        'country_stats': country_stats,
+        'days': days,
+        'start_date': start_date,
+    }
+    
+    return render(request, 'website_analytics.html', context)

@@ -271,12 +271,30 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(WebsiteMetric)
 class WebsiteMetricAdmin(admin.ModelAdmin):
-    list_display = ('user', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'response_time_ms')
-    list_filter = ('method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp')
-    search_fields = ('path', 'user__username', 'ip_address', 'user_agent')
+    list_display = ('user', 'ip_address', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'response_time_ms')
+    list_filter = ('method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'country')
+    search_fields = ('path', 'user__username', 'user__email', 'ip_address', 'user_agent', 'session_key')
     date_hierarchy = 'timestamp'
-    readonly_fields = ('timestamp', 'response_time_ms')
+    readonly_fields = ('timestamp', 'response_time_ms', 'user', 'session_key', 'ip_address', 'user_agent', 'referrer', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'country')
     list_per_page = 100
+    
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user', 'is_authenticated', 'session_key')
+        }),
+        ('Request Details', {
+            'fields': ('ip_address', 'user_agent', 'referrer', 'country')
+        }),
+        ('Page Information', {
+            'fields': ('path', 'method', 'status_code')
+        }),
+        ('Device & Bot Detection', {
+            'fields': ('is_mobile', 'is_bot')
+        }),
+        ('Performance', {
+            'fields': ('response_time_ms', 'timestamp')
+        }),
+    )
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -285,11 +303,23 @@ class WebsiteMetricAdmin(admin.ModelAdmin):
 
 @admin.register(UserSession)
 class UserSessionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'session_key', 'ip_address', 'started_at', 'last_activity', 'page_views', 'is_active', 'duration_display')
-    list_filter = ('is_active', 'started_at', 'last_activity')
-    search_fields = ('user__username', 'session_key', 'ip_address')
+    list_display = ('user', 'ip_address', 'session_key', 'started_at', 'last_activity', 'page_views', 'is_active', 'duration_display', 'country')
+    list_filter = ('is_active', 'started_at', 'last_activity', 'country')
+    search_fields = ('user__username', 'user__email', 'session_key', 'ip_address', 'user_agent')
     date_hierarchy = 'started_at'
-    readonly_fields = ('started_at', 'last_activity', 'duration_seconds')
+    readonly_fields = ('started_at', 'last_activity', 'duration_seconds', 'user', 'session_key', 'ip_address', 'user_agent', 'referrer', 'country')
+    
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user', 'session_key', 'is_active')
+        }),
+        ('Connection Details', {
+            'fields': ('ip_address', 'user_agent', 'referrer', 'country')
+        }),
+        ('Session Metrics', {
+            'fields': ('started_at', 'last_activity', 'ended_at', 'page_views', 'duration_seconds')
+        }),
+    )
     
     def duration_display(self, obj):
         """Display duration in human-readable format"""
@@ -303,3 +333,7 @@ class UserSessionAdmin(admin.ModelAdmin):
             minutes = (seconds % 3600) // 60
             return f"{hours}h {minutes}m"
     duration_display.short_description = 'Duration'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user')

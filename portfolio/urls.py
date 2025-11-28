@@ -125,5 +125,8 @@ urlpatterns = [
     path('transactions/<str:symbol>/create/', views.create_transaction, name='create_transaction_by_symbol'),
     path('transactions/<str:symbol>/', views.transactions_list, name='transactions_list_by_symbol'),
     path('transactions/', views.transactions_list, name='transactions_list'),
+    
+    # Website Analytics (staff only)
+    path('analytics/', views.website_analytics, name='website_analytics'),
 
 ]
