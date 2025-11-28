@@ -19,7 +19,7 @@
                         <h1 class="text-5xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                             📰 Stock News
                         </h1>
-                        <p class="text-xl text-gray-600">Latest news for your portfolio and watchlist stocks</p>
+                        <p class="text-xl text-gray-600">Latest news prioritizing upcoming dividend stocks, then your portfolio and watchlist</p>
                     </div>
                     <div class="mt-4 md:mt-0 flex gap-3">
                         <a href="{% url 'portfolio' %}" 
@@ -38,6 +38,10 @@
                     <a href="?filter=all" 
                        class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'all' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
                         All News ({{ total_articles }})
+                    </a>
+                    <a href="?filter=upcoming" 
+                       class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'upcoming' %}bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
+                        💰 Upcoming Dividends ({{ upcoming_dividend_stocks_count }} stocks)
                     </a>
                     <a href="?filter=portfolio" 
                        class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md {% if filter_type == 'portfolio' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg{% else %}bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200{% endif %}">
@@ -70,11 +74,26 @@
                     <div class="flex-1">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-2">
+                                <div class="flex items-center gap-3 mb-2 flex-wrap">
                                     <a href="{% url 'stock_detail' news.stock.symbol %}" 
                                        class="inline-flex items-center px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-bold text-sm hover:from-blue-600 hover:to-purple-700 transition">
                                         {{ news.stock.symbol }}
                                     </a>
+                                    {% if news.is_upcoming_dividend %}
+                                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white animate-pulse">
+                                        💰 Upcoming Dividend
+                                    </span>
+                                    {% endif %}
+                                    {% if news.is_portfolio %}
+                                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                        📊 Portfolio
+                                    </span>
+                                    {% endif %}
+                                    {% if news.is_watchlist and not news.is_portfolio %}
+                                    <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                        👀 Watchlist
+                                    </span>
+                                    {% endif %}
                                     {% if news.sentiment %}
                                     <span class="px-3 py-1.5 rounded-full text-xs font-semibold
                                         {% if news.sentiment == 'positive' %}bg-green-100 text-green-800
@@ -173,7 +192,9 @@
             <div class="text-7xl mb-6">📰</div>
             <h3 class="text-3xl font-bold text-gray-900 mb-3">No News Available</h3>
             <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
-                {% if filter_type == 'portfolio' %}
+                {% if filter_type == 'upcoming' %}
+                    No recent news found for stocks with upcoming dividends. News is automatically fetched daily.
+                {% elif filter_type == 'portfolio' %}
                     No recent news found for your portfolio stocks. News is automatically fetched daily.
                 {% elif filter_type == 'watchlist' %}
                     No recent news found for your watchlist stocks. News is automatically fetched daily.

@@ -3233,29 +3233,71 @@ def watchlist_news(request):
 
 @login_required
 def all_news(request):
-    """Display all news for portfolio and watchlist stocks combined"""
+    """Display all news prioritizing upcoming dividend stocks, then portfolio and watchlist"""
     # Filter options - determine which stocks to include
-    filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist
+    filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist, upcoming
     
     # Optimized: Get stock IDs directly instead of full querysets
     cutoff_date = timezone.now() - timedelta(days=7)
+    today = timezone.now().date()
+    thirty_days_later = today + timedelta(days=30)
     
+    # Get stocks with upcoming dividends (next 30 days) - Priority 1
+    upcoming_dividend_stock_ids = set(
+        Dividend.objects.filter(
+            ex_dividend_date__gte=today,
+            ex_dividend_date__lte=thirty_days_later
+        ).values_list('stock_id', flat=True).distinct()
+    )
+    
+    # Get portfolio and watchlist stock IDs
+    portfolio_ids = set(UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct())
+    watchlist_ids = set(Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct())
+    
+    # Determine which stocks to include based on filter
     if filter_type == 'portfolio':
-        stock_ids = UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct()
+        stock_ids = list(portfolio_ids)
+        include_upcoming = True  # Still show upcoming dividends for portfolio stocks
     elif filter_type == 'watchlist':
-        stock_ids = Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True).distinct()
+        stock_ids = list(watchlist_ids)
+        include_upcoming = True  # Still show upcoming dividends for watchlist stocks
+    elif filter_type == 'upcoming':
+        # Only upcoming dividend stocks
+        stock_ids = list(upcoming_dividend_stock_ids)
+        include_upcoming = False  # Don't double-count
     else:  # 'all'
-        # Combine portfolio and watchlist stock IDs efficiently
-        portfolio_ids = set(UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True))
-        watchlist_ids = set(Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True))
-        stock_ids = list(portfolio_ids | watchlist_ids)
+        # Combine all: upcoming dividends, portfolio, and watchlist
+        stock_ids = list(upcoming_dividend_stock_ids | portfolio_ids | watchlist_ids)
+        include_upcoming = False  # Already included in stock_ids
     
     # Get recent news (last 7 days) - optimized query
     if stock_ids:
         news_items = StockNews.objects.filter(
             stock_id__in=stock_ids,
             published_at__gte=cutoff_date
-        ).select_related('stock').order_by('-published_at')
+        ).select_related('stock').annotate(
+            # Annotate with priority: 1 for upcoming dividends, 2 for portfolio, 3 for watchlist
+            is_upcoming_dividend=Case(
+                When(stock_id__in=upcoming_dividend_stock_ids, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+            is_portfolio=Case(
+                When(stock_id__in=portfolio_ids, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+            is_watchlist=Case(
+                When(stock_id__in=watchlist_ids, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+        ).order_by(
+            '-is_upcoming_dividend',  # Upcoming dividends first
+            '-is_portfolio',          # Then portfolio stocks
+            '-is_watchlist',          # Then watchlist stocks
+            '-published_at'           # Then by date
+        )
     else:
         news_items = StockNews.objects.none()
     
@@ -3263,8 +3305,9 @@ def all_news(request):
     total_articles = news_items.count()
     
     # Get counts for context (optimized)
-    portfolio_stocks_count = UserPortfolio.objects.filter(user=request.user).values('stock_id').distinct().count()
-    watchlist_stocks_count = Watchlist.objects.filter(user=request.user).values('stock_id').distinct().count()
+    portfolio_stocks_count = len(portfolio_ids)
+    watchlist_stocks_count = len(watchlist_ids)
+    upcoming_dividend_stocks_count = len(upcoming_dividend_stock_ids)
     
     # Paginate
     paginator = Paginator(news_items, 20)
@@ -3277,6 +3320,7 @@ def all_news(request):
         'total_articles': total_articles,
         'portfolio_stocks_count': portfolio_stocks_count,
         'watchlist_stocks_count': watchlist_stocks_count,
+        'upcoming_dividend_stocks_count': upcoming_dividend_stocks_count,
     }
     
     return render(request, 'all_news.html', context)

@@ -61,15 +61,18 @@ class NewsFetcher:
         # Build more specific search query for better relevance
         # Use quotes for exact matches and add stock-related keywords
         symbol = stock.symbol.upper()
-        company_name = stock.company_name
+        company_name = stock.company_name or ''
         
         # Create multiple search queries for better results
         queries = [
             f'"{symbol}" stock',  # Exact symbol match with "stock"
-            f'"{company_name}" stock',  # Company name with "stock"
             f'{symbol} TSX',  # Symbol with TSX exchange
-            f'"{symbol}" dividend',  # Symbol with dividend keyword
         ]
+        
+        # Add company name query only if available
+        if company_name:
+            queries.insert(1, f'"{company_name}" stock')
+            queries.append(f'"{symbol}" dividend')
         
         all_articles = []
         
@@ -89,14 +92,26 @@ class NewsFetcher:
                 response.raise_for_status()
                 data = response.json()
                 
+                # Check for API errors
+                if data.get('status') == 'error':
+                    error_message = data.get('message', 'Unknown error')
+                    if 'rate limit' in error_message.lower() or '429' in str(response.status_code):
+                        logger.warning(f"NewsAPI rate limit reached for {stock.symbol}")
+                        break  # Stop trying more queries if rate limited
+                    logger.warning(f"NewsAPI error for {stock.symbol}: {error_message}")
+                    continue
+                
                 if data.get('status') == 'ok':
                     for article in data.get('articles', []):
+                        if not article.get('url') or not article.get('title'):
+                            continue
+                            
                         title = article.get('title', '').lower()
                         description = article.get('description', '').lower()
                         content = f"{title} {description}"
                         
                         # Filter for relevance - must mention symbol or company name
-                        if symbol.lower() in content or company_name.lower() in content:
+                        if symbol.lower() in content or (company_name and company_name.lower() in content):
                             # Skip if it's clearly not about this stock
                             if self._is_relevant_article(article, stock):
                                 all_articles.append({
@@ -109,6 +124,12 @@ class NewsFetcher:
                                     'image_url': article.get('urlToImage', ''),
                                     'relevance_score': self._calculate_relevance(article, stock),
                                 })
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    logger.warning(f"NewsAPI rate limit (429) for {stock.symbol}")
+                    break
+                logger.warning(f"NewsAPI HTTP error for '{query}': {e}")
+                continue
             except Exception as e:
                 logger.warning(f"NewsAPI query failed for '{query}': {e}")
                 continue
@@ -131,10 +152,10 @@ class NewsFetcher:
         content = f"{title} {description}"
         
         symbol = stock.symbol.lower()
-        company_name = stock.company_name.lower()
+        company_name = (stock.company_name or '').lower()
         
         # Must contain symbol or company name
-        if symbol not in content and company_name not in content:
+        if symbol not in content and (not company_name or company_name not in content):
             return False
         
         # Exclude common false positives
@@ -192,16 +213,28 @@ class NewsFetcher:
             response.raise_for_status()
             data = response.json()
             
-            if 'feed' in data:
+            # Check for Alpha Vantage API errors
+            if 'Error Message' in data:
+                logger.warning(f"Alpha Vantage error for {stock.symbol}: {data['Error Message']}")
+                return articles
+            if 'Note' in data:
+                logger.warning(f"Alpha Vantage note for {stock.symbol}: {data['Note']}")
+                return articles
+            
+            if 'feed' in data and isinstance(data['feed'], list):
                 for item in data['feed']:
+                    if not item.get('url') or not item.get('title'):
+                        continue
+                    
                     # Check if article mentions this specific ticker
                     tickers = item.get('ticker_sentiment', [])
                     relevant_ticker = False
                     
-                    for ticker_info in tickers:
-                        if ticker_info.get('ticker', '').upper() == stock.symbol.upper():
-                            relevant_ticker = True
-                            break
+                    if isinstance(tickers, list):
+                        for ticker_info in tickers:
+                            if isinstance(ticker_info, dict) and ticker_info.get('ticker', '').upper() == stock.symbol.upper():
+                                relevant_ticker = True
+                                break
                     
                     # Only include if it's about this specific stock
                     if not relevant_ticker:
@@ -239,9 +272,15 @@ class NewsFetcher:
             articles.sort(key=lambda x: x.get('relevance_score', 0), reverse=True)
             return articles[:max_articles]
             
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                logger.warning(f"Alpha Vantage rate limit (429) for {stock.symbol}")
+            else:
+                logger.error(f"Alpha Vantage HTTP error for {stock.symbol}: {e}")
+            return articles
         except Exception as e:
-            logger.error(f"Alpha Vantage error: {e}")
-            raise
+            logger.error(f"Alpha Vantage error for {stock.symbol}: {e}")
+            return articles
     
     def _fetch_generic_news(self, stock, max_articles=10):
         """
@@ -261,12 +300,18 @@ class NewsFetcher:
         if not date_string:
             return timezone.now()
         
+        # Convert to string if not already
+        if not isinstance(date_string, str):
+            date_string = str(date_string)
+        
         # Try different date formats
         formats = [
-            '%Y-%m-%dT%H:%M:%SZ',
-            '%Y-%m-%dT%H:%M:%S%z',
-            '%Y-%m-%d %H:%M:%S',
-            '%Y%m%dT%H%M%S',
+            '%Y-%m-%dT%H:%M:%SZ',  # NewsAPI format: 2024-01-15T12:00:00Z
+            '%Y-%m-%dT%H:%M:%S%z',  # With timezone: 2024-01-15T12:00:00+00:00
+            '%Y-%m-%dT%H:%M:%S',    # Without timezone: 2024-01-15T12:00:00
+            '%Y-%m-%d %H:%M:%S',    # Space separated: 2024-01-15 12:00:00
+            '%Y%m%dT%H%M%S',        # Alpha Vantage format: 20240115T120000
+            '%Y-%m-%d',             # Date only: 2024-01-15
         ]
         
         for fmt in formats:
@@ -315,6 +360,11 @@ class NewsFetcher:
             # Check if article already exists (by URL)
             url = article.get('url', '').strip()
             if not url:
+                continue
+            
+            # Validate URL format
+            if not url.startswith(('http://', 'https://')):
+                logger.warning(f"Invalid URL format: {url}")
                 continue
                 
             existing = StockNews.objects.filter(url=url).first()
