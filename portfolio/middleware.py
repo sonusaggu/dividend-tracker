@@ -97,9 +97,15 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
             session_key = ''
             if hasattr(request, 'session') and request.session:
                 try:
-                    session_key = request.session.session_key or ''
-                except (AttributeError, KeyError):
+                    sk = request.session.session_key
+                    # Ensure it's always a string, never None
+                    session_key = str(sk) if sk is not None else ''
+                except (AttributeError, KeyError, TypeError):
                     session_key = ''
+            
+            # Final safety check - ensure session_key is never None
+            if session_key is None:
+                session_key = ''
             
             # Get request information
             ip_address = self._get_client_ip(request)
@@ -128,22 +134,31 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
             # Import here to avoid circular imports
             from portfolio.models import WebsiteMetric
             
+            # Final safety check - ensure session_key is a string
+            session_key = str(session_key) if session_key is not None else ''
+            
             # Create metric record
-            WebsiteMetric.objects.create(
-                user=user,
-                session_key=session_key,
-                ip_address=ip_address,
-                user_agent=user_agent[:500],  # Limit length
-                referrer=referrer[:500],
-                path=request.path[:500],
-                method=request.method,
-                status_code=response.status_code,
-                response_time_ms=response_time_ms,
-                is_authenticated=user is not None,
-                is_mobile=is_mobile,
-                is_bot=is_bot,
-                country=country,
-            )
+            try:
+                WebsiteMetric.objects.create(
+                    user=user,
+                    session_key=session_key,
+                    ip_address=ip_address,
+                    user_agent=user_agent[:500],  # Limit length
+                    referrer=referrer[:500],
+                    path=request.path[:500],
+                    method=request.method,
+                    status_code=response.status_code,
+                    response_time_ms=response_time_ms,
+                    is_authenticated=user is not None,
+                    is_mobile=is_mobile,
+                    is_bot=is_bot,
+                    country=country,
+                )
+            except Exception as db_error:
+                # If there's still a database error, log it but don't break the request
+                logger.error(f"Database error creating WebsiteMetric: {db_error}")
+                logger.debug(f"session_key value: {repr(session_key)}, type: {type(session_key)}")
+                raise  # Re-raise to be caught by outer try-except
             
             # Update or create user session (only if session_key exists and is not empty)
             if session_key and session_key.strip():
