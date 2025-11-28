@@ -92,7 +92,14 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
             
             # Get user information
             user = None if isinstance(request.user, AnonymousUser) else request.user
-            session_key = request.session.session_key if hasattr(request, 'session') and request.session else ''
+            # Get session key safely - may not exist for all requests
+            # Use empty string instead of None to work with current DB constraint
+            session_key = ''
+            if hasattr(request, 'session') and request.session:
+                try:
+                    session_key = request.session.session_key or ''
+                except (AttributeError, KeyError):
+                    session_key = ''
             
             # Get request information
             ip_address = self._get_client_ip(request)
@@ -138,24 +145,28 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
                 country=country,
             )
             
-            # Update or create user session
-            if session_key:
-                from portfolio.models import UserSession
-                session, created = UserSession.objects.get_or_create(
-                    session_key=session_key,
-                    defaults={
-                        'user': user,
-                        'ip_address': ip_address,
-                        'user_agent': user_agent[:500],
-                        'referrer': referrer[:500],
-                        'country': country,
-                    }
-                )
-                if not created:
-                    # Update existing session
-                    session.last_activity = timezone.now()
-                    session.page_views += 1
-                    session.save(update_fields=['last_activity', 'page_views'])
+            # Update or create user session (only if session_key exists and is not empty)
+            if session_key and session_key.strip():
+                try:
+                    from portfolio.models import UserSession
+                    session, created = UserSession.objects.get_or_create(
+                        session_key=session_key,
+                        defaults={
+                            'user': user,
+                            'ip_address': ip_address,
+                            'user_agent': user_agent[:500],
+                            'referrer': referrer[:500],
+                            'country': country,
+                        }
+                    )
+                    if not created:
+                        # Update existing session
+                        session.last_activity = timezone.now()
+                        session.page_views += 1
+                        session.save(update_fields=['last_activity', 'page_views'])
+                except Exception as e:
+                    # Log but don't break the request
+                    logger.debug(f"Error updating user session: {e}")
             
         except Exception as e:
             # Log error but don't break the request

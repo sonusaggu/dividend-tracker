@@ -1061,7 +1061,7 @@ class WebsiteMetric(models.Model):
     """Track website metrics for analytics"""
     # User information
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='website_metrics', db_index=True)
-    session_key = models.CharField(max_length=40, blank=True, db_index=True)  # Django session key
+    session_key = models.CharField(max_length=40, blank=True, default='', db_index=True)  # Django session key (empty string if no session)
     
     # Request information
     ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
