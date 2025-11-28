@@ -113,11 +113,35 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            -webkit-hyphens: auto;
+            -moz-hyphens: auto;
+            hyphens: auto;
         }
         
         /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
+        }
+        
+        /* Text wrapping and overflow handling */
+        * {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* Prevent horizontal overflow */
+        body, html {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* Better text wrapping for long words */
+        p, span, div, h1, h2, h3, h4, h5, h6, a, button {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
         
         /* Loading spinner */
@@ -239,18 +263,37 @@
             
             /* Responsive text sizes */
             h1 {
-                font-size: 2rem;
+                font-size: 1.75rem;
                 line-height: 1.2;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
             
             h2 {
                 font-size: 1.5rem;
                 line-height: 1.3;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
             
             h3 {
                 font-size: 1.25rem;
                 line-height: 1.4;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            
+            /* Better text wrapping for all text elements */
+            p, span, div, li, td, th {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                hyphens: auto;
+            }
+            
+            /* Long URLs and text */
+            a, .text-break {
+                word-break: break-all;
+                overflow-wrap: anywhere;
             }
             
             /* Chart container optimizations */
@@ -295,6 +338,7 @@
                 min-height: 44px;
                 width: 100%;
                 -webkit-appearance: none;
+                appearance: none;
                 border-radius: 8px;
             }
             
@@ -304,11 +348,38 @@
             }
             
             /* Better navigation */
+            nav {
+                overflow-x: hidden;
+                width: 100%;
+            }
+            
             nav a, nav button {
                 padding: 12px 16px;
                 min-height: 44px;
                 display: flex;
                 align-items: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            /* Navbar container fixes */
+            nav .max-w-7xl {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            nav .flex {
+                flex-wrap: nowrap;
+                min-width: 0;
+            }
+            
+            /* Logo text wrapping */
+            nav a[href*="home"] span {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 120px;
             }
             
             /* Safe area insets for iOS */
@@ -355,45 +426,69 @@
         /* Extra small devices */
         @media (max-width: 480px) {
             h1 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
+                line-height: 1.2;
             }
             
             h2 {
                 font-size: 1.25rem;
+                line-height: 1.3;
+            }
+            
+            h3 {
+                font-size: 1.1rem;
+                line-height: 1.4;
             }
             
             .text-5xl {
-                font-size: 2rem;
-            }
-            
-            .text-4xl {
                 font-size: 1.75rem;
             }
             
-            .text-3xl {
+            .text-4xl {
                 font-size: 1.5rem;
             }
             
-            .text-2xl {
+            .text-3xl {
                 font-size: 1.25rem;
             }
             
+            .text-2xl {
+                font-size: 1.1rem;
+            }
+            
+            .text-xl {
+                font-size: 1rem;
+            }
+            
             .px-8 {
-                padding-left: 1rem;
-                padding-right: 1rem;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
             }
             
             .py-8 {
-                padding-top: 1rem;
-                padding-bottom: 1rem;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
             }
             
             .p-8 {
-                padding: 1rem;
+                padding: 0.75rem;
             }
             
             .p-6 {
-                padding: 0.75rem;
+                padding: 0.5rem;
+            }
+            
+            /* Navbar on extra small */
+            nav {
+                font-size: 0.875rem;
+            }
+            
+            nav .text-xl {
+                font-size: 0.875rem;
+            }
+            
+            nav .text-base {
+                font-size: 0.75rem;
             }
         }
         

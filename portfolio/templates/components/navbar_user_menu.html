@@ -1,13 +1,13 @@
 <!-- User Menu Component -->
-<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2 sm:space-x-4">
     {% if user.is_authenticated %}
     <div class="relative group">
-        <button class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition duration-200 px-3 py-2 rounded-lg hover:bg-gray-50">
-            <span class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md hover:scale-110 transition-transform">
+        <button class="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-blue-600 transition duration-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-50 min-w-0">
+            <span class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-md hover:scale-110 transition-transform flex-shrink-0">
                 {{ user.username|first|upper }}
             </span>
-            <span class="hidden sm:block font-medium">{{ user.username }}</span>
-            <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="hidden sm:block font-medium truncate max-w-[100px] md:max-w-none">{{ user.username }}</span>
+            <svg class="hidden sm:block w-4 h-4 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
         </button>
@@ -15,8 +15,8 @@
             <div class="py-2">
                 <!-- User Info -->
                 <div class="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
-                    <p class="font-semibold text-gray-900">{{ user.username }}</p>
-                    <p class="text-xs text-gray-500">{{ user.email }}</p>
+                    <p class="font-semibold text-gray-900 truncate">{{ user.username }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
                 </div>
                 
                 <!-- Quick Links -->
@@ -94,14 +94,14 @@
         </div>
     </div>
     {% else %}
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-2 sm:space-x-3">
         <a href="{% url 'login' %}" 
-           class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+           class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 text-sm sm:text-base whitespace-nowrap">
             Login
         </a>
         <a href="{% url 'register' %}" 
-           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
-            Sign Up Free
+           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base whitespace-nowrap">
+            Sign Up
         </a>
     </div>
     {% endif %}
