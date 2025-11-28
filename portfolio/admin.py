@@ -3,7 +3,7 @@ from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
     UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
     AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike,
-    StockNote, Transaction
+    StockNote, Transaction, WebsiteMetric, UserSession
 )
 
 
@@ -267,3 +267,39 @@ class TransactionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(WebsiteMetric)
+class WebsiteMetricAdmin(admin.ModelAdmin):
+    list_display = ('user', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'response_time_ms')
+    list_filter = ('method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp')
+    search_fields = ('path', 'user__username', 'ip_address', 'user_agent')
+    date_hierarchy = 'timestamp'
+    readonly_fields = ('timestamp', 'response_time_ms')
+    list_per_page = 100
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'session_key', 'ip_address', 'started_at', 'last_activity', 'page_views', 'is_active', 'duration_display')
+    list_filter = ('is_active', 'started_at', 'last_activity')
+    search_fields = ('user__username', 'session_key', 'ip_address')
+    date_hierarchy = 'started_at'
+    readonly_fields = ('started_at', 'last_activity', 'duration_seconds')
+    
+    def duration_display(self, obj):
+        """Display duration in human-readable format"""
+        seconds = obj.duration_seconds
+        if seconds < 60:
+            return f"{seconds}s"
+        elif seconds < 3600:
+            return f"{seconds // 60}m {seconds % 60}s"
+        else:
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            return f"{hours}h {minutes}m"
+    duration_display.short_description = 'Duration'

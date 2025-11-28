@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
 
 class Stock(models.Model):
     symbol = models.CharField(max_length=10, unique=True, db_index=True)
@@ -1054,3 +1055,131 @@ class StockNote(models.Model):
         if len(self.content) > 150:
             return self.content[:150] + '...'
         return self.content
+
+
+class WebsiteMetric(models.Model):
+    """Track website metrics for analytics"""
+    # User information
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='website_metrics', db_index=True)
+    session_key = models.CharField(max_length=40, blank=True, db_index=True)  # Django session key
+    
+    # Request information
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    user_agent = models.TextField(blank=True)
+    referrer = models.URLField(max_length=500, blank=True)
+    
+    # Page information
+    path = models.CharField(max_length=500, db_index=True)
+    method = models.CharField(max_length=10, default='GET')
+    status_code = models.IntegerField(default=200, db_index=True)
+    
+    # Timing information
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
+    response_time_ms = models.IntegerField(null=True, blank=True)  # Response time in milliseconds
+    
+    # Additional metadata
+    is_authenticated = models.BooleanField(default=False, db_index=True)
+    is_mobile = models.BooleanField(default=False, db_index=True)
+    is_bot = models.BooleanField(default=False, db_index=True)
+    country = models.CharField(max_length=2, blank=True, db_index=True)  # ISO country code
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['path', '-timestamp']),
+            models.Index(fields=['session_key', '-timestamp']),
+            models.Index(fields=['is_authenticated', '-timestamp']),
+            models.Index(fields=['timestamp']),  # For date range queries
+        ]
+        verbose_name = "Website Metric"
+        verbose_name_plural = "Website Metrics"
+    
+    def __str__(self):
+        user_str = self.user.username if self.user else 'Anonymous'
+        return f"{user_str} - {self.path} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+    
+    @classmethod
+    def get_visitor_count(cls, start_date=None, end_date=None):
+        """Get unique visitor count for a date range"""
+        queryset = cls.objects.all()
+        if start_date:
+            queryset = queryset.filter(timestamp__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(timestamp__lte=end_date)
+        
+        # Count unique sessions and authenticated users
+        unique_sessions = queryset.exclude(session_key='').values('session_key').distinct().count()
+        unique_users = queryset.exclude(user=None).values('user').distinct().count()
+        
+        return {
+            'total_visitors': unique_sessions + unique_users,
+            'anonymous_visitors': unique_sessions,
+            'authenticated_visitors': unique_users,
+        }
+    
+    @classmethod
+    def get_page_views(cls, start_date=None, end_date=None):
+        """Get total page views for a date range"""
+        queryset = cls.objects.all()
+        if start_date:
+            queryset = queryset.filter(timestamp__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(timestamp__lte=end_date)
+        return queryset.count()
+    
+    @classmethod
+    def get_top_pages(cls, start_date=None, end_date=None, limit=10):
+        """Get top pages by view count"""
+        queryset = cls.objects.all()
+        if start_date:
+            queryset = queryset.filter(timestamp__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(timestamp__lte=end_date)
+        
+        from django.db.models import Count
+        return queryset.values('path').annotate(
+            view_count=Count('id')
+        ).order_by('-view_count')[:limit]
+
+
+class UserSession(models.Model):
+    """Track user sessions for analytics"""
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sessions', db_index=True)
+    session_key = models.CharField(max_length=40, unique=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    
+    # Session timing
+    started_at = models.DateTimeField(default=timezone.now, db_index=True)
+    last_activity = models.DateTimeField(default=timezone.now, db_index=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    
+    # Session metrics
+    page_views = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True, db_index=True)
+    
+    # Additional info
+    referrer = models.URLField(max_length=500, blank=True)
+    country = models.CharField(max_length=2, blank=True)
+    
+    class Meta:
+        ordering = ['-last_activity']
+        indexes = [
+            models.Index(fields=['user', '-last_activity']),
+            models.Index(fields=['session_key']),
+            models.Index(fields=['is_active', '-last_activity']),
+        ]
+        verbose_name = "User Session"
+        verbose_name_plural = "User Sessions"
+    
+    def __str__(self):
+        user_str = self.user.username if self.user else 'Anonymous'
+        return f"{user_str} - {self.started_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    @property
+    def duration_seconds(self):
+        """Calculate session duration in seconds"""
+        end_time = self.ended_at or timezone.now()
+        return int((end_time - self.started_at).total_seconds())
