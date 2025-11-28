@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render app
-        run: curl -s https://dividend.forum/
+        run: curl -s https://dividend.forum/api/health/
