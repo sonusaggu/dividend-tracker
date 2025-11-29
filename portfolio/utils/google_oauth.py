@@ -167,6 +167,30 @@ def create_or_get_user(google_user_info):
         if last_name and not user.last_name:
             user.last_name = last_name
         user.save()
+        
+        # Mark email as verified for Google OAuth users (Google already verified it)
+        try:
+            from portfolio.models import EmailVerification
+            from django.utils import timezone
+            from django.utils.crypto import get_random_string
+            
+            verification, created = EmailVerification.objects.get_or_create(
+                user=user,
+                defaults={
+                    'token': get_random_string(length=32),
+                    'is_verified': True,
+                    'verified_at': timezone.now(),
+                }
+            )
+            if not created and not verification.is_verified:
+                # Update existing unverified record to verified
+                verification.is_verified = True
+                verification.verified_at = timezone.now()
+                verification.save()
+                logger.info(f"Email verified for existing Google OAuth user: {email}")
+        except Exception as e:
+            logger.warning(f"Could not update EmailVerification for Google user: {e}")
+        
         logger.info(f"Existing user logged in via Google: {email}")
         return user
     except User.DoesNotExist:

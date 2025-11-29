@@ -91,7 +91,8 @@ def login_view(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            # Check if email is verified (only if EmailVerification table exists)
+            # Check if email is verified - REQUIRED for login
+            email_verified = True  # Default to True for graceful degradation
             try:
                 from portfolio.models import EmailVerification
                 from django.db import connection
@@ -125,20 +126,56 @@ def login_view(request):
                 if table_exists:
                     try:
                         verification = EmailVerification.objects.get(user=user)
-                        if not verification.is_verified:
-                            # User has verification record but not verified - allow login but show warning
-                            messages.warning(
+                        email_verified = verification.is_verified
+                        if not email_verified:
+                            # Block login if email is not verified
+                            messages.error(
                                 request,
-                                'Your email address is not yet verified. Please check your inbox for the verification email, or request a new one from your dashboard.'
+                                f'Your email address ({user.email}) is not yet verified. Please check your inbox for the verification email and click the verification link before logging in.'
                             )
-                            logger.info(f"User {user.username} logged in with unverified email")
+                            logger.warning(f"Login blocked for user {user.username} - email not verified")
+                            # Show resend verification option
+                            context = {
+                                'next': request.POST.get('next') or request.GET.get('next'),
+                                'unverified_email': user.email,
+                                'username': username,
+                            }
+                            return render(request, 'login.html', context)
                     except EmailVerification.DoesNotExist:
-                        # If no verification record exists for existing user, don't send email automatically
-                        # Only create record if user explicitly requests verification (via resend_verification_email)
-                        logger.info(f"User {user.username} logged in without EmailVerification record (existing user)")
+                        # If no verification record exists, check if user is old (created before verification was required)
+                        # For new users, require verification. For old users, allow login but create verification record
+                        from django.utils import timezone
+                        from datetime import timedelta
+                        # If user was created more than 7 days ago, consider them legacy and allow login
+                        if user.date_joined < timezone.now() - timedelta(days=7):
+                            logger.info(f"Legacy user {user.username} logged in without EmailVerification record")
+                            email_verified = True
+                        else:
+                            # New user without verification - block login
+                            messages.error(
+                                request,
+                                f'Your email address ({user.email}) is not yet verified. Please check your inbox for the verification email and click the verification link before logging in.'
+                            )
+                            logger.warning(f"Login blocked for new user {user.username} - no verification record")
+                            context = {
+                                'next': request.POST.get('next') or request.GET.get('next'),
+                                'unverified_email': user.email,
+                                'username': username,
+                            }
+                            return render(request, 'login.html', context)
             except Exception as e:
                 # If table doesn't exist or any error, allow login (graceful degradation)
                 logger.debug(f"Email verification check skipped: {e}")
+                email_verified = True
+            
+            # Only login if email is verified
+            if not email_verified:
+                context = {
+                    'next': request.POST.get('next') or request.GET.get('next'),
+                    'unverified_email': user.email,
+                    'username': username,
+                }
+                return render(request, 'login.html', context)
             
             login(request, user)
             
