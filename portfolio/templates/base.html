@@ -131,6 +131,23 @@
             overflow-x: hidden;
         }
         
+        /* Prevent horizontal scrolling on desktop for tables */
+        @media (min-width: 768px) {
+            .overflow-x-auto {
+                overflow-x: visible !important;
+            }
+            
+            table {
+                max-width: 100%;
+                table-layout: fixed;
+            }
+            
+            /* Ensure company name columns don't overflow */
+            td[style*="max-width"] {
+                max-width: 200px !important;
+            }
+        }
+        
         /* Better text wrapping for content areas only */
         main p, main span, main div, main li, main td, main th,
         .content p, .content span, .content div {

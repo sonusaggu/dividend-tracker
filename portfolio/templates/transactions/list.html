@@ -18,30 +18,30 @@
         {% endif %}
         
         <!-- Header -->
-        <div class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Transaction History</h1>
-                    <p class="text-gray-600">Track your buy/sell transactions and cost basis</p>
+        <div class="mb-4 sm:mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div class="mb-3 sm:mb-0">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Transaction History</h1>
+                    <p class="text-sm sm:text-base text-gray-600">Track your buy/sell transactions and cost basis</p>
                 </div>
-                <div class="flex gap-3 flex-wrap">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <a href="{% if symbol %}{% url 'create_transaction_with_symbol' symbol=symbol %}{% else %}{% url 'create_transaction' %}{% endif %}" 
-                       class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm text-sm sm:text-base whitespace-nowrap">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                         Add Transaction
                     </a>
                     <a href="{% url 'import_wealthsimple_csv' %}" 
-                       class="inline-flex items-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm text-sm sm:text-base whitespace-nowrap">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
                         Import CSV
                     </a>
                     <a href="{% url 'export_transactions' %}{% if symbol %}?symbol={{ symbol }}{% endif %}" 
-                       class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition text-sm sm:text-base whitespace-nowrap">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         Export CSV
@@ -80,61 +80,61 @@
 
         <!-- Transactions Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+            <div class="overflow-x-auto md:overflow-x-visible">
+                <table class="w-full divide-y divide-gray-200" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Shares</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fees</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Gain/Loss</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 12%;">Date</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Stock</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Type</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Shares</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Price</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Fees</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Total</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Gain/Loss</th>
+                            <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for transaction in transactions %}
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.transaction_date|date:"M d, Y" }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <a href="{% url 'stock_detail' transaction.stock.symbol %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900" style="width: 12%;">{{ transaction.transaction_date|date:"M d, Y" }}</td>
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                                <a href="{% url 'stock_detail' transaction.stock.symbol %}" class="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm">
                                     {{ transaction.stock.symbol }}
                                 </a>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 rounded-lg text-xs font-medium {% if transaction.transaction_type == 'BUY' %}bg-green-100 text-green-700{% elif transaction.transaction_type == 'SELL' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                                <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-xs font-medium {% if transaction.transaction_type == 'BUY' %}bg-green-100 text-green-700{% elif transaction.transaction_type == 'SELL' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
                                     {{ transaction.get_transaction_type_display }}
                                 </span>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.shares|floatformat:6 }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.price_per_share|floatformat:4 }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${{ transaction.fees|floatformat:2 }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${{ transaction.total_amount|floatformat:2 }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm {% if transaction.realized_gain_loss is not None %}{% if transaction.realized_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}{% else %}text-gray-500{% endif %}">
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{{ transaction.shares|floatformat:6 }}</td>
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">${{ transaction.price_per_share|floatformat:4 }}</td>
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden sm:table-cell">${{ transaction.fees|floatformat:2 }}</td>
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-900">${{ transaction.total_amount|floatformat:2 }}</td>
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm hidden md:table-cell {% if transaction.realized_gain_loss is not None %}{% if transaction.realized_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}{% else %}text-gray-500{% endif %}">
                                 {% if transaction.realized_gain_loss is not None %}
                                     ${{ transaction.realized_gain_loss|floatformat:2|intcomma }}
                                 {% elif transaction.transaction_type == 'SELL' %}
-                                    <span class="text-xs text-gray-400">No buy transactions</span>
+                                    <span class="text-xs text-gray-400">No buy</span>
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
+                            <td class="px-2 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-1 sm:gap-2">
                                     <a href="{% url 'edit_transaction' transaction.id %}" 
-                                       class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition font-medium text-sm"
+                                       class="inline-flex items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition font-medium text-xs sm:text-sm"
                                        title="Edit transaction">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                         </svg>
                                     </a>
                                     <button onclick="showDeleteTransactionConfirm({{ transaction.id }}, '{{ transaction.stock.symbol|escapejs }}')" 
-                                            class="inline-flex items-center justify-center px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 rounded-lg transition font-medium text-sm"
+                                            class="inline-flex items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 rounded-lg transition font-medium text-xs sm:text-sm"
                                             title="Delete transaction">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
                                     </button>

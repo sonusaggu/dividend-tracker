@@ -11,37 +11,37 @@
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Simple Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">All Stocks</h1>
-            <p class="text-gray-600">Browse and search dividend-paying stocks on TSX</p>
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">All Stocks</h1>
+            <p class="text-sm sm:text-base text-gray-600">Browse and search dividend-paying stocks on TSX</p>
         </div>
 
         <!-- Stats Bar -->
-        <div class="grid grid-cols-3 gap-4 mb-6">
-            <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</div>
-                <div class="text-sm text-gray-600">Total Stocks</div>
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+                <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</div>
+                <div class="text-xs sm:text-sm text-gray-600">Total Stocks</div>
             </div>
-            <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold text-gray-900">{{ dividend_stocks_count|intcomma }}</div>
-                <div class="text-sm text-gray-600">Dividend Payers</div>
+            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+                <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ dividend_stocks_count|intcomma }}</div>
+                <div class="text-xs sm:text-sm text-gray-600">Dividend Payers</div>
             </div>
-            <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold text-gray-900">{{ sectors_count|intcomma }}</div>
-                <div class="text-sm text-gray-600">Sectors</div>
+            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+                <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ sectors_count|intcomma }}</div>
+                <div class="text-xs sm:text-sm text-gray-600">Sectors</div>
             </div>
         </div>
 
         <!-- Search and Filters -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <form method="get" class="space-y-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+            <form method="get" class="space-y-3 sm:space-y-4">
                 <!-- Hidden field to preserve sort -->
                 <input type="hidden" name="sort_by" value="{{ sort_by }}">
                 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
                     <!-- Search Input -->
                     <div class="md:col-span-2 relative" id="search-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Search</label>
                         <input 
                             type="text" 
                             id="stock-search-input"
@@ -72,10 +72,10 @@
                     
                     <!-- Sector Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sector</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Sector</label>
                         <select 
                             name="sector" 
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white"
+                            class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base bg-white"
                         >
                             <option value="">All Sectors</option>
                             {% for sector in sectors %}
@@ -86,10 +86,10 @@
                     
                     <!-- Sort -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Sort By</label>
                         <select 
                             name="sort_by" 
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white"
+                            class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base bg-white"
                         >
                             <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
                             <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount</option>
@@ -101,17 +101,17 @@
                 </div>
                 
                 <!-- Action Buttons -->
-                <div class="flex items-center gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <button 
                         type="submit" 
-                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition min-h-[44px]"
+                        class="px-4 py-2 sm:px-6 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm sm:text-base whitespace-nowrap"
                     >
                         Apply Filters
                     </button>
                     {% if search_query or sector_filter or sort_by != 'dividend_date' %}
                     <a 
                         href="{% url 'all_stocks' %}" 
-                        class="px-6 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition min-h-[44px] flex items-center"
+                        class="px-4 py-2 sm:px-6 sm:py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition text-sm sm:text-base whitespace-nowrap flex items-center justify-center"
                     >
                         Clear
                     </a>
@@ -121,7 +121,7 @@
         </div>
 
         <!-- Results Info -->
-        <div class="mb-4 text-sm text-gray-600">
+        <div class="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
             Showing <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span> - 
             <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span> of 
             <span class="font-semibold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> stocks
@@ -129,33 +129,33 @@
 
         <!-- Stocks Table View -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
+            <div class="overflow-x-auto md:overflow-x-visible">
+                <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
-                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Symbol</th>
-                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Company</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Dividend</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Yield</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Ex-Date</th>
-                            <th class="px-4 md:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 15%; min-width: 100px;">Symbol</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider" style="width: 25%; min-width: 120px; max-width: 250px;">Company</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Price</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 9%;">Dividend</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap hidden md:table-cell" style="width: 8%;">Yield</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 15%;">Ex-Date</th>
+                            <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Action</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for item in stocks_with_dividends %}
                         <tr class="hover:bg-blue-50 transition-colors">
                             <!-- Symbol -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center space-x-2">
-                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
-                                        <span class="text-white font-bold text-sm">{{ item.stock.symbol|slice:":1" }}</span>
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap" style="min-width: 100px;">
+                                <div class="flex items-center space-x-1.5 sm:space-x-2">
+                                    <div class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                                        <span class="text-white font-bold text-xs sm:text-sm">{{ item.stock.symbol|slice:":1" }}</span>
                                     </div>
-                                    <div>
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-lg font-bold text-gray-900">{{ item.stock.symbol }}</span>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center space-x-1 sm:space-x-2">
+                                            <span class="text-sm sm:text-base md:text-lg font-bold text-gray-900">{{ item.stock.symbol }}</span>
                                             {% if item.has_dividend %}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200 flex-shrink-0">
                                                 Div
                                             </span>
                                             {% endif %}
@@ -172,48 +172,48 @@
                             </td>
                             
                             <!-- Company Name -->
-                            <td class="px-4 md:px-6 py-4">
-                                <div class="text-sm font-semibold text-gray-900 max-w-xs">{{ item.stock.company_name|truncatewords:8 }}</div>
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4" style="width: 25%; min-width: 120px; max-width: 250px;">
+                                <div class="text-xs sm:text-sm font-semibold text-gray-900" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
                             </td>
                             
                             <!-- Price -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right hidden sm:table-cell">
                                 {% if item.latest_price %}
-                                <div class="text-base font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                                <div class="text-sm sm:text-base font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
                                 {% else %}
-                                <span class="text-sm text-gray-400">—</span>
+                                <span class="text-xs sm:text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
                             
                             <!-- Dividend -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right" style="width: 9%;">
                                 {% if item.latest_dividend %}
-                                <div class="text-base font-bold text-gray-900">${{ item.latest_dividend.amount|floatformat:4 }}</div>
+                                <div class="text-sm sm:text-base font-bold text-gray-900">${{ item.latest_dividend.amount|floatformat:4 }}</div>
                                 {% else %}
-                                <span class="text-sm text-gray-400">—</span>
+                                <span class="text-xs sm:text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
                             
                             <!-- Yield -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right hidden md:table-cell" style="width: 8%;">
                                 {% if item.latest_dividend and item.latest_dividend.yield_percent %}
-                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700 border border-green-200">
+                                <div class="inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-bold bg-green-100 text-green-700 border border-green-200">
                                     {{ item.latest_dividend.yield_percent|floatformat:2 }}%
                                 </div>
                                 {% else %}
-                                <span class="text-sm text-gray-400">—</span>
+                                <span class="text-xs sm:text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
                             
                             <!-- Ex-Date -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right" style="width: 15%;">
                                 {% if item.upcoming_dividend_date %}
                                 <div class="inline-flex flex-col items-end">
-                                    <div class="flex items-center space-x-1.5 mb-1">
-                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center space-x-1 sm:space-x-1.5 mb-0.5 sm:mb-1 whitespace-nowrap">
+                                        <svg class="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
-                                        <span class="text-sm font-bold text-blue-600">{{ item.upcoming_dividend_date|date:"M d, Y" }}</span>
+                                        <span class="text-xs sm:text-sm font-bold text-blue-600">{{ item.upcoming_dividend_date|date:"M d, Y" }}</span>
                                     </div>
                                     {% if item.days_until is not None %}
                                     <div class="text-xs font-medium {% if item.days_until <= 3 %}text-red-600{% elif item.days_until <= 7 %}text-orange-600{% else %}text-green-600{% endif %}">
@@ -222,21 +222,21 @@
                                         {% elif item.days_until < 0 %}
                                             Passed
                                         {% else %}
-                                            {{ item.days_until }} days
+                                            {{ item.days_until }}d
                                         {% endif %}
                                     </div>
                                     {% endif %}
                                 </div>
                                 {% else %}
-                                <span class="text-sm text-gray-400">—</span>
+                                <span class="text-xs sm:text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
                             
                             <!-- Action -->
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-center">
+                            <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
                                 <a 
                                     href="{% url 'stock_detail' item.stock.symbol %}" 
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm min-h-[36px]"
+                                    class="inline-flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition shadow-sm whitespace-nowrap"
                                 >
                                     View
                                 </a>
@@ -272,29 +272,29 @@
 
         <!-- Pagination -->
         {% if page_obj.paginator.num_pages > 1 %}
-        <div class="mt-6 flex items-center justify-between">
-            <div class="text-sm text-gray-600">
+        <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+            <div class="text-xs sm:text-sm text-gray-600">
                 Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2">
                 {% if page_obj.has_previous %}
                 <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     First
                 </a>
                 <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     Previous
                 </a>
                 {% endif %}
                 
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     Next
                 </a>
                 <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     Last
                 </a>
                 {% endif %}

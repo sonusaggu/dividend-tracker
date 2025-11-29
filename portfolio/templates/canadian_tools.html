@@ -9,11 +9,11 @@
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+        <div class="text-center mb-6 sm:mb-8 px-2">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                 Canadian Tax & Investment Tools
             </h1>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p class="text-sm sm:text-base md:text-lg text-gray-600 max-w-3xl mx-auto">
                 Free calculators for Canadian investors: Dividend Tax Credits, Capital Gains, RRSP & TFSA limits
             </p>
         </div>
@@ -31,31 +31,31 @@
 
         <!-- Tool Selection Tabs -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex flex-wrap gap-3 mb-8 border-b-2 border-gray-200 pb-6">
-                <button onclick="showTool('dividend_tax')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white">
-                    Dividend Tax Credit
+            <div class="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8 border-b-2 border-gray-200 pb-4 sm:pb-6">
+                <button onclick="showTool('dividend_tax')" class="tool-tab px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap bg-blue-600 text-white">
+                    Dividend Tax
                 </button>
-                <button onclick="showTool('capital_gains')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    Capital Gains Tax
+                <button onclick="showTool('capital_gains')" class="tool-tab px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Capital Gains
                 </button>
-                <button onclick="showTool('rrsp')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    RRSP Calculator
+                <button onclick="showTool('rrsp')" class="tool-tab px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    RRSP
                 </button>
-                <button onclick="showTool('tfsa')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    TFSA Calculator
+                <button onclick="showTool('tfsa')" class="tool-tab px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    TFSA
                 </button>
                 {% if user.is_authenticated %}
-                <button onclick="showTool('portfolio_tax')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    Portfolio Tax Summary
+                <button onclick="showTool('portfolio_tax')" class="tool-tab px-3 py-2 sm:px-6 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Portfolio Tax
                 </button>
                 {% endif %}
             </div>
 
             <!-- Dividend Tax Credit Calculator -->
             <div id="dividend_tax" class="tool-section">
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Dividend Tax Credit Calculator</h2>
-                    <p class="text-lg text-gray-600 leading-relaxed">
+                <div class="mb-6 sm:mb-8">
+                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Dividend Tax Credit Calculator</h2>
+                    <p class="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
                         Calculate your dividend tax credit for eligible Canadian dividends. Most TSX dividends qualify for the enhanced dividend tax credit.
                     </p>
                 </div>
@@ -66,7 +66,7 @@
                     
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                                 Annual Dividend Amount (CAD)
                             </label>
                             <input type="number" name="dividend_amount" step="0.01" min="0" required
@@ -90,7 +90,7 @@
                             <label class="flex items-center space-x-3">
                                 <input type="checkbox" name="is_eligible" value="true" checked
                                     class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <span class="text-sm font-medium text-gray-700">Eligible Dividend (most TSX dividends)</span>
+                                <span class="text-xs sm:text-sm font-medium text-gray-700">Eligible Dividend (most TSX dividends)</span>
                             </label>
                         </div>
                     </div>

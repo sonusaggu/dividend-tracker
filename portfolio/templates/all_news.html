@@ -11,41 +11,41 @@
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Header Section -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Stock News</h1>
-                    <p class="text-gray-600">Latest news prioritizing upcoming dividend stocks, then your portfolio and watchlist</p>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-6">
+                <div class="mb-4 md:mb-0">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Stock News</h1>
+                    <p class="text-sm sm:text-base text-gray-600">Latest news prioritizing upcoming dividend stocks, then your portfolio and watchlist</p>
                 </div>
-                <div class="mt-4 md:mt-0 flex gap-3">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <a href="{% url 'portfolio' %}" 
-                       class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm text-sm sm:text-base whitespace-nowrap">
                         My Portfolio
                     </a>
                     <a href="{% url 'watchlist' %}" 
-                       class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
+                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition text-sm sm:text-base whitespace-nowrap">
                         My Watchlist
                     </a>
                 </div>
             </div>
                 
             <!-- Filter Buttons -->
-            <div class="flex flex-wrap gap-3">
+            <div class="flex flex-wrap gap-2 sm:gap-3">
                 <a href="?filter=all" 
-                   class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                    All News ({{ total_articles }})
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    All ({{ total_articles }})
                 </a>
                 <a href="?filter=upcoming" 
-                   class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'upcoming' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                    Upcoming Dividends ({{ upcoming_dividend_stocks_count }} stocks)
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'upcoming' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Upcoming ({{ upcoming_dividend_stocks_count }})
                 </a>
                 <a href="?filter=portfolio" 
-                   class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'portfolio' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                    Portfolio ({{ portfolio_stocks_count }} stocks)
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'portfolio' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Portfolio ({{ portfolio_stocks_count }})
                 </a>
                 <a href="?filter=watchlist" 
-                   class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'watchlist' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                    Watchlist ({{ watchlist_stocks_count }} stocks)
+                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'watchlist' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Watchlist ({{ watchlist_stocks_count }})
                 </a>
             </div>
         </div>
@@ -98,7 +98,7 @@
                                     </span>
                                     {% endif %}
                                 </div>
-                                <h3 class="text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition">
+                                <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition break-words">
                                     <a href="{{ news.url }}" target="_blank" rel="noopener noreferrer">
                                         {{ news.title }}
                                     </a>
@@ -110,33 +110,33 @@
                         <p class="text-gray-600 mb-4 line-clamp-3">{{ news.description }}</p>
                         {% endif %}
                         
-                        <div class="flex items-center justify-between flex-wrap gap-3">
-                            <div class="flex items-center gap-4 text-sm text-gray-500">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                                 {% if news.source %}
-                                <span class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="flex items-center whitespace-nowrap">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
                                     </svg>
-                                    {{ news.source }}
+                                    <span class="truncate max-w-[120px] sm:max-w-none">{{ news.source }}</span>
                                 </span>
                                 {% endif %}
                                 {% if news.author %}
-                                <span class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="flex items-center whitespace-nowrap">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
-                                    {{ news.author }}
+                                    <span class="truncate max-w-[100px] sm:max-w-none">{{ news.author }}</span>
                                 </span>
                                 {% endif %}
-                                <span class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="flex items-center whitespace-nowrap">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     {{ news.published_at|timesince }} ago
                                 </span>
                             </div>
                             <a href="{{ news.url }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                               class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm text-sm whitespace-nowrap">
                                 Read More
                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>

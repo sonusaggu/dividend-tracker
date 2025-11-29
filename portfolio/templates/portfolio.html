@@ -201,11 +201,11 @@
                 </div>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="w-full" id="portfolioTable">
+            <div class="overflow-x-auto md:overflow-x-visible">
+                <table class="w-full" id="portfolioTable" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style="width: 18%; min-width: 120px;">Stock</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Shares</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Avg Cost</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
@@ -224,18 +224,18 @@
                             data-value="{{ item.current_value }}"
                             data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
                             data-company="{{ item.item.stock.company_name }}">
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td class="px-4 py-4" style="width: 18%; min-width: 120px;">
                                 <div class="flex items-center space-x-3">
                                     <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                                         <span class="text-white font-bold text-sm">{{ item.item.stock.symbol|slice:":1" }}</span>
                                     </div>
-                                    <div>
-                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition">
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
                                             {{ item.item.stock.symbol }}
                                         </a>
-                                        <div class="text-xs text-gray-500">{{ item.item.stock.company_name|truncatewords:3 }}</div>
+                                        <div class="text-xs text-gray-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ item.item.stock.company_name }}</div>
                                         {% if item.item.stock.sector %}
-                                        <div class="text-xs text-blue-600 mt-0.5">{{ item.item.stock.sector }}</div>
+                                        <div class="text-xs text-blue-600 mt-0.5" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto;">{{ item.item.stock.sector }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -404,7 +404,7 @@
                                     </div>
                                     <div class="flex items-center justify-between text-xs">
                                         <span class="text-gray-600">Yield: {{ item.latest_dividend.yield_percent|floatformat:2 }}%</span>
-                                        <span class="text-gray-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d" }}</span>
+                                        <span class="text-gray-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}</span>
                                     </div>
                                 </div>
                                 {% endif %}
