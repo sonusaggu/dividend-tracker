@@ -21,6 +21,29 @@
         <div class="max-w-md mx-auto">
             <!-- Login Card -->
             <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100">
+                <!-- Google OAuth Button -->
+                <div class="mb-6">
+                    <a href="{% url 'google_oauth_login' %}" class="w-full flex items-center justify-center px-4 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 transform hover:scale-[1.02] shadow-sm">
+                        <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86-3.71 1.48-4.58 3.29-2.91.18-5.45 1.05-7.28 2.66C4.39 20.52 7.78 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.18H2.18C1.43 8.48 1 9.98 1 11.5s.43 3.02 1.18 4.32l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.78 1 4.39 3.48 2.18 7.18l3.66 2.84c1.07-3.17 4.05-5.64 8.16-5.64z"/>
+                        </svg>
+                        Continue with Google
+                    </a>
+                </div>
+
+                <!-- Divider -->
+                <div class="relative mb-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-white text-gray-500 font-medium">Or sign in with email</span>
+                    </div>
+                </div>
+
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
                     {% if request.GET.next %}

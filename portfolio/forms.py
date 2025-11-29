@@ -13,10 +13,14 @@ class RegistrationForm(UserCreationForm):
         required=True,
         help_text='Required. Use Gmail, Outlook, Hotmail, Yahoo, iCloud, or other supported providers.'
     )
+    username = forms.CharField(
+        required=False,  # Make username optional - will auto-generate
+        help_text='Optional. If left blank, we\'ll create one from your email.'
+    )
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['email', 'password1', 'password2']  # Username removed from required fields
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,6 +29,10 @@ class RegistrationForm(UserCreationForm):
             field.widget.attrs.update({
                 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary'
             })
+        # Make username field optional in UI
+        if 'username' in self.fields:
+            self.fields['username'].required = False
+            self.fields['username'].widget.attrs['placeholder'] = 'Optional - auto-generated if blank'
     
     def clean_email(self):
         email = self.cleaned_data.get('email', '').lower().strip()
@@ -48,22 +56,63 @@ class RegistrationForm(UserCreationForm):
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()
         
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
-            raise forms.ValidationError('This username is already taken. Please choose another.')
+        # If username is provided, validate it
+        if username:
+            # Check if username already exists
+            if User.objects.filter(username=username).exists():
+                raise forms.ValidationError('This username is already taken. Please choose another.')
+            
+            # Validate username format
+            if len(username) < 3:
+                raise forms.ValidationError('Username must be at least 3 characters long.')
+            
+            if len(username) > 30:
+                raise forms.ValidationError('Username must be 30 characters or less.')
+            
+            # Check for invalid characters
+            if not username.replace('_', '').replace('-', '').isalnum():
+                raise forms.ValidationError('Username can only contain letters, numbers, hyphens, and underscores.')
         
-        # Validate username format
-        if len(username) < 3:
-            raise forms.ValidationError('Username must be at least 3 characters long.')
-        
-        if len(username) > 30:
-            raise forms.ValidationError('Username must be 30 characters or less.')
-        
-        # Check for invalid characters
-        if not username.replace('_', '').replace('-', '').isalnum():
-            raise forms.ValidationError('Username can only contain letters, numbers, hyphens, and underscores.')
-        
+        # If username is empty, we'll generate it in save()
         return username
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        email = self.cleaned_data['email']
+        username = self.cleaned_data.get('username', '').strip()
+        
+        # Auto-generate username from email if not provided
+        if not username:
+            # Extract username part from email (before @)
+            base_username = email.split('@')[0]
+            # Clean it up (remove dots, keep only alphanumeric and _)
+            base_username = ''.join(c for c in base_username if c.isalnum() or c == '_')
+            # Ensure it's at least 3 characters
+            if len(base_username) < 3:
+                base_username = base_username + '123'
+            # Truncate to 30 characters
+            base_username = base_username[:27]  # Leave room for numbers
+            
+            # Ensure uniqueness
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                suffix = str(counter)
+                max_len = 30 - len(suffix)
+                username = base_username[:max_len] + suffix
+                counter += 1
+                if counter > 999:  # Safety limit
+                    import random
+                    username = base_username[:20] + str(random.randint(1000, 9999))
+                    break
+        
+        user.username = username
+        user.email = email
+        
+        if commit:
+            user.save()
+        
+        return user
 
 
 class ContactForm(forms.Form):

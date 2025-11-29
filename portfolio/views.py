@@ -190,6 +190,7 @@ def register_view(request):
             try:
                 # Email validation is now handled in the form's clean_email method
                 # Additional checks are done there (format, domain, disposable, etc.)
+                # Username is auto-generated if not provided
                 user = form.save()
                 
                 # Create email verification token
@@ -274,6 +275,255 @@ def logout_view(request):
     """User logout view"""
     logout(request)
     return redirect('home')
+
+
+def demo_mode(request):
+    """Demo mode - let users explore without registering"""
+    # Create demo context with sample data
+    from portfolio.models import Stock, StockPrice, Dividend
+    from django.db.models import Q
+    
+    # Get some sample stocks for demo
+    demo_stocks = Stock.objects.filter(
+        Q(symbol__in=['RY', 'TD', 'BNS', 'ENB', 'TRP', 'CM']) |
+        Q(tsx60_member=True)
+    )[:6].select_related()
+    
+    # Get prices for demo stocks
+    demo_data = []
+    for stock in demo_stocks:
+        latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
+        latest_dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
+        
+        demo_data.append({
+            'stock': stock,
+            'price': latest_price.last_price if latest_price else None,
+            'dividend': latest_dividend.amount if latest_dividend else None,
+            'yield': latest_dividend.yield_percent if latest_dividend else None,
+        })
+    
+    # Sample portfolio value for demo
+    demo_portfolio_value = 125000.00
+    demo_annual_dividends = 4500.00
+    demo_monthly_dividends = demo_annual_dividends / 12
+    
+    context = {
+        'demo_stocks': demo_data,
+        'demo_portfolio_value': demo_portfolio_value,
+        'demo_annual_dividends': demo_annual_dividends,
+        'demo_monthly_dividends': demo_monthly_dividends,
+        'is_demo': True,
+    }
+    
+    return render(request, 'demo_mode.html', context)
+
+
+def google_oauth_login(request):
+    """Initiate Google OAuth login (works for both registration and login)"""
+    from portfolio.utils.google_oauth import get_google_oauth_url
+    import os
+    from decouple import config
+    
+    # Build redirect URI - ALWAYS use Render hostname in production (even if custom domain is used)
+    render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    redirect_uri = None
+    
+    # Priority: 1. Explicit env var, 2. Render hostname (ALWAYS in production), 3. Request URI (localhost only)
+    explicit_redirect = config('GOOGLE_OAUTH_REDIRECT_URI', default='')
+    if explicit_redirect:
+        redirect_uri = explicit_redirect
+        logger.info(f"Using explicit GOOGLE_OAUTH_REDIRECT_URI: {redirect_uri}")
+    elif render_hostname:
+        # ALWAYS use Render hostname in production, even if request comes from custom domain
+        redirect_uri = f"https://{render_hostname}/auth/google/callback/"
+        logger.info(f"✅ Using Render hostname for OAuth (ignoring custom domain): {redirect_uri}")
+        logger.info(f"   Request came from: {request.get_host()}, but using Render hostname for OAuth")
+    else:
+        # Only use request URI for localhost development
+        redirect_uri = request.build_absolute_uri('/auth/google/callback/')
+        logger.info(f"Using request URI for redirect (localhost): {redirect_uri}")
+    
+    # Log for debugging
+    logger.info(f"🔍 OAuth Debug Info:")
+    logger.info(f"   - RENDER_EXTERNAL_HOSTNAME: {render_hostname}")
+    logger.info(f"   - Request host: {request.get_host()}")
+    logger.info(f"   - Request scheme: {request.scheme}")
+    logger.info(f"   - Request port: {request.get_port()}")
+    logger.info(f"   - Final redirect URI: {redirect_uri}")
+    
+    # Get Google OAuth URL
+    auth_url = get_google_oauth_url(request, redirect_uri)
+    
+    if not auth_url:
+        messages.error(request, 'Google OAuth is not configured. Please contact support.')
+        # Redirect to login if user is trying to login, otherwise to register
+        if request.user.is_authenticated:
+            return redirect('dashboard')
+        return redirect('login')
+    
+    # Store redirect_uri in session for callback
+    request.session['google_oauth_redirect_uri'] = redirect_uri
+    
+    # Store where user came from (login or register) for better UX
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'register' in referer:
+        request.session['oauth_source'] = 'register'
+    else:
+        request.session['oauth_source'] = 'login'
+    
+    # Redirect to Google
+    return redirect(auth_url)
+
+
+def google_oauth_callback(request):
+    """Handle Google OAuth callback"""
+    from portfolio.utils.google_oauth import (
+        exchange_code_for_token,
+        get_user_info,
+        create_or_get_user
+    )
+    from django.contrib.auth import login as django_login
+    
+    # Get authorization code from query parameters
+    code = request.GET.get('code')
+    error = request.GET.get('error')
+    
+    if error:
+        logger.error(f"Google OAuth error: {error}")
+        messages.error(request, 'Google authentication was cancelled or failed.')
+        # Redirect based on where they came from
+        oauth_source = request.session.get('oauth_source', 'register')
+        return redirect('register' if oauth_source == 'register' else 'login')
+    
+    if not code:
+        messages.error(request, 'No authorization code received from Google.')
+        # Redirect based on where they came from
+        oauth_source = request.session.get('oauth_source', 'register')
+        return redirect('register' if oauth_source == 'register' else 'login')
+    
+    # Get redirect URI from session (must match the one used in auth URL)
+    redirect_uri = request.session.get('google_oauth_redirect_uri')
+    if not redirect_uri:
+        # Fallback to building from request - ALWAYS use Render hostname in production
+        import os
+        from decouple import config
+        render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+        explicit_redirect = config('GOOGLE_OAUTH_REDIRECT_URI', default='')
+        
+        if explicit_redirect:
+            redirect_uri = explicit_redirect
+        elif render_hostname:
+            # ALWAYS use Render hostname, even if request came from custom domain
+            redirect_uri = f"https://{render_hostname}/auth/google/callback/"
+            logger.info(f"Callback: Using Render hostname (ignoring custom domain): {redirect_uri}")
+        else:
+            redirect_uri = request.build_absolute_uri('/auth/google/callback/')
+    
+    # Clean up session
+    if 'google_oauth_redirect_uri' in request.session:
+        del request.session['google_oauth_redirect_uri']
+    
+    # Exchange code for access token
+    token_response = exchange_code_for_token(code, redirect_uri)
+    
+    if not token_response or 'access_token' not in token_response:
+        logger.error("Failed to exchange code for token")
+        messages.error(request, 'Failed to authenticate with Google. Please try again.')
+        oauth_source = request.session.get('oauth_source', 'register')
+        return redirect('register' if oauth_source == 'register' else 'login')
+    
+    access_token = token_response['access_token']
+    
+    # Get user info from Google
+    user_info = get_user_info(access_token)
+    
+    if not user_info:
+        logger.error("Failed to get user info from Google")
+        messages.error(request, 'Failed to get user information from Google. Please try again.')
+        oauth_source = request.session.get('oauth_source', 'register')
+        return redirect('register' if oauth_source == 'register' else 'login')
+    
+    # Validate email domain (same as registration form)
+    email = user_info.get('email', '').lower().strip()
+    if email:
+        from portfolio.utils.email_validator import validate_email_domain
+        is_valid, error = validate_email_domain(email)
+        if not is_valid:
+            messages.error(request, f'Email validation failed: {error}')
+            oauth_source = request.session.get('oauth_source', 'register')
+            return redirect('register' if oauth_source == 'register' else 'login')
+    
+    # Check if this is a new user or existing user BEFORE creating/getting
+    from django.contrib.auth.models import User
+    is_new_user = not User.objects.filter(email=email).exists()
+    
+    # Create or get user
+    user = create_or_get_user(user_info)
+    
+    if not user:
+        messages.error(request, 'Failed to create or retrieve user account.')
+        # Redirect based on where they came from
+        oauth_source = request.session.get('oauth_source', 'register')
+        return redirect('register' if oauth_source == 'register' else 'login')
+    
+    # Log the user in
+    django_login(request, user)
+    
+    # Success message - different for new vs existing users
+    oauth_source = request.session.get('oauth_source', 'login')  # Default to login
+    if is_new_user:
+        messages.success(request, f'🎉 Welcome to StockFolio! Your account has been created and you\'re logged in as {user.email}')
+    else:
+        messages.success(request, f'Welcome back! You\'ve been logged in as {user.email}')
+    
+    # Clean up session
+    if 'oauth_source' in request.session:
+        del request.session['oauth_source']
+    
+    # Redirect to dashboard
+    return redirect('dashboard')
+
+
+def google_oauth_debug(request):
+    """Debug view to show current OAuth configuration"""
+    import os
+    from decouple import config
+    
+    render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    explicit_redirect = config('GOOGLE_OAUTH_REDIRECT_URI', default='')
+    client_id = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+    has_client_secret = bool(config('GOOGLE_OAUTH_CLIENT_SECRET', default=''))
+    
+    # Determine what redirect URI would be used (same logic as google_oauth_login)
+    if explicit_redirect:
+        redirect_uri = explicit_redirect
+        source = "GOOGLE_OAUTH_REDIRECT_URI env var"
+    elif render_hostname:
+        # ALWAYS use Render hostname in production, even if request comes from custom domain
+        redirect_uri = f"https://{render_hostname}/auth/google/callback/"
+        source = f"RENDER_EXTERNAL_HOSTNAME (ignoring custom domain: {request.get_host()})"
+    else:
+        redirect_uri = request.build_absolute_uri('/auth/google/callback/')
+        source = "Request URI (fallback - localhost only)"
+    
+    # Check if custom domain is being used
+    request_host = request.get_host()
+    using_custom_domain = render_hostname and request_host != render_hostname and 'onrender.com' not in request_host
+    
+    context = {
+        'client_id_configured': bool(client_id),
+        'client_secret_configured': has_client_secret,
+        'redirect_uri': redirect_uri,
+        'redirect_uri_source': source,
+        'render_hostname': render_hostname,
+        'request_host': request_host,
+        'request_scheme': request.scheme,
+        'explicit_redirect': explicit_redirect,
+        'using_custom_domain': using_custom_domain,
+        'should_use_render_hostname': bool(render_hostname),
+    }
+    
+    return render(request, 'google_oauth_debug.html', context)
 
 
 def verify_email(request, token):

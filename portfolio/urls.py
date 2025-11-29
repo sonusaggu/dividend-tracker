@@ -13,6 +13,10 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
+    path('demo/', views.demo_mode, name='demo_mode'),
+    path('auth/google/', views.google_oauth_login, name='google_oauth_login'),
+    path('auth/google/callback/', views.google_oauth_callback, name='google_oauth_callback'),
+    path('auth/google/debug/', views.google_oauth_debug, name='google_oauth_debug'),
     path('logout/', views.logout_view, name='logout'),
     
     # Password reset URLs

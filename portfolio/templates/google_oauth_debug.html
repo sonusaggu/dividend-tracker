@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Google OAuth Debug - StockFolio{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Google OAuth Configuration Debug</h1>
+            
+            <div class="space-y-6">
+                <!-- Configuration Status -->
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Configuration Status</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Client ID:</span>
+                            <span class="{% if client_id_configured %}text-green-600 font-semibold{% else %}text-red-600 font-semibold{% endif %}">
+                                {% if client_id_configured %}✓ Configured{% else %}✗ Not Configured{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Client Secret:</span>
+                            <span class="{% if client_secret_configured %}text-green-600 font-semibold{% else %}text-red-600 font-semibold{% endif %}">
+                                {% if client_secret_configured %}✓ Configured{% else %}✗ Not Configured{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Redirect URI Information -->
+                <div class="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Redirect URI (Current)</h2>
+                    {% if using_custom_domain and should_use_render_hostname %}
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                        <p class="text-sm text-yellow-800">
+                            <strong>⚠️ Custom Domain Detected:</strong> You're accessing via <code>{{ request_host }}</code>, 
+                            but OAuth will use Render hostname <code>{{ render_hostname }}</code> (Google OAuth doesn't support custom domains).
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div class="bg-white rounded-lg p-4 border-2 border-blue-300">
+                        <code class="text-lg font-mono text-blue-800 break-all">{{ redirect_uri }}</code>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3">
+                        <strong>Source:</strong> {{ redirect_uri_source }}
+                    </p>
+                    {% if using_custom_domain and should_use_render_hostname %}
+                    <p class="text-xs text-blue-700 mt-2">
+                        ✅ This is correct! The system automatically uses Render hostname for OAuth, even when accessed via custom domain.
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Environment Variables -->
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Environment Variables</h2>
+                    <div class="space-y-2 text-sm">
+                        <div>
+                            <strong>RENDER_EXTERNAL_HOSTNAME:</strong>
+                            <code class="ml-2 text-gray-700">{{ render_hostname|default:"Not set" }}</code>
+                        </div>
+                        <div>
+                            <strong>GOOGLE_OAUTH_REDIRECT_URI:</strong>
+                            <code class="ml-2 text-gray-700">{{ explicit_redirect|default:"Not set" }}</code>
+                        </div>
+                        <div>
+                            <strong>Request Host:</strong>
+                            <code class="ml-2 text-gray-700">{{ request_host }}</code>
+                        </div>
+                        <div>
+                            <strong>Request Scheme:</strong>
+                            <code class="ml-2 text-gray-700">{{ request_scheme }}</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Instructions -->
+                <div class="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">⚠️ Fix Redirect URI Mismatch</h2>
+                    <div class="space-y-4 text-sm text-gray-700">
+                        <p><strong>Step 1:</strong> Copy the redirect URI shown above:</p>
+                        <div class="bg-white rounded p-3 border border-yellow-300">
+                            <code class="text-blue-800 font-mono break-all">{{ redirect_uri }}</code>
+                        </div>
+                        
+                        <p><strong>Step 2:</strong> Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-600 underline">Google Cloud Console → Credentials</a></p>
+                        
+                        <p><strong>Step 3:</strong> Click on your OAuth 2.0 Client ID</p>
+                        
+                        <p><strong>Step 4:</strong> In "Authorized redirect URIs", add or update:</p>
+                        <div class="bg-white rounded p-3 border border-yellow-300">
+                            <code class="text-blue-800 font-mono break-all">{{ redirect_uri }}</code>
+                        </div>
+                        
+                        <p><strong>Step 5:</strong> Click "Save"</p>
+                        
+                        <p><strong>Step 6:</strong> Try logging in again</p>
+                    </div>
+                </div>
+                
+                <!-- Alternative: Set Explicit Redirect URI -->
+                <div class="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">💡 Alternative: Set Explicit Redirect URI</h2>
+                    <p class="text-sm text-gray-700 mb-3">
+                        You can also set an explicit redirect URI in your environment variables:
+                    </p>
+                    <div class="bg-white rounded p-3 border border-green-300">
+                        <code class="text-sm text-gray-800">
+                            GOOGLE_OAUTH_REDIRECT_URI={{ redirect_uri }}
+                        </code>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">
+                        This will override auto-detection and ensure consistency.
+                    </p>
+                </div>
+                
+                <!-- Test Button -->
+                <div class="pt-4">
+                    <a href="{% url 'google_oauth_login' %}" 
+                       class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105">
+                        Test Google OAuth Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
