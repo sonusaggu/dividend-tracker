@@ -8,155 +8,139 @@
 {% block meta_keywords %}stock portfolio, portfolio management, investment tracking, portfolio analysis, dividend portfolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-    <div class="max-w-7xl mx-auto px-4">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-                <h1 class="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    My Portfolio
-                </h1>
-                <p class="text-xl text-gray-600">Track your investments and dividend income</p>
-            </div>
-            <div class="flex gap-3 mt-4 md:mt-0">
-                <a href="{% url 'transactions_list' %}" 
-                   class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
-                    📊 Transactions
-                </a>
-                <a href="{% url 'all_stocks' %}" 
-                   class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
-                    + Add Stock
-                </a>
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">My Portfolio</h1>
+                    <p class="text-gray-600">Track your investments and dividend income</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{% url 'transactions_list' %}" 
+                       class="inline-flex items-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Transactions
+                    </a>
+                    <a href="{% url 'all_stocks' %}" 
+                       class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Stock
+                    </a>
+                </div>
             </div>
         </div>
 
         {% if portfolio_items %}
         <!-- Portfolio Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <!-- Total Value -->
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm text-gray-600 mb-1">Total Portfolio Value</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ total_value|floatformat:2|intcomma }}</p>
-                        {% if total_roi_percent %}
-                        <p class="text-sm {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2">
-                            {{ total_roi_percent|floatformat:2 }}% ROI
-                        </p>
-                        {% endif %}
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span class="text-2xl text-blue-600">💰</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Total Portfolio Value</p>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold text-gray-900 mb-1">${{ total_value|floatformat:2|intcomma }}</p>
+                {% if total_roi_percent %}
+                <p class="text-sm font-medium {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ total_roi_percent|floatformat:2 }}% ROI
+                </p>
+                {% endif %}
             </div>
             
             <!-- Total Investment -->
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm text-gray-600 mb-1">Total Invested</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ total_investment|floatformat:2|intcomma }}</p>
-                        <p class="text-xs text-gray-500 mt-2">{{ portfolio_items|length }} holding{{ portfolio_items|length|pluralize }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <span class="text-2xl text-green-600">📊</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Total Invested</p>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold text-gray-900 mb-1">${{ total_investment|floatformat:2|intcomma }}</p>
+                <p class="text-sm text-gray-600">{{ portfolio_items|length }} holding{{ portfolio_items|length|pluralize }}</p>
             </div>
             
             <!-- Total Gain/Loss -->
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm text-gray-600 mb-1">Total Gain/Loss</p>
-                        <p class="text-2xl font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                            ${{ total_gain_loss|floatformat:2|intcomma }}
-                        </p>
-                        {% if total_roi_percent %}
-                        <p class="text-sm {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} mt-2">
-                            ({{ total_roi_percent|floatformat:2 }}%)
-                        </p>
-                        {% endif %}
-                    </div>
-                    <div class="w-12 h-12 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-full flex items-center justify-center">
-                        <span class="text-2xl {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                            {% if total_gain_loss >= 0 %}📈{% else %}📉{% endif %}
-                        </span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Total Gain/Loss</p>
+                    <div class="w-10 h-10 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %} mb-1">
+                    ${{ total_gain_loss|floatformat:2|intcomma }}
+                </p>
+                {% if total_roi_percent %}
+                <p class="text-sm font-medium {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    ({{ total_roi_percent|floatformat:2 }}%)
+                </p>
+                {% endif %}
             </div>
             
             <!-- Annual Dividends -->
-            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm text-gray-600 mb-1">Annual Dividends</p>
-                        <p class="text-2xl font-bold text-gray-900">${{ annual_dividend_income|floatformat:2|intcomma }}</p>
-                        {% if portfolio_yield %}
-                        <p class="text-sm text-purple-600 mt-2">
-                            {{ portfolio_yield|floatformat:2 }}% yield
-                        </p>
-                        {% endif %}
-                    </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                        <span class="text-2xl text-purple-600">🎯</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Annual Dividends</p>
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold text-gray-900 mb-1">${{ annual_dividend_income|floatformat:2|intcomma }}</p>
+                {% if portfolio_yield %}
+                <p class="text-sm font-medium text-purple-600">{{ portfolio_yield|floatformat:2 }}% yield</p>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Additional Metrics Row -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Additional Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <!-- Portfolio Yield -->
-            <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-xl p-6 border border-purple-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Portfolio Yield</p>
-                        <p class="text-3xl font-bold text-purple-600">{{ portfolio_yield|floatformat:2 }}%</p>
-                        <p class="text-xs text-gray-600 mt-1">Based on current value</p>
-                    </div>
-                    <span class="text-4xl">📈</span>
-                </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Portfolio Yield</p>
+                <p class="text-3xl font-bold text-purple-600">{{ portfolio_yield|floatformat:2 }}%</p>
+                <p class="text-xs text-gray-500 mt-1">Based on current value</p>
             </div>
 
             <!-- Yield on Cost -->
             {% if yield_on_cost %}
-            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-6 border border-green-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Yield on Cost</p>
-                        <p class="text-3xl font-bold text-green-600">{{ yield_on_cost|floatformat:2 }}%</p>
-                        <p class="text-xs text-gray-600 mt-1">Based on invested amount</p>
-                    </div>
-                    <span class="text-4xl">💎</span>
-                </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Yield on Cost</p>
+                <p class="text-3xl font-bold text-green-600">{{ yield_on_cost|floatformat:2 }}%</p>
+                <p class="text-xs text-gray-500 mt-1">Based on invested amount</p>
             </div>
             {% endif %}
 
             <!-- Monthly Dividend Income -->
-            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-xl p-6 border border-blue-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Monthly Income</p>
-                        <p class="text-3xl font-bold text-blue-600">${{ monthly_dividend_income|floatformat:2|intcomma }}</p>
-                        <p class="text-xs text-gray-600 mt-1">Estimated monthly</p>
-                    </div>
-                    <span class="text-4xl">💵</span>
-                </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Monthly Income</p>
+                <p class="text-3xl font-bold text-blue-600">${{ monthly_dividend_income|floatformat:2|intcomma }}</p>
+                <p class="text-xs text-gray-500 mt-1">Estimated monthly</p>
             </div>
         </div>
 
-        <!-- Sector Allocation with Pie Chart -->
+        <!-- Sector Allocation -->
         {% if sector_allocation %}
-        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                    <span class="text-2xl mr-2">🏢</span>
-                    Sector Allocation
-                </h2>
+                <h2 class="text-lg font-bold text-gray-900">Sector Allocation</h2>
                 <a href="{% url 'export_portfolio' %}" 
-                   class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition transform hover:scale-105 shadow-lg flex items-center">
+                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
@@ -164,18 +148,18 @@
                 </a>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Pie Chart -->
-                <div class="flex items-center justify-center chart-wrapper w-full">
+                <div class="flex items-center justify-center">
                     <canvas id="sectorPieChart" class="w-full max-w-full" style="max-width: 100%; height: auto;"></canvas>
                 </div>
                 
                 <!-- Sector List -->
                 <div class="space-y-3">
                     {% for item in sector_chart_data %}
-                    <div class="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:shadow-md transition">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <div class="flex-1">
-                            <p class="text-sm font-semibold text-gray-900 mb-1">{{ item.sector }}</p>
+                            <p class="text-sm font-semibold text-gray-900 mb-2">{{ item.sector }}</p>
                             <div class="flex items-center space-x-3">
                                 <div class="w-32 bg-gray-200 rounded-full h-2">
                                     <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ item.percent }}%"></div>
@@ -194,91 +178,92 @@
         {% endif %}
 
         <!-- Portfolio Holdings Table -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-4 md:mb-0">Your Holdings</h2>
-                <div class="flex items-center space-x-2 flex-wrap gap-2">
-                    <!-- Search Box -->
-                    <input type="text" id="portfolioSearch" placeholder="Search stocks..." 
-                           class="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                    <!-- Filter by Sector -->
-                    <select id="sectorFilter" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                        <option value="">All Sectors</option>
-                        {% for item in sector_chart_data %}
-                        <option value="{{ item.sector }}">{{ item.sector }}</option>
-                        {% endfor %}
-                    </select>
-                    <!-- Sort Options -->
-                    <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition min-h-[44px]">
-                        Sort by Symbol
-                    </button>
-                    <button onclick="sortTable('value')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition min-h-[44px]">
-                        Sort by Value
-                    </button>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <h2 class="text-lg font-bold text-gray-900">Your Holdings</h2>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <input type="text" id="portfolioSearch" placeholder="Search stocks..." 
+                               class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <select id="sectorFilter" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            <option value="">All Sectors</option>
+                            {% for item in sector_chart_data %}
+                            <option value="{{ item.sector }}">{{ item.sector }}</option>
+                            {% endfor %}
+                        </select>
+                        <button onclick="sortTable('symbol')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Sort by Symbol
+                        </button>
+                        <button onclick="sortTable('value')" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Sort by Value
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full" id="portfolioTable">
-                    <thead>
-                        <tr class="border-b-2 border-gray-200">
-                            <th class="text-left py-4 px-2 font-semibold text-gray-700">Stock</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Shares</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Avg Cost</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Current Price</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Current Value</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Allocation</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Gain/Loss</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">ROI</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Annual Div</th>
-                            <th class="text-right py-4 px-2 font-semibold text-gray-700">Actions</th>
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Shares</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Avg Cost</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Value</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Allocation</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Gain/Loss</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">ROI</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Annual Div</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-28">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="bg-white divide-y divide-gray-200">
                         {% for item in portfolio_items %}
-                        <tr class="border-b hover:bg-gray-50 transition portfolio-row" 
+                        <tr class="hover:bg-gray-50 transition-colors portfolio-row" 
                             data-symbol="{{ item.item.stock.symbol }}" 
                             data-value="{{ item.current_value }}"
                             data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
                             data-company="{{ item.item.stock.company_name }}">
-                            <td class="py-4 px-2">
-                                <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="flex items-center group">
-                                    <span class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 group-hover:scale-110 transition">
-                                        {{ item.item.stock.symbol|slice:":1" }}
-                                    </span>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">{{ item.item.stock.symbol|slice:":1" }}</span>
+                                    </div>
                                     <div>
-                                        <div class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ item.item.stock.symbol }}</div>
-                                        <div class="text-xs text-gray-600">{{ item.item.stock.company_name|truncatewords:3 }}</div>
+                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition">
+                                            {{ item.item.stock.symbol }}
+                                        </a>
+                                        <div class="text-xs text-gray-500">{{ item.item.stock.company_name|truncatewords:3 }}</div>
                                         {% if item.item.stock.sector %}
-                                        <div class="text-xs text-blue-600 mt-1">{{ item.item.stock.sector }}</div>
+                                        <div class="text-xs text-blue-600 mt-0.5">{{ item.item.stock.sector }}</div>
                                         {% endif %}
                                     </div>
-                                </a>
+                                </div>
                             </td>
-                            <td class="text-right py-4 px-2 font-medium">{{ item.item.shares_owned|intcomma }}</td>
-                            <td class="text-right py-4 px-2">${{ item.item.average_cost|floatformat:2 }}</td>
-                            <td class="text-right py-4 px-2">
+                            <td class="px-4 py-4 whitespace-nowrap text-right font-medium text-sm">{{ item.item.shares_owned|intcomma }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm">${{ item.item.average_cost|floatformat:2 }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right">
                                 {% if item.latest_price %}
-                                    <span class="font-semibold">${{ item.latest_price.last_price|floatformat:2 }}</span>
+                                    <div class="text-sm font-semibold text-gray-900">${{ item.latest_price.last_price|floatformat:2 }}</div>
                                     {% if item.latest_price.price_date %}
                                     <div class="text-xs text-gray-500">{{ item.latest_price.price_date|date:"M d" }}</div>
                                     {% endif %}
                                 {% else %}
-                                    <span class="text-gray-400">-</span>
+                                    <span class="text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
-                            <td class="text-right py-4 px-2 font-semibold">${{ item.current_value|floatformat:2|intcomma }}</td>
-                            <td class="text-right py-4 px-2">
-                                <div class="flex items-center justify-end">
-                                    <span class="font-medium text-gray-700 mr-2">{{ item.portfolio_allocation|floatformat:1 }}%</span>
+                            <td class="px-4 py-4 whitespace-nowrap text-right font-semibold text-gray-900">${{ item.current_value|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <span class="text-sm font-medium text-gray-700">{{ item.portfolio_allocation|floatformat:1 }}%</span>
                                     <div class="w-16 bg-gray-200 rounded-full h-2">
                                         <div class="bg-blue-600 h-2 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-right py-4 px-2">
+                            <td class="px-4 py-4 whitespace-nowrap text-right">
                                 <div>
-                                    <span class="font-semibold {% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                    <span class="text-sm font-semibold {% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                                         ${{ item.gain_loss|floatformat:2|intcomma }}
                                     </span>
                                     {% if item.roi_percent %}
@@ -288,31 +273,31 @@
                                     {% endif %}
                                 </div>
                             </td>
-                            <td class="text-right py-4 px-2">
-                                <span class="{% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+                            <td class="px-4 py-4 whitespace-nowrap text-right">
+                                <span class="text-sm font-semibold {% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                                     {{ item.roi_percent|floatformat:2 }}%
                                 </span>
                             </td>
-                            <td class="text-right py-4 px-2">
+                            <td class="px-4 py-4 whitespace-nowrap text-right">
                                 {% if item.dividend_income %}
                                     <div>
-                                        <span class="font-semibold text-green-600">${{ item.dividend_income|floatformat:2|intcomma }}</span>
+                                        <span class="text-sm font-semibold text-green-600">${{ item.dividend_income|floatformat:2|intcomma }}</span>
                                         {% if item.yield_on_cost %}
                                         <div class="text-xs text-gray-600">{{ item.yield_on_cost|floatformat:2 }}% YoC</div>
                                         {% endif %}
                                     </div>
                                 {% else %}
-                                    <span class="text-gray-400">-</span>
+                                    <span class="text-sm text-gray-400">—</span>
                                 {% endif %}
                             </td>
-                            <td class="text-right py-4 px-2">
-                                <div class="flex items-center justify-end space-x-2">
+                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                                <div class="flex flex-col items-center gap-2">
                                     <a href="{% url 'stock_detail' item.item.stock.symbol %}" 
-                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium" title="View Details">
+                                       class="w-full inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
                                         View
                                     </a>
                                     <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})" 
-                                            class="text-green-600 hover:text-green-800 text-sm font-medium" title="Edit">
+                                            class="w-full inline-flex items-center justify-center px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium rounded-lg transition">
                                         Edit
                                     </button>
                                 </div>
@@ -322,17 +307,17 @@
                     </tbody>
                     <tfoot class="bg-gray-50">
                         <tr>
-                            <td class="py-4 px-2 font-bold text-gray-900">Total</td>
-                            <td class="text-right py-4 px-2 font-bold text-gray-900">{{ portfolio_items|length }} stocks</td>
-                            <td colspan="3" class="text-right py-4 px-2 font-bold text-gray-900">${{ total_value|floatformat:2|intcomma }}</td>
-                            <td class="text-right py-4 px-2 font-bold text-gray-900">100%</td>
-                            <td class="text-right py-4 px-2 font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            <td class="py-4 px-4 font-semibold text-gray-900">Total</td>
+                            <td class="text-right py-4 px-4 font-semibold text-gray-900">{{ portfolio_items|length }} stocks</td>
+                            <td colspan="3" class="text-right py-4 px-4 font-semibold text-gray-900">${{ total_value|floatformat:2|intcomma }}</td>
+                            <td class="text-right py-4 px-4 font-semibold text-gray-900">100%</td>
+                            <td class="text-right py-4 px-4 font-semibold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                                 ${{ total_gain_loss|floatformat:2|intcomma }}
                             </td>
-                            <td class="text-right py-4 px-2 font-bold {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            <td class="text-right py-4 px-4 font-semibold {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                                 {{ total_roi_percent|floatformat:2 }}%
                             </td>
-                            <td class="text-right py-4 px-2 font-bold text-green-600">${{ annual_dividend_income|floatformat:2|intcomma }}</td>
+                            <td class="text-right py-4 px-4 font-semibold text-green-600">${{ annual_dividend_income|floatformat:2|intcomma }}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -342,58 +327,58 @@
 
         <!-- Dividend Income Projection -->
         {% if dividend_projection %}
-        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
-            <h2 class="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
-                <span class="text-2xl mr-2">📈</span>
-                Dividend Income Projection (Next 12 Months)
-            </h2>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Dividend Income Projection (Next 12 Months)</h2>
+            </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                 <!-- Chart -->
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+                <div class="bg-gray-50 rounded-lg p-4">
                     <canvas id="portfolioDividendChart" height="250"></canvas>
                 </div>
                 
                 <!-- Monthly Breakdown -->
-                <div class="space-y-2 max-h-80 overflow-y-auto">
-                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-4 text-white mb-4">
-                        <p class="text-sm text-green-100 mb-1">Total Projected</p>
-                        <p class="text-3xl font-bold">${{ total_projected_income|floatformat:2|intcomma }}</p>
+                <div class="space-y-3">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Projected</p>
+                        <p class="text-3xl font-bold text-gray-900">${{ total_projected_income|floatformat:2|intcomma }}</p>
                     </div>
-                    {% for month in dividend_projection %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ month.month }}</p>
-                            <p class="text-xs text-gray-600">Cumulative: ${{ month.cumulative|floatformat:2|intcomma }}</p>
+                    <div class="space-y-2 max-h-80 overflow-y-auto">
+                        {% for month in dividend_projection %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold text-gray-900 text-sm">{{ month.month }}</p>
+                                <p class="text-xs text-gray-600">Cumulative: ${{ month.cumulative|floatformat:2|intcomma }}</p>
+                            </div>
+                            <p class="text-sm font-bold text-green-600">${{ month.income|floatformat:2|intcomma }}</p>
                         </div>
-                        <p class="text-lg font-bold text-green-600">${{ month.income|floatformat:2|intcomma }}</p>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Upcoming Dividends Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-8">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-semibold text-gray-900 flex items-center">
-                    <span class="text-2xl mr-2">📅</span>
-                    Upcoming Dividend Payments
-                </h2>
-                <a href="{% url 'my_alerts' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Manage Alerts →
-                </a>
+        <!-- Upcoming Dividends -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">Upcoming Dividend Payments</h2>
+                    <a href="{% url 'my_alerts' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+                        Manage Alerts →
+                    </a>
+                </div>
             </div>
             
             {% regroup portfolio_items|dictsort:"latest_dividend.ex_dividend_date" by latest_dividend.ex_dividend_date as dividends_by_date %}
             
             {% if dividends_by_date %}
-            <div class="space-y-6">
+            <div class="p-6 space-y-6">
                 {% for dividend_group in dividends_by_date %}
                     {% if dividend_group.grouper %}
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                        <h3 class="text-base font-semibold text-gray-700 mb-3">
                             {{ dividend_group.grouper|date:"F d, Y" }}
                             <span class="text-sm font-normal text-gray-500">
                                 ({{ dividend_group.grouper|timeuntil }})
@@ -402,9 +387,9 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {% for item in dividend_group.list %}
                                 {% if item.latest_dividend and item.latest_dividend.ex_dividend_date == dividend_group.grouper %}
-                                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-200 hover:shadow-md transition">
+                                <div class="bg-green-50 rounded-lg p-4 border border-green-200">
                                     <div class="flex items-center justify-between mb-3">
-                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="font-bold text-gray-900 hover:text-blue-600 transition">
+                                        <a href="{% url 'stock_detail' item.item.stock.symbol %}" class="font-semibold text-gray-900 hover:text-blue-600 transition">
                                             {{ item.item.stock.symbol }}
                                         </a>
                                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
@@ -412,8 +397,8 @@
                                         </span>
                                     </div>
                                     <div class="mb-3">
-                                        <p class="text-3xl font-bold text-green-600 mb-1">${{ item.expected_dividend|floatformat:2 }}</p>
-                                        <p class="text-sm text-gray-600">
+                                        <p class="text-2xl font-bold text-green-600 mb-1">${{ item.expected_dividend|floatformat:2 }}</p>
+                                        <p class="text-xs text-gray-600">
                                             ${{ item.latest_dividend.amount }} per share × {{ item.item.shares_owned }} shares
                                         </p>
                                     </div>
@@ -430,8 +415,10 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="text-center py-12">
-                <span class="text-5xl mb-4 block">📊</span>
+            <div class="p-12 text-center">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
                 <p class="text-gray-600 font-medium mb-2">No upcoming dividends</p>
                 <p class="text-sm text-gray-500">Dividends from your holdings will appear here</p>
             </div>
@@ -439,19 +426,21 @@
         </div>
         {% else %}
         <!-- Empty Portfolio State -->
-        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
-            <div class="text-6xl mb-4">📊</div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your portfolio is empty</h2>
             <p class="text-gray-600 mb-8 max-w-md mx-auto">
                 Start building your dividend portfolio by adding stocks. Track your investments, monitor gains, and never miss a dividend payment.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{% url 'all_stocks' %}" 
-                   class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-lg">
+                   class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
                     Browse Stocks
                 </a>
                 <a href="{% url 'watchlist' %}" 
-                   class="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-blue-50 transition">
+                   class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
                     View Watchlist
                 </a>
             </div>
@@ -462,10 +451,10 @@
 
 <!-- Edit Portfolio Item Modal -->
 <div id="editPortfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-md">
+    <div class="bg-white rounded-lg shadow-xl p-6 mx-4 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-gray-900">Edit Portfolio Item</h3>
-            <button onclick="closeModal('editPortfolioModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition duration-200">
+            <button onclick="closeModal('editPortfolioModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition">
                 &times;
             </button>
         </div>
@@ -503,11 +492,11 @@
             
             <div class="mt-6 flex space-x-3">
                 <button type="button" onclick="closeModal('editPortfolioModal')"
-                        class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition font-medium">
+                        class="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium">
                     Cancel
                 </button>
                 <button type="submit"
-                        class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 rounded-lg font-semibold transition transform hover:scale-105">
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition">
                     Save Changes
                 </button>
             </div>
@@ -516,7 +505,6 @@
 </div>
 
 <script>
-// Modal utility functions
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -533,7 +521,6 @@ function closeModal(modalId) {
     }
 }
 
-// Close modal when clicking outside
 document.addEventListener('DOMContentLoaded', function() {
     const editModal = document.getElementById('editPortfolioModal');
     if (editModal) {
@@ -544,7 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Close with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('editPortfolioModal');
@@ -577,20 +563,14 @@ function sortTable(sortBy) {
 }
 
 function editPortfolioItem(symbol, shares, cost, notes) {
-    // Set form values
     document.getElementById('editStockSymbol').value = symbol;
     document.getElementById('editSharesOwned').value = shares;
     document.getElementById('editAverageCost').value = cost;
     document.getElementById('editNotes').value = notes || '';
-    
-    // Update form action
     document.getElementById('editPortfolioForm').action = `/portfolio/add/${symbol}/`;
-    
-    // Open modal
     openModal('editPortfolioModal');
 }
 
-// Handle edit portfolio form submission
 document.addEventListener('DOMContentLoaded', function() {
     const editForm = document.getElementById('editPortfolioForm');
     if (editForm) {
@@ -600,14 +580,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const sharesInput = this.querySelector('input[name="shares_owned"]');
             const costInput = this.querySelector('input[name="average_cost"]');
             
-            // Validation
             if (!sharesInput.value || Number(sharesInput.value) < 1) {
-                Toast.error('Shares Owned must be at least 1.');
+                alert('Shares Owned must be at least 1.');
                 sharesInput.focus();
                 return;
             }
             if (!costInput.value || Number(costInput.value) <= 0) {
-                Toast.error('Average Cost must be greater than $0.');
+                alert('Average Cost must be greater than $0.');
                 costInput.focus();
                 return;
             }
@@ -627,21 +606,19 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'success') {
                     closeModal('editPortfolioModal');
-                    Toast.success(data.message || 'Portfolio updated successfully!');
-                    // Reload page to show updated data
+                    alert(data.message || 'Portfolio updated successfully!');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    Toast.error(data.message || 'Error updating portfolio.');
+                    alert(data.message || 'Error updating portfolio.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Toast.error('Error updating portfolio. Please try again.');
+                alert('Error updating portfolio. Please try again.');
             });
-            });
+        });
     }
     
-    // Initialize pie chart
     {% if sector_chart_data %}
     const sectorData = [
         {% for item in sector_chart_data %}
@@ -650,36 +627,22 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     const ctx = document.getElementById('sectorPieChart');
     if (ctx) {
-        // Make canvas responsive
         const container = ctx.parentElement;
         const containerSize = Math.min(container.clientWidth || 300, container.clientHeight || 300, 400);
         ctx.width = containerSize;
         ctx.height = containerSize;
         
-        // Generate colors for sectors
         const colors = [
             '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
             '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#6366F1'
         ];
         
-        const chartData = {
-            labels: sectorData.map(item => item.sector),
-            datasets: [{
-                data: sectorData.map(item => item.value),
-                backgroundColor: colors.slice(0, sectorData.length),
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        };
-        
-        // Simple pie chart using canvas (no external library needed)
+        const total = sectorData.reduce((sum, item) => sum + item.value, 0);
+        let currentAngle = -Math.PI / 2;
+        const canvas = ctx.getContext('2d');
         const centerX = ctx.width / 2;
         const centerY = ctx.height / 2;
         const radius = Math.min(centerX, centerY) - (containerSize > 300 ? 20 : 15);
-        const total = sectorData.reduce((sum, item) => sum + item.value, 0);
-        
-        let currentAngle = -Math.PI / 2;
-        const canvas = ctx.getContext('2d');
         
         sectorData.forEach((item, index) => {
             const sliceAngle = (item.value / total) * 2 * Math.PI;
@@ -694,7 +657,6 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.lineWidth = 2;
             canvas.stroke();
             
-            // Add label (only if slice is large enough and screen is not too small)
             if (sliceAngle > 0.2 && containerSize > 250) {
                 const labelAngle = currentAngle + sliceAngle / 2;
                 const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
@@ -705,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas.font = `bold ${fontSize}px Arial`;
                 canvas.textAlign = 'center';
                 canvas.textBaseline = 'middle';
-                if (item.percent >= 5) { // Only show label if >= 5%
+                if (item.percent >= 5) {
                     canvas.fillText(item.percent.toFixed(1) + '%', labelX, labelY);
                 }
             }
@@ -715,7 +677,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     {% endif %}
     
-    // Portfolio search and filter
     const searchInput = document.getElementById('portfolioSearch');
     const sectorFilter = document.getElementById('sectorFilter');
     const portfolioRows = document.querySelectorAll('.portfolio-row');
@@ -749,11 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sectorFilter.addEventListener('change', filterPortfolio);
     }
     
-    // Dividend Projection Chart
     {% if dividend_projection %}
     const dividendCtx = document.getElementById('portfolioDividendChart');
     if (dividendCtx) {
-        // Make canvas responsive
         const container = dividendCtx.parentElement;
         const containerWidth = container.clientWidth || 600;
         const aspectRatio = 2.5;
@@ -776,7 +735,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const chartWidth = width - (padding * 2);
         const chartHeight = height - (padding * 2);
         
-        // Draw bars
         const barWidth = chartWidth / dividendData.length * 0.7;
         const spacing = chartWidth / dividendData.length;
         
@@ -785,11 +743,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const barHeight = (data.income / maxIncome) * chartHeight;
             const y = padding + chartHeight - barHeight;
             
-            // Draw bar
             canvas.fillStyle = '#10B981';
             canvas.fillRect(x, y, barWidth, barHeight);
             
-            // Draw value (responsive font size)
             const fontSize = Math.max(8, width / 70);
             if (barHeight > 15) {
                 canvas.fillStyle = '#1F2937';
@@ -798,11 +754,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 3);
             }
             
-            // Draw month label (responsive, abbreviate on mobile)
             canvas.save();
             canvas.translate(x + barWidth/2, height - 5);
             if (width < 640) {
-                // Vertical text on mobile
                 canvas.rotate(-Math.PI / 2);
             } else {
                 canvas.rotate(-Math.PI / 4);

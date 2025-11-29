@@ -43,19 +43,27 @@
                 <!-- Key Features -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                     <div class="flex flex-col items-center space-y-2 text-blue-100">
-                        <span class="text-3xl">📊</span>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
                         <span class="text-sm font-medium text-center">Transaction Tracking</span>
                     </div>
                     <div class="flex flex-col items-center space-y-2 text-blue-100">
-                        <span class="text-3xl">🔔</span>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
                         <span class="text-sm font-medium text-center">Smart Alerts</span>
                     </div>
                     <div class="flex flex-col items-center space-y-2 text-blue-100">
-                        <span class="text-3xl">💰</span>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                         <span class="text-sm font-medium text-center">Cost Basis</span>
                     </div>
                     <div class="flex flex-col items-center space-y-2 text-blue-100">
-                        <span class="text-3xl">👥</span>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
                         <span class="text-sm font-medium text-center">Community</span>
                     </div>
                 </div>
@@ -64,34 +72,25 @@
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
                 <a href="{% url 'register' %}" 
-                   class="group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-green-500/50">
-                    <span class="flex items-center justify-center">
-                        <span class="mr-2">🚀</span>
-                        Get Started Free
-                        <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                        </svg>
-                    </span>
+                   class="group inline-flex items-center px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold text-base transition shadow-lg">
+                    <span>Get Started Free</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
                 </a>
                 <a href="{% url 'demo_mode' %}" 
-                   class="group border-2 border-white/40 hover:border-white bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300">
-                    <span class="flex items-center justify-center">
-                        <span class="mr-2">🎮</span>
-                        Try Demo
-                        <svg class="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </span>
+                   class="group inline-flex items-center px-8 py-3 border-2 border-white/40 hover:border-white bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold text-base transition">
+                    <span>Try Demo</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </a>
                 <a href="#dividend-stocks" 
-                   class="group border-2 border-white/40 hover:border-white bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300">
-                    <span class="flex items-center justify-center">
-                        <span class="mr-2">📊</span>
-                        Explore Stocks
-                        <svg class="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </span>
+                   class="group inline-flex items-center px-8 py-3 border-2 border-white/40 hover:border-white bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold text-base transition">
+                    <span>Explore Stocks</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </a>
             </div>
             
@@ -140,7 +139,7 @@
                 <div class="text-gray-600 font-medium">Real-time Updates</div>
             </div>
             <div class="text-center">
-                <div class="text-4xl md:text-5xl font-bold text-orange-600 mb-2">🔔</div>
+                <div class="text-4xl md:text-5xl font-bold text-orange-600 mb-2">24/7</div>
                 <div class="text-gray-600 font-medium">Smart Alerts</div>
             </div>
         </div>
@@ -148,14 +147,14 @@
 </div>
 
 <!-- Upcoming Dividend Stocks Section -->
-<div id="dividend-stocks" class="bg-gradient-to-br from-gray-50 to-blue-50 py-20">
-    <div class="max-w-7xl mx-auto px-4">
+<div id="dividend-stocks" class="bg-gray-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Section Header -->
-        <div class="text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Upcoming <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dividend Opportunities</span>
+        <div class="text-center mb-8">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                Upcoming Dividend Opportunities
             </h2>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
                 Discover top dividend-paying stocks with upcoming ex-dividend dates. Never miss a dividend payment again.
             </p>
         </div>
@@ -164,93 +163,113 @@
         {% include 'components/sponsored_content.html' %}
         
         {% if upcoming_dividends %}
-        <!-- Stocks Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-            {% for stock in upcoming_dividends %}
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-2 group overflow-hidden">
-                <!-- Urgency indicator bar -->
-                <div class="{% if stock.days_until is not None and stock.days_until <= 3 %}bg-red-500{% elif stock.days_until is not None and stock.days_until <= 7 %}bg-orange-500{% else %}bg-green-500{% endif %} h-1.5"></div>
-                
-                <div class="p-6">
-                    <!-- Stock Header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition">
-                                {{ stock.symbol|slice:":1" }}
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
-                                    {{ stock.symbol }}
-                                </h3>
-                                <p class="text-xs text-gray-500">{{ stock.frequency|default:"N/A" }}</p>
-                            </div>
-                        </div>
-                        <span class="{% if stock.days_until is not None and stock.days_until <= 3 %}bg-red-100 text-red-800 border-red-200{% elif stock.days_until is not None and stock.days_until <= 7 %}bg-orange-100 text-orange-800 border-orange-200{% else %}bg-green-100 text-green-800 border-green-200{% endif %} text-xs font-bold px-3 py-1 rounded-full border-2">
-                            {% if stock.days_until is None %}
-                                TBD
-                            {% elif stock.days_until == 0 %}
-                                Today
-                            {% elif stock.days_until < 0 %}
-                                Passed
-                            {% else %}
-                                {{ stock.days_until }}d
-                            {% endif %}
-                        </span>
-                    </div>
-                    
-                    <!-- Company Name -->
-                    <p class="text-gray-700 text-sm mb-5 line-clamp-2 font-medium">{{ stock.company_name }}</p>
-                    
-                    <!-- Dividend Information -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 mb-4 border border-green-200">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-xs text-gray-600 font-medium">Dividend Amount</span>
-                            <span class="text-2xl font-bold text-green-600">${{ stock.dividend_amount|floatformat:2 }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-600 font-medium">Yield</span>
-                            <span class="text-lg font-bold text-blue-600">
-                                {% if stock.dividend_yield %}
-                                    {{ stock.dividend_yield|floatformat:2 }}%
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Additional Info -->
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="text-xs text-gray-500 mb-1">Price</div>
-                            <div class="font-bold text-gray-900">
+        <!-- Stocks Table View -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-12">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Symbol</th>
+                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Company</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Dividend</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Yield</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Ex-Date</th>
+                            <th class="px-4 md:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for stock in upcoming_dividends %}
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <!-- Symbol -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                                        <span class="text-white font-bold text-sm">{{ stock.symbol|slice:":1" }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-lg font-bold text-gray-900">{{ stock.symbol }}</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                                                Div
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 font-medium">{{ stock.frequency|default:"N/A" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Company Name -->
+                            <td class="px-4 md:px-6 py-4">
+                                <div class="text-sm font-semibold text-gray-900 max-w-xs">{{ stock.company_name|truncatewords:8 }}</div>
+                            </td>
+                            
+                            <!-- Price -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
                                 {% if stock.last_price != 'N/A' %}
-                                    ${{ stock.last_price|floatformat:2 }}
+                                <div class="text-base font-bold text-gray-900">${{ stock.last_price|floatformat:2 }}</div>
                                 {% else %}
-                                    N/A
+                                <span class="text-sm text-gray-400">—</span>
                                 {% endif %}
-                            </div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="text-xs text-gray-500 mb-1">Ex-Date</div>
-                            <div class="font-bold text-purple-600">
+                            </td>
+                            
+                            <!-- Dividend -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                <div class="text-base font-bold text-gray-900">${{ stock.dividend_amount|floatformat:4 }}</div>
+                            </td>
+                            
+                            <!-- Yield -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                {% if stock.dividend_yield %}
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700 border border-green-200">
+                                    {{ stock.dividend_yield|floatformat:2 }}%
+                                </div>
+                                {% else %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Ex-Date -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
                                 {% if stock.ex_dividend_date %}
-                                    {{ stock.ex_dividend_date|date:"M d" }}
+                                <div class="inline-flex flex-col items-end">
+                                    <div class="flex items-center space-x-1.5 mb-1">
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span class="text-sm font-bold text-blue-600">{{ stock.ex_dividend_date|date:"M d, Y" }}</span>
+                                    </div>
+                                    {% if stock.days_until is not None %}
+                                    <div class="text-xs font-medium {% if stock.days_until <= 3 %}text-red-600{% elif stock.days_until <= 7 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                        {% if stock.days_until == 0 %}
+                                            Today
+                                        {% elif stock.days_until < 0 %}
+                                            Passed
+                                        {% else %}
+                                            {{ stock.days_until }} days
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
                                 {% else %}
-                                    TBD
+                                <span class="text-sm text-gray-400">TBD</span>
                                 {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Button -->
-                    <a href="{% url 'stock_detail' stock.symbol %}" 
-                       class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
-                        View Details →
-                    </a>
-                </div>
+                            </td>
+                            
+                            <!-- Action -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-center">
+                                <a 
+                                    href="{% url 'stock_detail' stock.symbol %}" 
+                                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-lg transition shadow-sm hover:shadow-md min-h-[36px]"
+                                >
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% endfor %}
         </div>
         
         <!-- View All Button -->

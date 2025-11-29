@@ -7,135 +7,78 @@
 {% block meta_description %}Compare up to 3 stocks side-by-side. Compare dividend yield, P/E ratio, growth, price, and more. Make informed investment decisions.{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
-    <div class="max-w-7xl mx-auto px-4">
-        <!-- Modern Header with Animated Background -->
-        <div class="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 rounded-3xl shadow-2xl p-8 md:p-12 mb-8 border border-white/50 backdrop-blur-sm overflow-hidden">
-            <!-- Animated Background Elements -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                <div class="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-                <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-gradient-to-br from-indigo-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
-            </div>
-            
-            <!-- Content -->
-            <div class="relative z-10">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                    <!-- Left Section -->
-                    <div class="flex-1">
-                        <!-- Badge -->
-                        <div class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-4 border border-blue-200/50">
-                            <svg class="w-4 h-4 text-blue-600 mr-2 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            <span class="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                Smart Comparison Tool
-                            </span>
-                        </div>
-                        
-                        <!-- Title -->
-                        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
-                            <span class="inline-block transform hover:scale-105 transition-transform duration-300">Stock</span>
-                            <span class="inline-block transform hover:scale-105 transition-transform duration-300" style="animation-delay: 0.1s;"> Comparison</span>
-                        </h1>
-                        
-                        <!-- Description -->
-                        <p class="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed max-w-2xl">
-                            Compare up to <span class="font-bold text-blue-600">3 stocks</span> side-by-side with real-time data. Analyze dividend yields, P/E ratios, growth metrics, and more to make <span class="font-semibold text-purple-600">informed investment decisions</span>.
-                        </p>
-                        
-                        <!-- Feature Pills -->
-                        <div class="flex flex-wrap gap-2 mb-6">
-                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
-                                📊 Visual Charts
-                            </span>
-                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
-                                💰 Dividend Analysis
-                            </span>
-                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
-                                📈 Growth Metrics
-                            </span>
-                            <span class="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm">
-                                ⚡ Real-time Data
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Right Section - Action Button -->
-                    <div class="flex-shrink-0">
-                        <a href="{% url 'all_stocks' %}" 
-                           class="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl font-semibold text-lg shadow-lg relative overflow-hidden">
-                            <!-- Animated background on hover -->
-                            <span class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                            <!-- Content -->
-                            <span class="relative z-10 flex items-center">
-                                <svg class="w-6 h-6 mr-3 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                                Browse Stocks
-                                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </span>
-                        </a>
-                    </div>
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Stock Comparison</h1>
+                    <p class="text-gray-600">Compare up to 3 stocks side-by-side with real-time data</p>
                 </div>
+                <a href="{% url 'all_stocks' %}" 
+                   class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Browse Stocks
+                </a>
             </div>
         </div>
         
         <!-- Stock Selector Form -->
-        <form method="get" action="{% url 'stock_comparison' %}" class="bg-white/80 backdrop-blur-lg rounded-2xl p-6 md:p-8 border border-white/50 shadow-xl mb-8">
+        <form method="get" action="{% url 'stock_comparison' %}" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="relative">
+                    <label for="symbol1" class="block text-sm font-medium text-gray-700 mb-2">Stock 1</label>
                     <div class="relative">
-                        <label for="symbol1" class="block text-sm font-medium text-gray-700 mb-2">Stock 1</label>
-                        <div class="relative">
-                            <input type="text" 
-                                   id="symbol1" 
-                                   name="symbol1" 
-                                   value="{{ symbols.0|default:'' }}" 
-                                   placeholder="Search stock symbol or name..."
-                                   autocomplete="off"
-                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                   required>
-                            <div id="autocomplete-results-1" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
-                        </div>
+                        <input type="text" 
+                               id="symbol1" 
+                               name="symbol1" 
+                               value="{{ symbols.0|default:'' }}" 
+                               placeholder="Search stock symbol or name..."
+                               autocomplete="off"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
+                        <div id="autocomplete-results-1" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
                     </div>
+                </div>
+                <div class="relative">
+                    <label for="symbol2" class="block text-sm font-medium text-gray-700 mb-2">Stock 2</label>
                     <div class="relative">
-                        <label for="symbol2" class="block text-sm font-medium text-gray-700 mb-2">Stock 2</label>
-                        <div class="relative">
-                            <input type="text" 
-                                   id="symbol2" 
-                                   name="symbol2" 
-                                   value="{{ symbols.1|default:'' }}" 
-                                   placeholder="Search stock symbol or name..."
-                                   autocomplete="off"
-                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                   required>
-                            <div id="autocomplete-results-2" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
-                        </div>
+                        <input type="text" 
+                               id="symbol2" 
+                               name="symbol2" 
+                               value="{{ symbols.1|default:'' }}" 
+                               placeholder="Search stock symbol or name..."
+                               autocomplete="off"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                               required>
+                        <div id="autocomplete-results-2" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
                     </div>
+                </div>
+                <div class="relative">
+                    <label for="symbol3" class="block text-sm font-medium text-gray-700 mb-2">Stock 3 (Optional)</label>
                     <div class="relative">
-                        <label for="symbol3" class="block text-sm font-medium text-gray-700 mb-2">Stock 3 (Optional)</label>
-                        <div class="relative">
-                            <input type="text" 
-                                   id="symbol3" 
-                                   name="symbol3" 
-                                   value="{{ symbols.2|default:'' }}" 
-                                   placeholder="Search stock symbol or name..."
-                                   autocomplete="off"
-                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            <div id="autocomplete-results-3" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto"></div>
-                        </div>
+                        <input type="text" 
+                               id="symbol3" 
+                               name="symbol3" 
+                               value="{{ symbols.2|default:'' }}" 
+                               placeholder="Search stock symbol or name..."
+                               autocomplete="off"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <div id="autocomplete-results-3" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
                     </div>
+                </div>
             </div>
             <div class="mt-4 flex flex-col sm:flex-row gap-3">
                 <button type="submit" 
-                        class="flex-1 sm:flex-none px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 font-semibold shadow-lg">
+                        class="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium shadow-sm">
                     Compare Stocks
                 </button>
                 <button type="button" 
                         id="reset-form-btn"
-                        class="flex-1 sm:flex-none px-8 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition transform hover:scale-105 font-semibold shadow-md flex items-center justify-center">
+                        class="flex-1 sm:flex-none px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>

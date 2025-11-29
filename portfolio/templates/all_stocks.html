@@ -8,392 +8,296 @@
 {% block meta_keywords %}all stocks, TSX stocks, dividend stocks list, stock screener, TSX dividend stocks{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
-    <div class="max-w-7xl mx-auto px-4">
-        <!-- Hero Header Section -->
-        <div class="text-center mb-12 relative">
-            <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-96 h-96 bg-gradient-to-r from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30"></div>
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Simple Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">All Stocks</h1>
+            <p class="text-gray-600">Browse and search dividend-paying stocks on TSX</p>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</div>
+                <div class="text-sm text-gray-600">Total Stocks</div>
             </div>
-            <div class="relative z-10">
-                <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Discover Dividend Stocks
-                </h1>
-                <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-8">
-                    Explore our comprehensive database of dividend-paying stocks. Filter by sector, search by symbol, 
-                    and find your next investment opportunity.
-                </p>
+            <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ dividend_stocks_count|intcomma }}</div>
+                <div class="text-sm text-gray-600">Dividend Payers</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ sectors_count|intcomma }}</div>
+                <div class="text-sm text-gray-600">Sectors</div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <form method="get" class="space-y-4">
+                <!-- Hidden field to preserve sort -->
+                <input type="hidden" name="sort_by" value="{{ sort_by }}">
                 
-                {% if not user.is_authenticated %}
-                <div class="mt-8">
-                    <a href="{% url 'register' %}" 
-                       class="inline-flex items-center px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl font-bold text-lg transition duration-200 transform hover:scale-105 shadow-2xl hover:shadow-3xl">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        Start Tracking Your Dividends - Free
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Enhanced Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-5xl">📊</div>
-                        <div class="text-right">
-                            <div class="text-4xl font-bold">{{ page_obj.paginator.count }}</div>
-                            <div class="text-blue-100 text-sm font-medium">Total Stocks</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-5xl">💰</div>
-                        <div class="text-right">
-                            <div class="text-4xl font-bold">{{ dividend_stocks_count }}</div>
-                            <div class="text-green-100 text-sm font-medium">Dividend Payers</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl shadow-2xl p-8 text-white transform hover:scale-105 transition duration-300 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-5xl">🏢</div>
-                        <div class="text-right">
-                            <div class="text-4xl font-bold">{{ sectors_count }}</div>
-                            <div class="text-purple-100 text-sm font-medium">Sectors</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Enhanced Search and Filter Section -->
-        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-32 -mt-32 opacity-50 overflow-hidden"></div>
-            <div class="relative z-10">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Search & Filter Stocks
-                </h2>
-                <form method="get" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <!-- Hidden field to preserve sort -->
-                    <input type="hidden" name="sort_by" value="{{ sort_by }}">
-                    
-                    <!-- Enhanced Search Input with Autocomplete -->
-                    <div class="lg:col-span-2 relative">
-                        <label class="block text-sm font-bold text-gray-700 mb-3">🔍 Search Stocks</label>
-                        <div class="relative" id="search-container">
-                            <input 
-                                type="text" 
-                                id="stock-search-input"
-                                name="search" 
-                                placeholder="Search by symbol or company name..." 
-                                value="{{ search_query }}"
-                                autocomplete="off"
-                                class="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg"
-                            >
-                            <svg class="absolute left-4 top-4 w-6 h-6 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            
-                            <!-- Autocomplete Dropdown -->
-                            <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-[9999] mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-96 overflow-y-auto">
-                                <!-- Results will be inserted here -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Search Input -->
+                    <div class="md:col-span-2 relative" id="search-container">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input 
+                            type="text" 
+                            id="stock-search-input"
+                            name="search" 
+                            placeholder="Symbol or company name..." 
+                            value="{{ search_query }}"
+                            autocomplete="off"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                        >
+                        <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto"></div>
+                        <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                            <div class="p-3 border-b border-gray-200">
+                                <h4 class="text-sm font-semibold text-gray-700">Recent Searches</h4>
                             </div>
-                            
-                            <!-- Recent Searches Dropdown -->
-                            <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-[9999] mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl">
-                                <div class="p-3 border-b border-gray-200">
-                                    <h4 class="text-sm font-semibold text-gray-700">Recent Searches</h4>
-                                </div>
-                                <div id="recent-searches-list" class="p-2">
-                                    {% for search in recent_searches %}
-                                    <button type="button" class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg text-sm text-gray-700 recent-search-item" data-search="{{ search }}">
-                                        <span class="text-gray-400 mr-2">🕒</span>{{ search }}
-                                    </button>
-                                    {% empty %}
-                                    <p class="px-4 py-2 text-sm text-gray-500">No recent searches</p>
-                                    {% endfor %}
-                                </div>
+                            <div id="recent-searches-list" class="p-2">
+                                {% for search in recent_searches %}
+                                <button type="button" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded text-sm text-gray-700 recent-search-item" data-search="{{ search }}">
+                                    <svg class="w-4 h-4 text-gray-400 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>{{ search }}
+                                </button>
+                                {% empty %}
+                                <p class="px-4 py-2 text-sm text-gray-500">No recent searches</p>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Enhanced Sector Filter -->
+                    <!-- Sector Filter -->
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-3">🏢 Sector</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sector</label>
                         <select 
                             name="sector" 
-                            class="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg font-medium bg-white"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white"
                         >
                             <option value="">All Sectors</option>
                             {% for sector in sectors %}
-                            <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>
-                                {{ sector }}
-                            </option>
+                            <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>{{ sector }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     
-                    <!-- Enhanced Action Buttons -->
-                    <div class="flex items-end space-x-3">
-                        <button 
-                            type="submit" 
-                            class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-xl font-bold text-lg transition duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    <!-- Sort -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                        <select 
+                            name="sort_by" 
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white"
                         >
-                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Apply
-                        </button>
-                        {% if search_query or sector_filter or sort_by != 'dividend_date' %}
-                        <a 
-                            href="{% url 'all_stocks' %}" 
-                            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-bold transition duration-200 shadow-lg hover:shadow-xl"
-                        >
-                            <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </a>
-                        {% endif %}
+                            <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
+                            <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount</option>
+                            <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Dividend Yield</option>
+                            <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol (A-Z)</option>
+                            <option value="sector" {% if sort_by == 'sector' %}selected{% endif %}>Sector</option>
+                        </select>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Enhanced Results Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Available Stocks</h2>
-                <p class="text-gray-600 text-lg">
-                    Showing <span class="font-bold text-blue-600">{{ page_obj.start_index }}</span> - 
-                    <span class="font-bold text-blue-600">{{ page_obj.end_index }}</span> of 
-                    <span class="font-bold text-purple-600">{{ page_obj.paginator.count }}</span> stocks
-                </p>
-            </div>
-            <div class="flex items-center space-x-3 mt-4 sm:mt-0">
-                <span class="text-sm font-semibold text-gray-700">Sort by:</span>
-                <form method="get" class="m-0">
-                    <!-- Preserve existing filters -->
-                    <input type="hidden" name="search" value="{{ search_query }}">
-                    <input type="hidden" name="sector" value="{{ sector_filter }}">
-                    
-                    <select 
-                        name="sort_by" 
-                        onchange="this.form.submit()"
-                        class="text-base border-2 border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-blue-500 focus:border-blue-500 font-medium bg-white transition"
-                    >
-                        <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
-                        <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount (High-Low)</option>
-                        <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Dividend Yield (High-Low)</option>
-                        <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol (A-Z)</option>
-                        <option value="sector" {% if sort_by == 'sector' %}selected{% endif %}>Sector</option>
-                    </select>
-                </form>
-            </div>
-        </div>
-
-        <!-- Sponsored Content -->
-        {% include 'components/sponsored_content.html' %}
-        
-        <!-- Enhanced Stocks Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-            {% for item in stocks_with_dividends %}
-            <div class="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 transform hover:-translate-y-2 group relative overflow-hidden">
-                <!-- Decorative gradient overlay on hover -->
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
                 
-                <div class="p-6 relative z-10">
-                    <!-- Enhanced Stock Header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition duration-200">
-                                {{ item.stock.symbol }}
-                            </h3>
-                            <p class="text-sm text-gray-500 font-medium">{{ item.stock.code }}</p>
-                        </div>
-                        {% if item.has_dividend %}
-                        <span class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
-                            💰 Dividend
-                        </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Enhanced Company Name -->
-                    <p class="text-gray-700 font-semibold mb-4 line-clamp-2 text-base">{{ item.stock.company_name }}</p>
-                    
-                    <!-- Enhanced Sector Badge -->
-                    {% if item.stock.sector %}
-                    <div class="mb-4">
-                        <span class="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 text-xs px-4 py-2 rounded-full font-bold border border-blue-200">
-                            {{ item.stock.sector }}
-                        </span>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3">
+                    <button 
+                        type="submit" 
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition min-h-[44px]"
+                    >
+                        Apply Filters
+                    </button>
+                    {% if search_query or sector_filter or sort_by != 'dividend_date' %}
+                    <a 
+                        href="{% url 'all_stocks' %}" 
+                        class="px-6 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition min-h-[44px] flex items-center"
+                    >
+                        Clear
+                    </a>
                     {% endif %}
-                    
-                    <!-- Enhanced Dividend Information -->
-                    {% if item.has_dividend %}
-                    <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 p-5 rounded-2xl mb-4 border-2 border-green-200 shadow-inner">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white rounded-xl p-3 shadow-sm">
-                                <span class="text-xs text-gray-600 font-medium block mb-1">Dividend</span>
-                                <div class="text-xl font-bold text-green-600">${{ item.latest_dividend.amount }}</div>
-                            </div>
-                            <div class="bg-white rounded-xl p-3 shadow-sm">
-                                <span class="text-xs text-gray-600 font-medium block mb-1">Yield</span>
-                                <div class="text-xl font-bold text-blue-600">{{ item.latest_dividend.yield_percent }}%</div>
-                            </div>
-                            <div class="bg-white rounded-xl p-3 shadow-sm">
-                                <span class="text-xs text-gray-600 font-medium block mb-1">Frequency</span>
-                                <div class="text-sm font-bold text-gray-900">{{ item.latest_dividend.frequency }}</div>
-                            </div>
-                            <div class="bg-white rounded-xl p-3 shadow-sm">
-                                <span class="text-xs text-gray-600 font-medium block mb-1">Next Ex-Date</span>
-                                <div class="text-sm font-bold text-gray-900">
-                                    {% if item.upcoming_dividend_date %}
-                                        {{ item.upcoming_dividend_date|date:"M d" }}
-                                    {% else %}
-                                        <span class="text-gray-400">No upcoming</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Info -->
+        <div class="mb-4 text-sm text-gray-600">
+            Showing <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span> - 
+            <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span> of 
+            <span class="font-semibold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> stocks
+        </div>
+
+        <!-- Stocks Table View -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Symbol</th>
+                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Company</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Dividend</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Yield</th>
+                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Ex-Date</th>
+                            <th class="px-4 md:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for item in stocks_with_dividends %}
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <!-- Symbol -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                                        <span class="text-white font-bold text-sm">{{ item.stock.symbol|slice:":1" }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-lg font-bold text-gray-900">{{ item.stock.symbol }}</span>
+                                            {% if item.has_dividend %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                                                Div
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-gray-500 font-medium">
+                                            {% if item.latest_dividend and item.latest_dividend.frequency %}
+                                                {{ item.latest_dividend.frequency }}
+                                            {% else %}
+                                                {{ item.stock.code }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Company Name -->
+                            <td class="px-4 md:px-6 py-4">
+                                <div class="text-sm font-semibold text-gray-900 max-w-xs">{{ item.stock.company_name|truncatewords:8 }}</div>
+                            </td>
+                            
+                            <!-- Price -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                {% if item.latest_price %}
+                                <div class="text-base font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                                {% else %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Dividend -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                {% if item.latest_dividend %}
+                                <div class="text-base font-bold text-gray-900">${{ item.latest_dividend.amount|floatformat:4 }}</div>
+                                {% else %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Yield -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                {% if item.latest_dividend and item.latest_dividend.yield_percent %}
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700 border border-green-200">
+                                    {{ item.latest_dividend.yield_percent|floatformat:2 }}%
+                                </div>
+                                {% else %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Ex-Date -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right">
+                                {% if item.upcoming_dividend_date %}
+                                <div class="inline-flex flex-col items-end">
+                                    <div class="flex items-center space-x-1.5 mb-1">
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span class="text-sm font-bold text-blue-600">{{ item.upcoming_dividend_date|date:"M d, Y" }}</span>
+                                    </div>
+                                    {% if item.days_until is not None %}
+                                    <div class="text-xs font-medium {% if item.days_until <= 3 %}text-red-600{% elif item.days_until <= 7 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                        {% if item.days_until == 0 %}
+                                            Today
+                                        {% elif item.days_until < 0 %}
+                                            Passed
+                                        {% else %}
+                                            {{ item.days_until }} days
+                                        {% endif %}
+                                    </div>
                                     {% endif %}
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Enhanced Price Information -->
-                    {% if item.latest_price %}
-                    <div class="flex justify-between items-center mb-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 rounded-xl">
-                        <div>
-                            <span class="text-gray-600 font-medium text-sm">Current Price:</span>
-                            <span class="text-xl font-bold text-gray-900 block">${{ item.latest_price.price }}</span>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Enhanced Action Button -->
-                    <a 
-                        href="{% url 'stock_detail' item.stock.symbol %}" 
-                        class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-center py-3 md:py-4 px-4 rounded-xl font-bold text-base transition duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group/btn min-h-[44px] flex items-center justify-center"
-                    >
-                        <span class="flex items-center justify-center">
-                            View Details
-                            <svg class="w-5 h-5 ml-2 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </span>
-                    </a>
-                </div>
+                                {% else %}
+                                <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Action -->
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-center">
+                                <a 
+                                    href="{% url 'stock_detail' item.stock.symbol %}" 
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm min-h-[36px]"
+                                >
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-20 text-center">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">No stocks found</h3>
+                                <p class="text-gray-600 mb-6">
+                                    {% if search_query or sector_filter %}
+                                    Try adjusting your search or filters.
+                                    {% else %}
+                                    No stocks available at the moment.
+                                    {% endif %}
+                                </p>
+                                {% if search_query or sector_filter %}
+                                <a href="{% url 'all_stocks' %}" 
+                                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                                    Clear Filters
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% empty %}
-            <div class="col-span-full text-center py-20 bg-white rounded-3xl shadow-xl border-2 border-gray-100">
-                <div class="text-8xl mb-6">🔍</div>
-                <h3 class="text-3xl font-bold text-gray-900 mb-3">No stocks found</h3>
-                <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
-                    {% if search_query or sector_filter %}
-                    Try adjusting your search criteria or filters to find what you're looking for.
-                    {% else %}
-                    No stocks available in the database at the moment.
-                    {% endif %}
-                </p>
-                <a href="{% url 'all_stocks' %}" 
-                   class="inline-flex items-center px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    Clear filters and view all stocks
-                </a>
-            </div>
-            {% endfor %}
         </div>
 
-        <!-- Enhanced Pagination -->
+        <!-- Pagination -->
         {% if page_obj.paginator.num_pages > 1 %}
-        <div class="flex justify-center mt-12">
-            <nav class="flex items-center space-x-3 bg-white rounded-3xl shadow-2xl p-4 border-2 border-gray-100">
+        <div class="mt-6 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="flex items-center gap-2">
                 {% if page_obj.has_previous %}
                 <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
-                    &laquo; First
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                    First
                 </a>
                 <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
-                    ← Previous
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                    Previous
                 </a>
                 {% endif %}
-
-                <span class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                </span>
-
+                
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
-                    Next →
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                    Next
                 </a>
                 <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" 
-                   class="px-3 md:px-5 py-2 md:py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:border-blue-500 transition duration-200 font-semibold min-h-[44px] flex items-center justify-center text-sm md:text-base">
-                    Last &raquo;
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition min-h-[44px] flex items-center">
+                    Last
                 </a>
                 {% endif %}
-            </nav>
-        </div>
-        {% endif %}
-
-        <!-- Enhanced CTA Section -->
-        {% if user.is_authenticated %}
-        <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl shadow-2xl p-12 text-center mt-16 relative overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-10"></div>
-            <div class="relative z-10">
-                <h2 class="text-4xl font-bold text-white mb-4">Track Your Dividend Portfolio</h2>
-                <p class="text-blue-100 text-xl mb-10 max-w-2xl mx-auto">
-                    Monitor your investments, track dividend payments, and analyze your portfolio performance with advanced tools.
-                </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="{% url 'portfolio' %}" 
-                       class="bg-white text-blue-600 hover:bg-gray-100 px-10 py-4 rounded-xl font-bold text-lg transition duration-200 transform hover:scale-105 shadow-2xl">
-                        View My Portfolio
-                    </a>
-                    <a href="{% url 'dividend_calendar' %}" 
-                       class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-xl font-bold text-lg transition duration-200 shadow-2xl">
-                        Dividend Calendar
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl shadow-2xl p-12 text-center mt-16 relative overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-10"></div>
-            <div class="relative z-10">
-                <h2 class="text-4xl font-bold text-white mb-4">Ready to Track Your Dividends?</h2>
-                <p class="text-blue-100 text-xl mb-10 max-w-2xl mx-auto">
-                    Create your free account and start building your dividend portfolio with advanced tracking and notifications.
-                </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="{% url 'register' %}" 
-                       class="bg-white text-blue-600 hover:bg-gray-100 px-10 py-4 rounded-xl font-bold text-lg transition duration-200 transform hover:scale-105 shadow-2xl">
-                        Start Free Trial
-                    </a>
-                    <a href="{% url 'login' %}" 
-                       class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-10 py-4 rounded-xl font-bold text-lg transition duration-200 shadow-2xl">
-                        Sign In
-                    </a>
-                </div>
             </div>
         </div>
         {% endif %}
@@ -401,7 +305,7 @@
 </div>
 
 <script>
-// Search Autocomplete and Recent Searches
+// Search Autocomplete
 (function() {
     const searchInput = document.getElementById('stock-search-input');
     const autocompleteResults = document.getElementById('autocomplete-results');
@@ -412,7 +316,6 @@
     
     if (!searchInput) return;
     
-    // Show recent searches when input is focused and empty
     searchInput.addEventListener('focus', function() {
         if (!this.value.trim() && recentSearchesList.children.length > 0) {
             recentSearches.classList.remove('hidden');
@@ -420,7 +323,6 @@
         }
     });
     
-    // Hide dropdowns when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#search-container')) {
             autocompleteResults.classList.add('hidden');
@@ -428,26 +330,19 @@
         }
     });
     
-    // Handle input for autocomplete
     searchInput.addEventListener('input', function() {
         const query = this.value.trim();
-        
-        // Clear previous timeout
         clearTimeout(autocompleteTimeout);
-        
-        // Hide recent searches when typing
         recentSearches.classList.add('hidden');
         
         if (query.length < 2) {
             autocompleteResults.classList.add('hidden');
-            // Show recent searches if input is empty
             if (query.length === 0 && recentSearchesList.children.length > 0) {
                 recentSearches.classList.remove('hidden');
             }
             return;
         }
         
-        // Debounce autocomplete requests
         autocompleteTimeout = setTimeout(function() {
             fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
@@ -457,10 +352,9 @@
                 .catch(error => {
                     console.error('Autocomplete error:', error);
                 });
-        }, 300); // 300ms debounce
+        }, 300);
     });
     
-    // Handle keyboard navigation
     searchInput.addEventListener('keydown', function(e) {
         const items = autocompleteResults.querySelectorAll('.autocomplete-item');
         
@@ -500,23 +394,20 @@
         autocompleteResults.innerHTML = '';
         selectedIndex = -1;
         
-        results.forEach((stock, index) => {
+        results.forEach((stock) => {
             const item = document.createElement('div');
-            item.className = 'autocomplete-item p-4 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition duration-150';
+            item.className = 'autocomplete-item p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition';
             item.dataset.url = stock.url;
             item.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <div class="flex items-center space-x-2">
-                            <span class="font-bold text-lg text-gray-900">${escapeHtml(stock.symbol)}</span>
+                            <span class="font-semibold text-gray-900">${escapeHtml(stock.symbol)}</span>
                             <span class="text-xs text-gray-500">${escapeHtml(stock.code)}</span>
-                            ${stock.sector ? `<span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
+                            ${stock.sector ? `<span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
                         </div>
                         <p class="text-sm text-gray-600 mt-1">${escapeHtml(stock.company_name)}</p>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
                 </div>
             `;
             
@@ -530,12 +421,10 @@
         autocompleteResults.classList.remove('hidden');
     }
     
-    // Handle recent search clicks
     document.querySelectorAll('.recent-search-item').forEach(item => {
         item.addEventListener('click', function() {
             const searchTerm = this.dataset.search;
             searchInput.value = searchTerm;
-            // Submit the form
             searchInput.closest('form').submit();
         });
     });

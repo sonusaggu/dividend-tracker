@@ -835,6 +835,7 @@ def all_stocks_view(request):
     page_obj = paginator.get_page(request.GET.get('page', 1))
 
     # --- 9️⃣ Prepare context list — already annotated, no extra DB calls
+    today = timezone.now().date()
     stocks_with_data = [
         {
             'stock': stock,
@@ -847,6 +848,7 @@ def all_stocks_view(request):
                 } if stock.latest_dividend_amount else None
             ),
             'upcoming_dividend_date': stock.upcoming_dividend_date,
+            'days_until': (stock.upcoming_dividend_date - today).days if stock.upcoming_dividend_date else None,
             'latest_price': (
                 {
                     'price': stock.latest_price_value,

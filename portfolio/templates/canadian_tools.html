@@ -6,22 +6,16 @@
 {% block meta_description %}Free Canadian tax calculators for dividend tax credits, capital gains, RRSP, and TFSA contribution limits. Perfect for TSX stock investors.{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="text-center mb-16 pt-8 pb-12">
-            <div class="mb-6">
-                <span class="text-6xl mb-4 block">🇨🇦</span>
-            </div>
-            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                 Canadian Tax & Investment Tools
             </h1>
-            <p class="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
                 Free calculators for Canadian investors: Dividend Tax Credits, Capital Gains, RRSP & TFSA limits
             </p>
-            <div class="mt-8 flex justify-center">
-                <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
-            </div>
         </div>
 
         <!-- Messages -->
@@ -36,7 +30,7 @@
         {% endif %}
 
         <!-- Tool Selection Tabs -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div class="flex flex-wrap gap-3 mb-8 border-b-2 border-gray-200 pb-6">
                 <button onclick="showTool('dividend_tax')" class="tool-tab px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white">
                     Dividend Tax Credit
@@ -101,7 +95,7 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
                         Calculate Tax Credit
                     </button>
                 </form>
@@ -140,7 +134,7 @@
                         </div>
                     </div>
                     <p class="mt-4 text-sm text-gray-600">
-                        💡 <strong>Note:</strong> Most Canadian investors pay little to no tax on eligible dividends thanks to the dividend tax credit!
+                        <strong>Note:</strong> Most Canadian investors pay little to no tax on eligible dividends thanks to the dividend tax credit!
                     </p>
                 </div>
                 {% endif %}
@@ -370,7 +364,7 @@
                         </div>
                     </div>
                     <p class="mt-4 text-sm text-gray-600">
-                        💡 <strong>Remember:</strong> TFSA withdrawals can be re-contributed in the following year!
+                        <strong>Remember:</strong> TFSA withdrawals can be re-contributed in the following year!
                     </p>
                 </div>
                 {% else %}
@@ -475,9 +469,9 @@
                     {% endif %}
                     
                     <!-- Final Summary -->
-                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
-                        <h4 class="font-bold text-xl mb-4">Net After-Tax Income</h4>
-                        <div class="text-4xl font-bold">${{ portfolio_tax_result.net_after_tax_income|floatformat:2 }}</div>
+                    <div class="bg-blue-600 text-white rounded-lg p-6">
+                        <h4 class="font-bold text-lg mb-4">Net After-Tax Income</h4>
+                        <div class="text-3xl font-bold">${{ portfolio_tax_result.net_after_tax_income|floatformat:2 }}</div>
                         <p class="mt-2 text-blue-100">Total dividends + capital gains after taxes</p>
                     </div>
                 </div>
@@ -487,38 +481,54 @@
         </div>
 
         <!-- Information Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-10 mt-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">💡 Important Notes for Canadian Investors</h2>
-            <div class="space-y-6 text-gray-700 max-w-4xl mx-auto">
-                <div class="flex items-start space-x-4 p-6 bg-blue-50 rounded-lg border border-blue-100">
-                    <span class="text-3xl flex-shrink-0">📊</span>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Important Notes for Canadian Investors</h2>
+            <div class="space-y-4 text-gray-700 max-w-4xl mx-auto">
+                <div class="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Dividend Tax Credit</h3>
-                        <p class="text-base leading-relaxed">Most TSX dividends are "eligible dividends" and qualify for the enhanced dividend tax credit. This means most Canadians pay little to no tax on dividend income!</p>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Dividend Tax Credit</h3>
+                        <p class="text-sm leading-relaxed">Most TSX dividends are "eligible dividends" and qualify for the enhanced dividend tax credit. This means most Canadians pay little to no tax on dividend income!</p>
                     </div>
                 </div>
-                <div class="flex items-start space-x-4 p-6 bg-green-50 rounded-lg border border-green-100">
-                    <span class="text-3xl flex-shrink-0">💰</span>
+                <div class="flex items-start space-x-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Capital Gains</h3>
-                        <p class="text-base leading-relaxed">Only 50% of capital gains are taxable in Canada. This makes capital gains more tax-efficient than regular income.</p>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Capital Gains</h3>
+                        <p class="text-sm leading-relaxed">Only 50% of capital gains are taxable in Canada. This makes capital gains more tax-efficient than regular income.</p>
                     </div>
                 </div>
-                <div class="flex items-start space-x-4 p-6 bg-purple-50 rounded-lg border border-purple-100">
-                    <span class="text-3xl flex-shrink-0">🏦</span>
+                <div class="flex items-start space-x-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">RRSP vs TFSA</h3>
-                        <p class="text-base leading-relaxed">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">RRSP vs TFSA</h3>
+                        <p class="text-sm leading-relaxed">
                             <strong>RRSP:</strong> Tax deduction now, tax on withdrawal. Best if you're in a higher tax bracket now than in retirement.<br><br>
                             <strong>TFSA:</strong> No tax deduction, but all growth and withdrawals are tax-free. Best for tax-free growth.
                         </p>
                     </div>
                 </div>
-                <div class="flex items-start space-x-4 p-6 bg-yellow-50 rounded-lg border border-yellow-100">
-                    <span class="text-3xl flex-shrink-0">⚠️</span>
+                <div class="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Disclaimer</h3>
-                        <p class="text-base leading-relaxed">These calculators provide estimates only. Tax rates vary by province and income level. Always consult with a tax professional for personalized advice.</p>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Disclaimer</h3>
+                        <p class="text-sm leading-relaxed">These calculators provide estimates only. Tax rates vary by province and income level. Always consult with a tax professional for personalized advice.</p>
                     </div>
                 </div>
             </div>

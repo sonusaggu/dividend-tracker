@@ -4,12 +4,10 @@
 {% block title %}Import Transactions from Wealthsimple - StockFolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-    <div class="max-w-3xl mx-auto px-4">
-        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h1 class="text-3xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Import Transactions from Wealthsimple
-            </h1>
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Import Transactions from Wealthsimple</h1>
 
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
                 <h3 class="font-semibold text-blue-900 mb-2">How to Export from Wealthsimple:</h3>
@@ -21,7 +19,7 @@
                 </ol>
                 
                 <details class="mt-4">
-                    <summary class="cursor-pointer font-semibold text-blue-900 hover:text-blue-700">📋 Expected CSV Format (Click to expand)</summary>
+                    <summary class="cursor-pointer font-semibold text-blue-900 hover:text-blue-700">Expected CSV Format (Click to expand)</summary>
                     <div class="mt-3 bg-white rounded-lg p-4 border border-blue-300">
                         <p class="text-xs text-gray-700 mb-2 font-mono">Example CSV format:</p>
                         <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto">Date,Symbol,Type,Quantity,Price,Fees
@@ -39,7 +37,7 @@
                 <div>
                     <label for="csv_file" class="block text-sm font-semibold text-gray-700 mb-2">CSV File *</label>
                     <input type="file" id="csv_file" name="csv_file" accept=".csv" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" 
                            required>
                     <p class="mt-2 text-sm text-gray-500">Supported formats: CSV files exported from Wealthsimple Trade</p>
                 </div>
@@ -72,11 +70,14 @@
 
                 <div class="flex gap-4 pt-4">
                     <button type="submit" 
-                            class="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
-                        📥 Import Transactions
+                            class="flex-1 inline-flex items-center justify-center px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Import Transactions
                     </button>
                     <a href="{% url 'transactions_list' %}" 
-                       class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition min-h-[44px] flex items-center justify-center">
+                       class="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition flex items-center justify-center">
                         Cancel
                     </a>
                 </div>
