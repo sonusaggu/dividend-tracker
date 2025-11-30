@@ -84,3 +84,5 @@ class Command(BaseCommand):
             f"\nCompleted! Updated: {updated_count}, Errors: {error_count}"
         ))
 
+
+

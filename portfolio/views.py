@@ -4463,6 +4463,8 @@ def website_analytics(request):
         messages.error(request, 'You do not have permission to view analytics.')
         return redirect('dashboard')
     
+    import re
+    from urllib.parse import urlparse
     from datetime import timedelta
     from django.db.models import Count, Q, Avg
     from portfolio.models import WebsiteMetric, UserSession
@@ -4485,11 +4487,49 @@ def website_analytics(request):
     bot_visits = metrics.filter(is_bot=True).count()
     authenticated_visits = metrics.filter(is_authenticated=True).count()
     
-    # Top IPs
-    top_ips = metrics.exclude(ip_address=None).values('ip_address').annotate(
+    # Top IPs with additional info
+    top_ips_raw = list(metrics.exclude(ip_address=None).values('ip_address', 'country', 'city', 'region', 'timezone', 'user_agent').annotate(
         visit_count=Count('id'),
         user_count=Count('user', distinct=True)
-    ).order_by('-visit_count')[:20]
+    ).order_by('-visit_count')[:20])
+    
+    # Process IPs with browser/OS info
+    top_ips = []
+    for ip_data in top_ips_raw:
+        ip_info = dict(ip_data)
+        # Extract browser from user_agent
+        user_agent = ip_data.get('user_agent', '')
+        browser = 'Unknown'
+        os_info = 'Unknown'
+        
+        if user_agent:
+            # Browser detection
+            if 'Chrome' in user_agent and 'Edg' not in user_agent:
+                browser = 'Chrome'
+            elif 'Firefox' in user_agent:
+                browser = 'Firefox'
+            elif 'Safari' in user_agent and 'Chrome' not in user_agent:
+                browser = 'Safari'
+            elif 'Edg' in user_agent:
+                browser = 'Edge'
+            elif 'Opera' in user_agent or 'OPR' in user_agent:
+                browser = 'Opera'
+            
+            # OS detection
+            if 'Windows' in user_agent:
+                os_info = 'Windows'
+            elif 'Mac' in user_agent or 'Macintosh' in user_agent:
+                os_info = 'macOS'
+            elif 'Linux' in user_agent:
+                os_info = 'Linux'
+            elif 'Android' in user_agent:
+                os_info = 'Android'
+            elif 'iOS' in user_agent or 'iPhone' in user_agent or 'iPad' in user_agent:
+                os_info = 'iOS'
+        
+        ip_info['browser'] = browser
+        ip_info['os'] = os_info
+        top_ips.append(ip_info)
     
     # Top users
     top_users = metrics.exclude(user=None).values('user__username', 'user__email', 'user__id').annotate(
@@ -4503,6 +4543,77 @@ def website_analytics(request):
         unique_visitors=Count('ip_address', distinct=True)
     ).order_by('-view_count')[:20]
     
+    # Traffic sources (referrers)
+    referrer_stats = []
+    referrers = metrics.exclude(referrer='').values('referrer').annotate(
+        visit_count=Count('id')
+    ).order_by('-visit_count')[:20]
+    
+    for ref in referrers:
+        ref_url = ref['referrer']
+        try:
+            parsed = urlparse(ref_url)
+            domain = parsed.netloc.replace('www.', '')
+            if domain:
+                referrer_stats.append({
+                    'domain': domain,
+                    'full_url': ref_url[:100],
+                    'visit_count': ref['visit_count']
+                })
+        except:
+            referrer_stats.append({
+                'domain': ref_url[:50],
+                'full_url': ref_url[:100],
+                'visit_count': ref['visit_count']
+            })
+    
+    # Browser breakdown
+    browser_stats = {}
+    for metric in metrics.exclude(user_agent=''):
+        user_agent = metric.user_agent
+        browser = 'Unknown'
+        if 'Chrome' in user_agent and 'Edg' not in user_agent:
+            browser = 'Chrome'
+        elif 'Firefox' in user_agent:
+            browser = 'Firefox'
+        elif 'Safari' in user_agent and 'Chrome' not in user_agent:
+            browser = 'Safari'
+        elif 'Edg' in user_agent:
+            browser = 'Edge'
+        elif 'Opera' in user_agent or 'OPR' in user_agent:
+            browser = 'Opera'
+        
+        browser_stats[browser] = browser_stats.get(browser, 0) + 1
+    
+    browser_stats = sorted(browser_stats.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # OS breakdown
+    os_stats = {}
+    for metric in metrics.exclude(user_agent=''):
+        user_agent = metric.user_agent
+        os_info = 'Unknown'
+        if 'Windows' in user_agent:
+            os_info = 'Windows'
+        elif 'Mac' in user_agent or 'Macintosh' in user_agent:
+            os_info = 'macOS'
+        elif 'Linux' in user_agent:
+            os_info = 'Linux'
+        elif 'Android' in user_agent:
+            os_info = 'Android'
+        elif 'iOS' in user_agent or 'iPhone' in user_agent or 'iPad' in user_agent:
+            os_info = 'iOS'
+        
+        os_stats[os_info] = os_stats.get(os_info, 0) + 1
+    
+    os_stats = sorted(os_stats.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # Hourly activity pattern
+    hourly_stats = metrics.extra(
+        select={'hour': "EXTRACT(hour FROM timestamp)"}
+    ).values('hour').annotate(
+        visit_count=Count('id')
+    ).order_by('hour')
+    
     # Recent activity
     recent_activity = metrics.select_related('user').order_by('-timestamp')[:50]
     
@@ -4515,6 +4626,10 @@ def website_analytics(request):
     country_stats = metrics.exclude(country='').values('country').annotate(
         visit_count=Count('id')
     ).order_by('-visit_count')[:20]
+    
+    # Direct vs Referral traffic
+    direct_traffic = metrics.filter(referrer='').count()
+    referral_traffic = metrics.exclude(referrer='').count()
     
     context = {
         'total_visits': total_visits,
@@ -4530,6 +4645,12 @@ def website_analytics(request):
         'recent_activity': recent_activity,
         'avg_response_time': round(avg_response_time, 2),
         'country_stats': country_stats,
+        'browser_stats': browser_stats,
+        'os_stats': os_stats,
+        'referrer_stats': referrer_stats,
+        'hourly_stats': hourly_stats,
+        'direct_traffic': direct_traffic,
+        'referral_traffic': referral_traffic,
         'days': days,
         'start_date': start_date,
     }

@@ -271,11 +271,11 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(WebsiteMetric)
 class WebsiteMetricAdmin(admin.ModelAdmin):
-    list_display = ('user', 'ip_address', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'response_time_ms')
-    list_filter = ('method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'country')
-    search_fields = ('path', 'user__username', 'user__email', 'ip_address', 'user_agent', 'session_key')
+    list_display = ('user', 'ip_address', 'location_display', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'response_time_ms')
+    list_filter = ('method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'timestamp', 'country', 'city', 'timezone')
+    search_fields = ('path', 'user__username', 'user__email', 'ip_address', 'user_agent', 'session_key', 'city', 'region', 'country')
     date_hierarchy = 'timestamp'
-    readonly_fields = ('timestamp', 'response_time_ms', 'user', 'session_key', 'ip_address', 'user_agent', 'referrer', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'country')
+    readonly_fields = ('timestamp', 'response_time_ms', 'user', 'session_key', 'ip_address', 'user_agent', 'referrer', 'path', 'method', 'status_code', 'is_authenticated', 'is_mobile', 'is_bot', 'country', 'city', 'region', 'timezone')
     list_per_page = 100
     
     fieldsets = (
@@ -283,7 +283,10 @@ class WebsiteMetricAdmin(admin.ModelAdmin):
             'fields': ('user', 'is_authenticated', 'session_key')
         }),
         ('Request Details', {
-            'fields': ('ip_address', 'user_agent', 'referrer', 'country')
+            'fields': ('ip_address', 'user_agent', 'referrer')
+        }),
+        ('Location Information', {
+            'fields': ('country', 'city', 'region', 'timezone')
         }),
         ('Page Information', {
             'fields': ('path', 'method', 'status_code')
@@ -295,6 +298,20 @@ class WebsiteMetricAdmin(admin.ModelAdmin):
             'fields': ('response_time_ms', 'timestamp')
         }),
     )
+    
+    def location_display(self, obj):
+        """Display location information in a compact format"""
+        parts = []
+        if obj.city:
+            parts.append(obj.city)
+        if obj.region:
+            parts.append(obj.region)
+        if obj.country:
+            parts.append(obj.country.upper())
+        if obj.timezone:
+            parts.append(f"({obj.timezone})")
+        return ', '.join(parts) if parts else 'N/A'
+    location_display.short_description = 'Location'
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)

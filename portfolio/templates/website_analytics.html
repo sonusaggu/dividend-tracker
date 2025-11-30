@@ -90,20 +90,40 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visits</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Browser/OS</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for ip in top_ips %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm font-mono text-gray-900">{{ ip.ip_address }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    {% if ip.city or ip.region or ip.country %}
+                                        <div class="space-y-0.5">
+                                            {% if ip.city %}<div class="font-medium">{{ ip.city }}</div>{% endif %}
+                                            {% if ip.region %}<div class="text-xs text-gray-500">{{ ip.region }}</div>{% endif %}
+                                            {% if ip.country %}<div class="text-xs font-semibold text-blue-600">{{ ip.country|upper }}</div>{% endif %}
+                                            {% if ip.timezone %}<div class="text-xs text-gray-400">{{ ip.timezone }}</div>{% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-400">Unknown</span>
+                                    {% endif %}
+                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ ip.visit_count|intcomma }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ ip.user_count|intcomma }}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <div class="space-y-0.5">
+                                        <div class="text-xs font-medium text-gray-700">{{ ip.browser|default:"Unknown" }}</div>
+                                        <div class="text-xs text-gray-500">{{ ip.os|default:"Unknown" }}</div>
+                                    </div>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" class="px-4 py-8 text-center text-gray-500">No IP data available</td>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">No IP data available</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -154,6 +174,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Path</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -166,12 +187,27 @@
                             <td class="px-4 py-3 text-sm text-gray-600">{{ activity.timestamp|date:"M d, Y H:i" }}</td>
                             <td class="px-4 py-3 text-sm">
                                 {% if activity.user %}
-                                    <span class="font-medium text-gray-900">{{ activity.user.username }}</span>
+                                    <div class="space-y-0.5">
+                                        <span class="font-medium text-gray-900">{{ activity.user.username }}</span>
+                                        {% if activity.user.email %}<div class="text-xs text-gray-500">{{ activity.user.email }}</div>{% endif %}
+                                    </div>
                                 {% else %}
                                     <span class="text-gray-400">Anonymous</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-3 text-sm font-mono text-gray-600">{{ activity.ip_address|default:"N/A" }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">
+                                {% if activity.city or activity.region or activity.country %}
+                                    <div class="space-y-0.5">
+                                        {% if activity.city %}<div class="font-medium text-gray-700">{{ activity.city }}</div>{% endif %}
+                                        {% if activity.region %}<div class="text-xs text-gray-500">{{ activity.region }}</div>{% endif %}
+                                        {% if activity.country %}<div class="text-xs font-semibold text-blue-600">{{ activity.country|upper }}</div>{% endif %}
+                                        {% if activity.timezone %}<div class="text-xs text-gray-400">{{ activity.timezone }}</div>{% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400">Unknown</span>
+                                {% endif %}
+                            </td>
                             <td class="px-4 py-3 text-sm text-gray-600">{{ activity.path|truncatechars:40 }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <span class="px-2 py-1 rounded text-xs font-medium {% if activity.method == 'GET' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
@@ -195,7 +231,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">No recent activity</td>
+                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">No recent activity</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -204,7 +240,7 @@
         </div>
 
         <!-- Additional Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3">Device Breakdown</h3>
                 <div class="space-y-2">
@@ -238,12 +274,95 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">Sessions</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Traffic Sources</h3>
                 <div class="space-y-2">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Unique Sessions:</span>
+                        <span class="text-gray-600">Direct:</span>
+                        <span class="font-semibold">{{ direct_traffic|intcomma }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Referral:</span>
+                        <span class="font-semibold">{{ referral_traffic|intcomma }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Sessions:</span>
                         <span class="font-semibold">{{ unique_sessions|intcomma }}</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browser & OS Stats -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🌐 Top Browsers</h3>
+                <div class="space-y-3">
+                    {% for browser, count in browser_stats %}
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">{{ browser }}</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ count|intcomma }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {% widthratio count total_visits 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No browser data</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">💻 Operating Systems</h3>
+                <div class="space-y-3">
+                    {% for os, count in os_stats %}
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">{{ os }}</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ count|intcomma }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: {% widthratio count total_visits 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No OS data</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Sources & Countries -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🔗 Top Referrers</h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for ref in referrer_stats|slice:":10" %}
+                    <div class="flex justify-between text-sm py-1 border-b border-gray-100">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-900 truncate">{{ ref.domain }}</div>
+                            <div class="text-xs text-gray-500 truncate">{{ ref.full_url|truncatechars:50 }}</div>
+                        </div>
+                        <span class="font-semibold text-gray-700 ml-2">{{ ref.visit_count|intcomma }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No referrer data</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🌍 Top Countries</h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for country in country_stats|slice:":10" %}
+                    <div class="flex justify-between text-sm py-1 border-b border-gray-100">
+                        <span class="font-medium text-gray-700">{{ country.country|upper }}</span>
+                        <span class="font-semibold text-gray-900">{{ country.visit_count|intcomma }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No country data</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>

@@ -1082,6 +1082,9 @@ class WebsiteMetric(models.Model):
     is_mobile = models.BooleanField(default=False, db_index=True)
     is_bot = models.BooleanField(default=False, db_index=True)
     country = models.CharField(max_length=2, blank=True, db_index=True)  # ISO country code
+    city = models.CharField(max_length=100, blank=True, db_index=True)
+    region = models.CharField(max_length=100, blank=True)  # State/Province
+    timezone = models.CharField(max_length=50, blank=True)
     
     class Meta:
         ordering = ['-timestamp']

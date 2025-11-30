@@ -44,3 +44,5 @@ class Command(BaseCommand):
             self.stdout.write(f'  Active: {affiliate.is_active}')
 
 
+
+

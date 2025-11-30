@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'portfolio.middleware.SecurityHeadersMiddleware',  # Add security headers
+    'portfolio.middleware.DatabaseErrorHandlerMiddleware',  # Handle database errors gracefully
     'portfolio.middleware.WebsiteMetricsMiddleware',  # Track website metrics
 ]
 

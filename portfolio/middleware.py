@@ -4,10 +4,12 @@ Custom middleware for security and logging
 import logging
 import time
 import re
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
+from django.template.loader import render_to_string
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
 from django.contrib.auth.models import AnonymousUser
+from django.db import OperationalError, DatabaseError, InterfaceError
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +51,51 @@ class BlockSuspiciousUserAgentsMiddleware(MiddlewareMixin):
             logger.warning(f"Blocked suspicious user agent: {user_agent} from {request.META.get('REMOTE_ADDR')}")
             return HttpResponse('Forbidden', status=403)
         
+        return None
+
+
+class DatabaseErrorHandlerMiddleware(MiddlewareMixin):
+    """Handle database connection errors gracefully with user-friendly messages"""
+    
+    def process_exception(self, request, exception):
+        """Catch database connection errors and return user-friendly error page"""
+        if isinstance(exception, (OperationalError, DatabaseError, InterfaceError)):
+            # Check if it's a connection error
+            error_str = str(exception).lower()
+            if any(keyword in error_str for keyword in [
+                'connection refused', 'connection', 'server', 'tcp/ip',
+                'could not connect', 'unable to connect', 'connection timeout',
+                'is the server running', 'accepting tcp/ip connections'
+            ]):
+                logger.error(f"Database connection error: {exception}")
+                
+                # Determine if this is an admin request
+                is_admin = request.path.startswith('/admin/')
+                
+                # Render user-friendly error page
+                try:
+                    html = render_to_string('database_error.html', {
+                        'error_type': 'Database Connection Error',
+                        'error_message': 'We are currently experiencing database connectivity issues. Please try again in a few moments.',
+                        'support_message': 'If this problem persists, please contact support.',
+                        'is_admin': is_admin,
+                    })
+                    return HttpResponseServerError(html)
+                except Exception as template_error:
+                    # Fallback if template rendering fails
+                    logger.error(f"Error rendering database error template: {template_error}")
+                    home_link = '/admin/' if is_admin else '/'
+                    return HttpResponseServerError(
+                        f'<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">'
+                        f'<h1 style="color: #dc2626;">Service Temporarily Unavailable</h1>'
+                        f'<p style="color: #6b7280; font-size: 18px;">We are currently experiencing database connectivity issues.</p>'
+                        f'<p style="color: #6b7280;">Please try again in a few moments.</p>'
+                        f'<p style="margin-top: 30px;"><a href="{home_link}" style="color: #2563eb; text-decoration: none;">Return to {"Admin" if is_admin else "Home"}</a></p>'
+                        f'</body></html>',
+                        content_type='text/html'
+                    )
+        
+        # Return None to let Django handle other exceptions normally
         return None
 
 
@@ -128,8 +175,12 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
                 response_time = (time.time() - request._metrics_start_time) * 1000
                 response_time_ms = int(response_time)
             
-            # Get country from IP (basic detection, can be enhanced with GeoIP)
-            country = self._get_country_from_ip(ip_address)
+            # Get location from IP (country, city, region, timezone)
+            location_data = self._get_location_from_ip(ip_address)
+            country = location_data.get('country', '')
+            city = location_data.get('city', '')
+            region = location_data.get('region', '')
+            timezone = location_data.get('timezone', '')
             
             # Import here to avoid circular imports
             from portfolio.models import WebsiteMetric
@@ -153,12 +204,26 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
                     is_mobile=is_mobile,
                     is_bot=is_bot,
                     country=country,
+                    city=city,
+                    region=region,
+                    timezone=timezone,
                 )
+            except (OperationalError, DatabaseError, InterfaceError) as db_error:
+                # If there's a database connection error, log it but don't break the request
+                error_str = str(db_error).lower()
+                if any(keyword in error_str for keyword in [
+                    'connection refused', 'connection', 'server', 'tcp/ip',
+                    'could not connect', 'unable to connect', 'connection timeout'
+                ]):
+                    logger.warning(f"Database connection error in metrics tracking (non-critical): {db_error}")
+                    # Don't re-raise - just skip metrics tracking
+                else:
+                    logger.error(f"Database error creating WebsiteMetric: {db_error}")
+                    logger.debug(f"session_key value: {repr(session_key)}, type: {type(session_key)}")
             except Exception as db_error:
-                # If there's still a database error, log it but don't break the request
-                logger.error(f"Database error creating WebsiteMetric: {db_error}")
+                # For other errors, log but don't break the request
+                logger.error(f"Error creating WebsiteMetric: {db_error}")
                 logger.debug(f"session_key value: {repr(session_key)}, type: {type(session_key)}")
-                raise  # Re-raise to be caught by outer try-except
             
             # Update or create user session (only if session_key exists and is not empty)
             if session_key and session_key.strip():
@@ -179,6 +244,16 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
                         session.last_activity = timezone.now()
                         session.page_views += 1
                         session.save(update_fields=['last_activity', 'page_views'])
+                except (OperationalError, DatabaseError, InterfaceError) as e:
+                    # Log database connection errors but don't break the request
+                    error_str = str(e).lower()
+                    if any(keyword in error_str for keyword in [
+                        'connection refused', 'connection', 'server', 'tcp/ip',
+                        'could not connect', 'unable to connect', 'connection timeout'
+                    ]):
+                        logger.debug(f"Database connection error updating user session (non-critical): {e}")
+                    else:
+                        logger.debug(f"Database error updating user session: {e}")
                 except Exception as e:
                     # Log but don't break the request
                     logger.debug(f"Error updating user session: {e}")
@@ -216,12 +291,50 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
         user_agent_lower = user_agent.lower()
         return any(bot in user_agent_lower for bot in self.BOT_AGENTS)
     
+    def _get_location_from_ip(self, ip_address):
+        """Get location data from IP address (country, city, region, timezone)"""
+        if not ip_address or ip_address in ['127.0.0.1', 'localhost', '::1']:
+            return {'country': '', 'city': '', 'region': '', 'timezone': ''}
+        
+        try:
+            # Use free ip-api.com service (45 requests/minute free tier)
+            import requests
+            url = f"http://ip-api.com/json/{ip_address}?fields=status,message,country,countryCode,region,regionName,city,timezone"
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') == 'success':
+                    return {
+                        'country': data.get('countryCode', ''),
+                        'city': data.get('city', ''),
+                        'region': data.get('regionName', ''),
+                        'timezone': data.get('timezone', '')
+                    }
+        except Exception as e:
+            logger.debug(f"Could not get location from ip-api.com for IP {ip_address}: {e}")
+        
+        # Fallback: try ipapi.co
+        try:
+            url = f"https://ipapi.co/{ip_address}/json/"
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                if not data.get('error'):
+                    return {
+                        'country': data.get('country_code', ''),
+                        'city': data.get('city', ''),
+                        'region': data.get('region', ''),
+                        'timezone': data.get('timezone', '')
+                    }
+        except Exception as e:
+            logger.debug(f"Fallback location lookup failed for IP {ip_address}: {e}")
+        
+        return {'country': '', 'city': '', 'region': '', 'timezone': ''}
+    
     def _get_country_from_ip(self, ip_address):
-        """Get country code from IP address (basic implementation)"""
-        # This is a placeholder - in production, use a GeoIP library like geoip2
-        # For now, return empty string
-        # You can integrate with MaxMind GeoIP2 or similar service
-        return ''
+        """Get country code from IP address (legacy method, kept for compatibility)"""
+        location = self._get_location_from_ip(ip_address)
+        return location.get('country', '')
 
 
 

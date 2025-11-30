@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Service Temporarily Unavailable - StockFolio{% endblock %}
+{% block meta_title %}Service Temporarily Unavailable{% endblock %}
+{% block meta_description %}We are currently experiencing database connectivity issues. Please try again in a few moments.{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 text-center">
+        <!-- Error Icon -->
+        <div class="flex justify-center">
+            <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center">
+                <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Service Temporarily Unavailable</h1>
+            <p class="text-lg text-gray-600 mb-2">
+                {{ error_message|default:"We are currently experiencing database connectivity issues." }}
+            </p>
+            <p class="text-base text-gray-500 mb-8">
+                {{ support_message|default:"Please try again in a few moments. If this problem persists, please contact support." }}
+            </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% if is_admin %}/admin/{% else %}/{% endif %}" 
+               class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Return to {% if is_admin %}Admin{% else %}Home{% endif %}
+            </a>
+            <button onclick="window.location.reload()" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-lg font-medium transition shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m10 11V19m0 0h-4m4 0h4m-4 0a8.003 8.003 0 01-3.356-11.356"></path>
+                </svg>
+                Try Again
+            </button>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500">
+                <strong>Error Type:</strong> {{ error_type|default:"Database Connection Error" }}
+            </p>
+            <p class="text-xs text-gray-400 mt-2">
+                If you continue to see this message, the database service may be undergoing maintenance.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
