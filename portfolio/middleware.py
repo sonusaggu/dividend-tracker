@@ -67,36 +67,39 @@ class DatabaseErrorHandlerMiddleware(MiddlewareMixin):
                 'could not connect', 'unable to connect', 'connection timeout',
                 'is the server running', 'accepting tcp/ip connections'
             ]):
-                logger.error(f"Database connection error: {exception}")
-                
-                # Determine if this is an admin request
-                is_admin = request.path.startswith('/admin/')
-                
-                # Render user-friendly error page
-                try:
-                    html = render_to_string('database_error.html', {
-                        'error_type': 'Database Connection Error',
-                        'error_message': 'We are currently experiencing database connectivity issues. Please try again in a few moments.',
-                        'support_message': 'If this problem persists, please contact support.',
-                        'is_admin': is_admin,
-                    })
-                    return HttpResponseServerError(html)
-                except Exception as template_error:
-                    # Fallback if template rendering fails
-                    logger.error(f"Error rendering database error template: {template_error}")
-                    home_link = '/admin/' if is_admin else '/'
-                    return HttpResponseServerError(
-                        f'<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">'
-                        f'<h1 style="color: #dc2626;">Service Temporarily Unavailable</h1>'
-                        f'<p style="color: #6b7280; font-size: 18px;">We are currently experiencing database connectivity issues.</p>'
-                        f'<p style="color: #6b7280;">Please try again in a few moments.</p>'
-                        f'<p style="margin-top: 30px;"><a href="{home_link}" style="color: #2563eb; text-decoration: none;">Return to {"Admin" if is_admin else "Home"}</a></p>'
-                        f'</body></html>',
-                        content_type='text/html'
-                    )
+                logger.error(f"Database connection error in process_exception: {exception}")
+                return self._render_database_error(request, exception)
         
         # Return None to let Django handle other exceptions normally
         return None
+    
+    def _render_database_error(self, request, exception):
+        """Render the database error page"""
+        # Determine if this is an admin request
+        is_admin = request.path.startswith('/admin/') if request else False
+        
+        # Render user-friendly error page
+        try:
+            html = render_to_string('database_error.html', {
+                'error_type': 'Database Connection Error',
+                'error_message': 'We are currently experiencing database connectivity issues. Please try again in a few moments.',
+                'support_message': 'If this problem persists, please contact support.',
+                'is_admin': is_admin,
+            })
+            return HttpResponseServerError(html)
+        except Exception as template_error:
+            # Fallback if template rendering fails
+            logger.error(f"Error rendering database error template: {template_error}")
+            home_link = '/admin/' if is_admin else '/'
+            return HttpResponseServerError(
+                f'<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">'
+                f'<h1 style="color: #dc2626;">Service Temporarily Unavailable</h1>'
+                f'<p style="color: #6b7280; font-size: 18px;">We are currently experiencing database connectivity issues.</p>'
+                f'<p style="color: #6b7280;">Please try again in a few moments.</p>'
+                f'<p style="margin-top: 30px;"><a href="{home_link}" style="color: #2563eb; text-decoration: none;">Return to {"Admin" if is_admin else "Home"}</a></p>'
+                f'</body></html>',
+                content_type='text/html'
+            )
 
 
 class WebsiteMetricsMiddleware(MiddlewareMixin):
