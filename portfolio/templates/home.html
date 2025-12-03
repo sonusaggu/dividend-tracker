@@ -303,6 +303,104 @@
     </div>
 </div>
 
+<!-- Newsletter CTA Section - Highlighted -->
+<div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 py-16 relative overflow-hidden">
+    <!-- Background pattern -->
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl"></div>
+    </div>
+    
+    <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+        <div class="mb-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                📧 Get Weekly Dividend Insights
+            </h2>
+            <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                Stay ahead with curated dividend opportunities, market analysis, and exclusive insights delivered to your inbox every week.
+            </p>
+        </div>
+        
+        {% if user.is_authenticated %}
+            <!-- Authenticated User: Direct Subscribe Button -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'newsletter_subscription' %}" 
+                   class="group bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                    <span class="flex items-center justify-center">
+                        <span class="mr-2">✨</span>
+                        Subscribe to Newsletter
+                        <svg class="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </span>
+                </a>
+            </div>
+            <p class="text-sm text-blue-200 mt-4">
+                Customize your preferences and get personalized dividend recommendations
+            </p>
+        {% else %}
+            <!-- Non-Authenticated User: Email Capture or Register -->
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-2xl mx-auto">
+                <form method="get" action="{% url 'register' %}" class="space-y-4" id="newsletterEmailForm">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input 
+                            type="email" 
+                            name="email" 
+                            id="newsletterEmail"
+                            placeholder="Enter your email address" 
+                            required
+                            class="flex-1 px-6 py-4 rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-lg"
+                        >
+                        <button 
+                            type="submit"
+                            class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl whitespace-nowrap"
+                        >
+                            Subscribe Free
+                        </button>
+                    </div>
+                    <p class="text-sm text-blue-200 mt-3">
+                        By subscribing, you'll create a free account and receive weekly dividend insights. No credit card required.
+                    </p>
+                </form>
+                
+                <div class="mt-6 pt-6 border-t border-white/20">
+                    <p class="text-sm text-blue-200 mb-3">Already have an account?</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-3">
+                        <a href="{% url 'login' %}" 
+                           class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold transition border border-white/30">
+                            Sign In to Subscribe
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Benefits -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 max-w-3xl mx-auto">
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div class="text-2xl mb-2">📊</div>
+                <div class="text-white font-semibold mb-1">Top Dividend Stocks</div>
+                <div class="text-sm text-blue-200">Curated high-yield opportunities</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div class="text-2xl mb-2">📈</div>
+                <div class="text-white font-semibold mb-1">Market Analysis</div>
+                <div class="text-sm text-blue-200">Weekly insights and trends</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div class="text-2xl mb-2">🎯</div>
+                <div class="text-white font-semibold mb-1">Exclusive Content</div>
+                <div class="text-sm text-blue-200">Early access to new features</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Affiliate Links Section -->
 <div class="bg-gradient-to-br from-gray-50 to-blue-50 py-12">
     <div class="max-w-7xl mx-auto px-4">

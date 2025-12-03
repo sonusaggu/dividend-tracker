@@ -304,7 +304,12 @@ def register_view(request):
                     if 'already exists' in str(error).lower():
                         messages.error(request, 'This username is already taken. Please choose another.')
     else:
-        form = RegistrationForm()
+        # Pre-fill email if provided in URL parameter
+        initial_data = {}
+        email = request.GET.get('email', '').strip()
+        if email:
+            initial_data['email'] = email
+        form = RegistrationForm(initial=initial_data)
     
     return render(request, 'register.html', {'form': form})
 
