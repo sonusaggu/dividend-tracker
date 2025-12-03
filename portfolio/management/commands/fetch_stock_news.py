@@ -4,7 +4,9 @@ Can be run for all stocks, portfolio stocks, or watchlist stocks
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from portfolio.models import Stock, UserPortfolio, Watchlist
+from django.utils import timezone
+from datetime import timedelta
+from portfolio.models import Stock, UserPortfolio, Watchlist, Dividend
 from portfolio.utils.news_fetcher import NewsFetcher
 import logging
 
@@ -38,8 +40,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--max-articles',
             type=int,
-            default=10,
-            help='Maximum articles to fetch per stock (default: 10)',
+            default=5,
+            help='Maximum articles to fetch per stock (default: 5 to avoid rate limits)',
         )
         parser.add_argument(
             '--max-stocks',
@@ -79,8 +81,31 @@ class Command(BaseCommand):
                 watchlist_stocks = Stock.objects.filter(
                     watchlist__user=user
                 ).distinct()
-                stocks = (portfolio_stocks | watchlist_stocks).distinct()[:options['max_stocks']]
-                self.stdout.write(f"Fetching news for user {user.username}'s stocks...")
+                stocks = (portfolio_stocks | watchlist_stocks).distinct()
+                
+                # Always also include upcoming dividend stocks (next 15 days) for this user
+                today = timezone.now().date()
+                fifteen_days_later = today + timedelta(days=15)
+                upcoming_dividend_stocks = Stock.objects.filter(
+                    dividends__ex_dividend_date__gte=today,
+                    dividends__ex_dividend_date__lte=fifteen_days_later,
+                    dividends__ex_dividend_date__isnull=False
+                ).distinct()
+                
+                # Combine user's portfolio/watchlist stocks with upcoming dividend stocks
+                all_stocks = (stocks | upcoming_dividend_stocks).distinct()
+                
+                if stocks.exists():
+                    self.stdout.write(f"User {user.username} has {stocks.count()} portfolio/watchlist stocks")
+                if upcoming_dividend_stocks.exists():
+                    self.stdout.write(f"Found {upcoming_dividend_stocks.count()} stocks with upcoming dividends (next 15 days)")
+                
+                if all_stocks.exists():
+                    stocks = all_stocks[:options['max_stocks']]
+                    self.stdout.write(f"Fetching news for {stocks.count()} stocks (user's stocks + upcoming dividends)...")
+                else:
+                    self.stdout.write(self.style.WARNING("No stocks found to fetch news for"))
+                    stocks = Stock.objects.none()
             except User.DoesNotExist:
                 self.stdout.write(self.style.ERROR(f"User '{options['user']}' not found"))
                 return
@@ -108,18 +133,48 @@ class Command(BaseCommand):
             watchlist_stocks = Stock.objects.filter(
                 watchlist__isnull=False
             ).distinct()
-            stocks = (portfolio_stocks | watchlist_stocks).distinct()[:options['max_stocks']]
-            self.stdout.write("Fetching news for portfolio and watchlist stocks...")
+            portfolio_watchlist_stocks = (portfolio_stocks | watchlist_stocks).distinct()
+            
+            # Always also include upcoming dividend stocks (next 15 days)
+            today = timezone.now().date()
+            fifteen_days_later = today + timedelta(days=15)
+            upcoming_dividend_stocks = Stock.objects.filter(
+                dividends__ex_dividend_date__gte=today,
+                dividends__ex_dividend_date__lte=fifteen_days_later,
+                dividends__ex_dividend_date__isnull=False
+            ).distinct()
+            
+            # Combine portfolio/watchlist stocks with upcoming dividend stocks
+            all_stocks = (portfolio_watchlist_stocks | upcoming_dividend_stocks).distinct()
+            
+            if portfolio_watchlist_stocks.exists():
+                self.stdout.write(f"Found {portfolio_watchlist_stocks.count()} portfolio/watchlist stocks")
+            if upcoming_dividend_stocks.exists():
+                self.stdout.write(f"Found {upcoming_dividend_stocks.count()} stocks with upcoming dividends (next 15 days)")
+            
+            if all_stocks.exists():
+                stocks = all_stocks[:options['max_stocks']]
+                self.stdout.write(f"Fetching news for {stocks.count()} stocks (portfolio/watchlist + upcoming dividends)...")
+            else:
+                self.stdout.write(self.style.WARNING("No stocks found to fetch news for"))
+                stocks = Stock.objects.none()
         
         if not stocks.exists():
             self.stdout.write(self.style.WARNING("No stocks found to fetch news for"))
             return
         
-        self.stdout.write(f"Processing {stocks.count()} stocks...")
+        # Evaluate queryset to list to ensure it's properly processed
+        stocks_list = list(stocks)
+        self.stdout.write(f"Processing {len(stocks_list)} stocks...")
+        
+        if stocks_list:
+            # Log which stocks we're processing
+            stock_symbols = [s.symbol for s in stocks_list[:10]]  # Show first 10
+            self.stdout.write(f"Stocks to process: {', '.join(stock_symbols)}{'...' if len(stocks_list) > 10 else ''}")
         
         # Fetch and save news
         total_saved = fetcher.fetch_and_save_news(
-            stocks,
+            stocks_list,
             max_articles_per_stock=options['max_articles'],
             max_age_days=7
         )

@@ -4,6 +4,7 @@ Uses free news APIs to fetch news articles for stocks
 """
 import requests
 import logging
+import time
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -20,39 +21,107 @@ class NewsFetcher:
         # Try to get API key from settings, fallback to environment variable
         self.newsapi_key = config('NEWSAPI_KEY', default='')
         self.alpha_vantage_key = config('ALPHA_VANTAGE_KEY', default='')
+        # Rate limiting: track last API call time
+        self.last_newsapi_call = 0
+        self.last_alphavantage_call = 0
+        self.min_delay_between_calls = 1.0  # Minimum 1 second between API calls
+        self.rate_limit_hit = False
         
-    def fetch_news_for_stock(self, stock, max_articles=20):
+    def fetch_news_for_stock(self, stock, max_articles=10):
         """
         Fetch news for a single stock
         Returns list of news articles
+        Reduced max_articles default to 10 to reduce API calls
         """
         articles = []
         
+        # Check if API keys are configured
+        if not self.newsapi_key and not self.alpha_vantage_key:
+            logger.warning(f"No news API keys configured. Set NEWSAPI_KEY or ALPHA_VANTAGE_KEY environment variables.")
+            return articles
+        
+        # Check if we've hit rate limit - skip if so
+        if self.rate_limit_hit:
+            logger.warning(f"Skipping {stock.symbol} - rate limit already hit")
+            return articles
+        
+        # Check if news was recently fetched (within last 24 hours) to avoid redundant calls
+        recent_news = StockNews.objects.filter(
+            stock=stock,
+            published_at__gte=timezone.now() - timedelta(days=1)
+        ).exists()
+        
+        if recent_news:
+            logger.debug(f"Skipping {stock.symbol} - news was recently fetched")
+            return articles
+        
         # Try NewsAPI first (free tier: 100 requests/day)
-        if self.newsapi_key:
+        if self.newsapi_key and not self.rate_limit_hit:
             try:
+                # Rate limiting: wait if needed
+                self._wait_for_rate_limit('newsapi')
+                
+                logger.debug(f"Fetching from NewsAPI for {stock.symbol}")
                 newsapi_articles = self._fetch_from_newsapi(stock, max_articles)
                 articles.extend(newsapi_articles)
+                logger.debug(f"NewsAPI returned {len(newsapi_articles)} articles for {stock.symbol}")
+                
+                # Update last call time
+                self.last_newsapi_call = time.time()
             except Exception as e:
-                logger.warning(f"NewsAPI fetch failed for {stock.symbol}: {e}")
+                error_msg = str(e).lower()
+                if '429' in error_msg or 'rate limit' in error_msg:
+                    logger.warning(f"NewsAPI rate limit hit for {stock.symbol}")
+                    self.rate_limit_hit = True
+                else:
+                    logger.warning(f"NewsAPI fetch failed for {stock.symbol}: {e}")
         
         # Try Alpha Vantage as fallback (free tier: 5 API calls/min, 500/day)
-        if len(articles) < max_articles and self.alpha_vantage_key:
+        # Only if we don't have enough articles and haven't hit rate limit
+        if len(articles) < max_articles and self.alpha_vantage_key and not self.rate_limit_hit:
             try:
+                # Rate limiting: wait if needed (Alpha Vantage needs 12 seconds between calls for free tier)
+                self._wait_for_rate_limit('alphavantage', min_delay=12.0)
+                
+                logger.debug(f"Fetching from Alpha Vantage for {stock.symbol}")
                 av_articles = self._fetch_from_alphavantage(stock, max_articles - len(articles))
                 articles.extend(av_articles)
+                logger.debug(f"Alpha Vantage returned {len(av_articles)} articles for {stock.symbol}")
+                
+                # Update last call time
+                self.last_alphavantage_call = time.time()
             except Exception as e:
-                logger.warning(f"Alpha Vantage fetch failed for {stock.symbol}: {e}")
+                error_msg = str(e).lower()
+                if '429' in error_msg or 'rate limit' in error_msg:
+                    logger.warning(f"Alpha Vantage rate limit hit for {stock.symbol}")
+                    self.rate_limit_hit = True
+                else:
+                    logger.warning(f"Alpha Vantage fetch failed for {stock.symbol}: {e}")
         
-        # Fallback to generic search if APIs fail
+        # Don't use generic fallback to avoid extra API calls
+        
         if not articles:
-            try:
-                generic_articles = self._fetch_generic_news(stock, max_articles)
-                articles.extend(generic_articles)
-            except Exception as e:
-                logger.warning(f"Generic news fetch failed for {stock.symbol}: {e}")
+            logger.debug(f"No news articles found for {stock.symbol} from any source")
         
         return articles[:max_articles]
+    
+    def _wait_for_rate_limit(self, api_name, min_delay=None):
+        """Wait if needed to respect rate limits"""
+        if min_delay is None:
+            min_delay = self.min_delay_between_calls
+        
+        if api_name == 'newsapi':
+            elapsed = time.time() - self.last_newsapi_call
+            if elapsed < min_delay:
+                wait_time = min_delay - elapsed
+                logger.debug(f"Rate limiting: waiting {wait_time:.2f}s before NewsAPI call")
+                time.sleep(wait_time)
+        elif api_name == 'alphavantage':
+            elapsed = time.time() - self.last_alphavantage_call
+            if elapsed < min_delay:
+                wait_time = min_delay - elapsed
+                logger.debug(f"Rate limiting: waiting {wait_time:.2f}s before Alpha Vantage call")
+                time.sleep(wait_time)
     
     def _fetch_from_newsapi(self, stock, max_articles=20):
         """Fetch news from NewsAPI.org with improved relevance"""
@@ -76,8 +145,8 @@ class NewsFetcher:
         
         all_articles = []
         
-        # Try each query and collect results
-        for query in queries[:2]:  # Limit to 2 queries to avoid rate limits
+        # Try only ONE query to reduce API calls and avoid rate limits
+        for query in queries[:1]:  # Limit to 1 query to avoid rate limits
             try:
                 url = "https://newsapi.org/v2/everything"
                 params = {
@@ -400,20 +469,38 @@ class NewsFetcher:
         
         return saved_count
     
-    def fetch_and_save_news(self, stocks, max_articles_per_stock=10, max_age_days=7):
+    def fetch_and_save_news(self, stocks, max_articles_per_stock=5, max_age_days=7):
         """
         Fetch and save news for multiple stocks
         Returns summary of saved articles
+        Reduced default max_articles_per_stock to 5 to reduce API calls
         """
         total_saved = 0
+        stocks_processed = 0
         
         for stock in stocks:
+            # Stop if rate limit was hit
+            if self.rate_limit_hit:
+                logger.warning(f"Rate limit hit. Stopping news fetching. Processed {stocks_processed} stocks.")
+                break
+            
             try:
                 articles = self.fetch_news_for_stock(stock, max_articles_per_stock)
                 saved = self.save_news_to_database(stock, articles, max_age_days)
                 total_saved += saved
+                stocks_processed += 1
                 logger.info(f"Saved {saved} news articles for {stock.symbol}")
+                
+                # Add delay between stocks to avoid rate limits (2 seconds between stocks)
+                if stocks_processed < len(list(stocks)):
+                    time.sleep(2.0)
+                    
             except Exception as e:
+                error_msg = str(e).lower()
+                if '429' in error_msg or 'rate limit' in error_msg:
+                    logger.warning(f"Rate limit hit while processing {stock.symbol}")
+                    self.rate_limit_hit = True
+                    break
                 logger.error(f"Error fetching news for {stock.symbol}: {e}")
                 continue
         

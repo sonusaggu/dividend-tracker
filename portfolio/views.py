@@ -2737,6 +2737,19 @@ def dashboard(request):
             for dividend in user_dividends
         ]
         
+        # If no dividends from user's portfolio, show general upcoming dividends
+        if not upcoming_dividends:
+            general_dividends = StockService.get_upcoming_dividends(days=30, limit=3)
+            upcoming_dividends = [
+                {
+                    'stock': dividend.stock,
+                    'amount': dividend.amount,
+                    'ex_dividend_date': dividend.ex_dividend_date,
+                    'days_until': (dividend.ex_dividend_date - today).days
+                }
+                for dividend in general_dividends
+            ]
+        
         # Get watchlist stocks with prices - optimized with prefetch to avoid N+1
         watchlist_items = Watchlist.objects.filter(user=request.user).select_related('stock').prefetch_related(
             Prefetch('stock__prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices')
@@ -2772,6 +2785,16 @@ def dashboard(request):
         portfolio_stock_ids = [item.stock.id for item in portfolio_items]
         watchlist_stock_ids = [item.stock.id for item in watchlist_items]
         all_stock_ids = list(set(portfolio_stock_ids + watchlist_stock_ids))
+        
+        # If no portfolio or watchlist stocks, fallback to upcoming dividend stocks (next 15 days)
+        if not all_stock_ids:
+            today = timezone.now().date()
+            fifteen_days_later = today + timedelta(days=15)
+            upcoming_dividend_stocks = Stock.objects.filter(
+                dividends__ex_dividend_date__gte=today,
+                dividends__ex_dividend_date__lte=fifteen_days_later
+            ).distinct()
+            all_stock_ids = list(upcoming_dividend_stocks.values_list('id', flat=True))
         
         cutoff_date = timezone.now() - timedelta(days=7)
         recent_news = StockNews.objects.filter(
@@ -3495,22 +3518,39 @@ def newsletter_subscription(request):
 
 @login_required
 def portfolio_news(request):
-    """Display news for stocks in user's portfolio"""
+    """Display news for stocks in user's portfolio, or upcoming dividend stocks if no portfolio"""
     # Get user's portfolio stocks
     portfolio_stocks = Stock.objects.filter(
         userportfolio__user=request.user
     ).distinct()
+    
+    # If no portfolio stocks, fallback to upcoming dividend stocks (next 15 days)
+    if not portfolio_stocks.exists():
+        today = timezone.now().date()
+        fifteen_days_later = today + timedelta(days=15)
+        portfolio_stocks = Stock.objects.filter(
+            dividends__ex_dividend_date__gte=today,
+            dividends__ex_dividend_date__lte=fifteen_days_later
+        ).distinct()
+        show_upcoming_dividends = True
+    else:
+        show_upcoming_dividends = False
     
     # Get recent news (last 7 days)
     cutoff_date = timezone.now() - timedelta(days=7)
     news_items = StockNews.objects.filter(
         stock__in=portfolio_stocks,
         published_at__gte=cutoff_date
-    ).select_related('stock').order_by('-published_at')[:50]
+    ).select_related('stock').order_by('-published_at')
     
-    # Group by stock
+    # Paginate - show 20 articles per page
+    paginator = Paginator(news_items, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Group by stock for display
     news_by_stock = {}
-    for news in news_items:
+    for news in page_obj:
         symbol = news.stock.symbol
         if symbol not in news_by_stock:
             news_by_stock[symbol] = {
@@ -3521,8 +3561,10 @@ def portfolio_news(request):
     
     context = {
         'news_by_stock': news_by_stock,
-        'total_articles': len(news_items),
+        'news_items': page_obj,  # For pagination controls
+        'total_articles': news_items.count(),
         'portfolio_stocks_count': portfolio_stocks.count(),
+        'show_upcoming_dividends': show_upcoming_dividends,
     }
     
     return render(request, 'portfolio_news.html', context)
@@ -3530,22 +3572,39 @@ def portfolio_news(request):
 
 @login_required
 def watchlist_news(request):
-    """Display news for stocks in user's watchlist"""
+    """Display news for stocks in user's watchlist, or upcoming dividend stocks if no watchlist"""
     # Get user's watchlist stocks
     watchlist_stocks = Stock.objects.filter(
         watchlist__user=request.user
     ).distinct()
+    
+    # If no watchlist stocks, fallback to upcoming dividend stocks (next 15 days)
+    if not watchlist_stocks.exists():
+        today = timezone.now().date()
+        fifteen_days_later = today + timedelta(days=15)
+        watchlist_stocks = Stock.objects.filter(
+            dividends__ex_dividend_date__gte=today,
+            dividends__ex_dividend_date__lte=fifteen_days_later
+        ).distinct()
+        show_upcoming_dividends = True
+    else:
+        show_upcoming_dividends = False
     
     # Get recent news (last 7 days)
     cutoff_date = timezone.now() - timedelta(days=7)
     news_items = StockNews.objects.filter(
         stock__in=watchlist_stocks,
         published_at__gte=cutoff_date
-    ).select_related('stock').order_by('-published_at')[:50]
+    ).select_related('stock').order_by('-published_at')
     
-    # Group by stock
+    # Paginate - show 20 articles per page
+    paginator = Paginator(news_items, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Group by stock for display
     news_by_stock = {}
-    for news in news_items:
+    for news in page_obj:
         symbol = news.stock.symbol
         if symbol not in news_by_stock:
             news_by_stock[symbol] = {
@@ -3556,8 +3615,10 @@ def watchlist_news(request):
     
     context = {
         'news_by_stock': news_by_stock,
-        'total_articles': len(news_items),
+        'news_items': page_obj,  # For pagination controls
+        'total_articles': news_items.count(),
         'watchlist_stocks_count': watchlist_stocks.count(),
+        'show_upcoming_dividends': show_upcoming_dividends,
     }
     
     return render(request, 'watchlist_news.html', context)
