@@ -3297,10 +3297,19 @@ def trigger_daily_scrape(request):
 def trigger_newsletter(request):
     """
     API endpoint to trigger newsletter sending
-    Runs synchronously (newsletters are usually fast)
+    Similar to trigger_daily_scrape - runs asynchronously to avoid timeout
     CSRF exempt - uses secret key authentication instead
+    
+    Parameters:
+    - secret_key: Authentication key (required)
+    - dry_run: Test run without sending emails (optional, boolean, default: false)
+    - user: Send to specific user only (optional, username)
+    - frequency: Filter by subscription frequency (optional: weekly, biweekly, monthly)
+    - force: Force send even if recently sent (optional, boolean, default: false)
     """
     import threading
+    from django.core.management import call_command
+    from portfolio.models import NewsletterSubscription
     
     # Simple authentication
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
@@ -3308,35 +3317,108 @@ def trigger_newsletter(request):
         logger.warning(f"Unauthorized attempt to trigger newsletter from {request.META.get('REMOTE_ADDR')}")
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
-    # Get optional parameters
-    dry_run = request.POST.get('dry_run', '').lower() == 'true'
-    
     try:
-        # Run newsletter sending in background thread (optional, can be synchronous)
+        # Get optional parameters
+        dry_run = request.POST.get('dry_run', '').lower() == 'true'
+        user = request.POST.get('user', '').strip()
+        frequency = request.POST.get('frequency', '').strip().lower()
+        force = request.POST.get('force', '').lower() == 'true'
+        
+        # Validate frequency if provided
+        valid_frequencies = ['weekly', 'biweekly', 'monthly']
+        if frequency and frequency not in valid_frequencies:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid frequency. Must be one of: {", ".join(valid_frequencies)}'
+            }, status=400)
+        
+        # Get subscriber count for response
+        subscribers_query = NewsletterSubscription.objects.filter(is_active=True)
+        if user:
+            from django.contrib.auth.models import User
+            try:
+                user_obj = User.objects.get(username=user)
+                subscribers_query = subscribers_query.filter(user=user_obj)
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'User "{user}" not found'
+                }, status=404)
+        
+        if frequency:
+            subscribers_query = subscribers_query.filter(frequency=frequency)
+        
+        subscriber_count = subscribers_query.count()
+        
+        # Build command arguments
+        cmd_options = {}
+        if dry_run:
+            cmd_options['dry_run'] = True
+        
+        # Run newsletter sending in background thread to avoid timeout
         def run_newsletter():
             try:
-                logger.info(f"Starting newsletter sending (dry_run={dry_run})")
-                call_command('send_dividend_newsletter', dry_run=dry_run)
-                logger.info(f"Newsletter sending completed")
+                logger.info(f"🚀 Starting background newsletter sending (dry_run={dry_run}, user={user or 'all'}, frequency={frequency or 'all'})")
+                
+                # If specific user, we need to handle differently
+                if user:
+                    from portfolio.utils.newsletter_utils import DividendNewsletterGenerator
+                    from portfolio.utils.newsletter_email import send_newsletter_email
+                    from django.contrib.auth.models import User
+                    
+                    user_obj = User.objects.get(username=user)
+                    subscription = NewsletterSubscription.objects.filter(user=user_obj, is_active=True).first()
+                    
+                    if subscription:
+                        generator = DividendNewsletterGenerator()
+                        newsletter_content = generator.generate_newsletter_content(user=user_obj)
+                        
+                        if dry_run:
+                            logger.info(f"[DRY RUN] Would send newsletter to {user_obj.email}")
+                        else:
+                            success = send_newsletter_email(user_obj, newsletter_content)
+                            if success:
+                                subscription.last_sent = timezone.now()
+                                subscription.save(update_fields=['last_sent'])
+                                logger.info(f"Newsletter sent to {user_obj.email}")
+                    else:
+                        logger.warning(f"User {user} does not have an active newsletter subscription")
+                else:
+                    # Use management command for bulk sending
+                    call_command('send_dividend_newsletter', **cmd_options)
+                
+                logger.info(f"✅ Background newsletter sending completed")
             except Exception as e:
-                logger.error(f"Error in newsletter sending: {e}")
+                logger.error(f"❌ Error in background newsletter sending: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
         
         # Start background thread
         thread = threading.Thread(target=run_newsletter, daemon=True)
         thread.start()
         
-        # Return immediately
-        return JsonResponse({
-            'status': 'accepted', 
-            'message': f'Newsletter sending started in background (dry_run={dry_run})',
+        # Build response
+        response_data = {
+            'status': 'accepted',
+            'message': f'Newsletter sending started in background',
             'dry_run': dry_run,
+            'subscribers_count': subscriber_count,
             'note': 'Newsletter is being sent asynchronously. Check logs for progress.'
-        })
+        }
+        
+        if user:
+            response_data['user'] = user
+        if frequency:
+            response_data['frequency'] = frequency
+        if force:
+            response_data['force'] = True
+        
+        return JsonResponse(response_data)
         
     except Exception as e:
         logger.error(f"Error triggering newsletter: {e}")
         return JsonResponse({
-            'status': 'error', 
+            'status': 'error',
             'message': f'Error: {str(e)}'
         }, status=500)
 
@@ -3752,11 +3834,27 @@ def stock_news(request, symbol):
 
 @csrf_exempt
 @require_POST
+@csrf_exempt
+@require_POST
 def fetch_news(request):
     """
-    API endpoint to manually trigger news fetching
-    Can be called for specific stocks or all portfolio/watchlist stocks
+    API endpoint to trigger news fetching for stocks
+    Similar to trigger_daily_scrape - runs asynchronously to avoid timeout
+    CSRF exempt - uses secret key authentication instead
+    
+    Parameters:
+    - secret_key: Authentication key (required)
+    - user: Username to fetch news for their portfolio/watchlist (optional)
+    - all: Fetch for all stocks (optional, boolean)
+    - portfolio-only: Fetch only for portfolio stocks (optional, boolean)
+    - watchlist-only: Fetch only for watchlist stocks (optional, boolean)
+    - stocks: Comma-separated list of stock symbols (optional)
+    - max-articles: Max articles per stock (default: 5)
+    - max-stocks: Max stocks to process (default: 100)
     """
+    import threading
+    from django.core.management import call_command
+    
     # Simple authentication
     secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
     if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
@@ -3764,27 +3862,107 @@ def fetch_news(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     try:
-        # Get stocks to fetch news for
-        stock_symbols = request.POST.getlist('stocks', [])
+        # Get parameters
+        user = request.POST.get('user', '').strip()
+        fetch_all = request.POST.get('all', '').lower() == 'true'
+        portfolio_only = request.POST.get('portfolio-only', '').lower() == 'true'
+        watchlist_only = request.POST.get('watchlist-only', '').lower() == 'true'
+        stock_symbols = request.POST.get('stocks', '').strip()
+        max_articles = request.POST.get('max-articles', '5')
+        max_stocks = request.POST.get('max-stocks', '100')
         
-        if stock_symbols:
-            stocks = Stock.objects.filter(symbol__in=[s.upper() for s in stock_symbols])
+        # Convert to integers with validation
+        try:
+            max_articles = int(max_articles)
+            if max_articles < 1 or max_articles > 20:
+                max_articles = 5
+        except (ValueError, TypeError):
+            max_articles = 5
+        
+        try:
+            max_stocks = int(max_stocks)
+            if max_stocks < 1 or max_stocks > 500:
+                max_stocks = 100
+        except (ValueError, TypeError):
+            max_stocks = 100
+        
+        # Build command arguments
+        cmd_args = []
+        cmd_options = {
+            'max_articles': max_articles,
+            'max_stocks': max_stocks,
+        }
+        
+        if user:
+            cmd_options['user'] = user
+        elif fetch_all:
+            cmd_options['all'] = True
+        elif portfolio_only:
+            cmd_options['portfolio_only'] = True
+        elif watchlist_only:
+            cmd_options['watchlist_only'] = True
+        elif stock_symbols:
+            # If specific stocks provided, fetch for those
+            symbols = [s.strip().upper() for s in stock_symbols.split(',') if s.strip()]
+            if symbols:
+                # Use NewsFetcher directly for specific symbols
+                stocks = Stock.objects.filter(symbol__in=symbols)
+                if stocks.exists():
+                    fetcher = NewsFetcher()
+                    total_saved = fetcher.fetch_and_save_news(
+                        list(stocks),
+                        max_articles_per_stock=max_articles
+                    )
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': f'Fetched and saved {total_saved} news articles',
+                        'stocks_processed': stocks.count(),
+                        'articles_saved': total_saved,
+                        'symbols': symbols
+                    })
+                else:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'No stocks found for the provided symbols'
+                    }, status=400)
+        
+        # Run news fetching in background thread to avoid timeout
+        def run_news_fetch():
+            try:
+                logger.info(f"🚀 Starting background news fetch (max_articles={max_articles}, max_stocks={max_stocks})")
+                call_command('fetch_stock_news', **cmd_options)
+                logger.info(f"✅ Background news fetch completed")
+            except Exception as e:
+                logger.error(f"❌ Error in background news fetch: {e}")
+        
+        # Start background thread
+        thread = threading.Thread(target=run_news_fetch, daemon=True)
+        thread.start()
+        
+        # Return immediately to avoid timeout
+        response_data = {
+            'status': 'accepted',
+            'message': 'News fetching started in background',
+            'max_articles': max_articles,
+            'max_stocks': max_stocks,
+            'note': 'News fetching is running asynchronously. Check news pages to see results.'
+        }
+        
+        if user:
+            response_data['user'] = user
+        elif fetch_all:
+            response_data['scope'] = 'all_stocks'
+        elif portfolio_only:
+            response_data['scope'] = 'portfolio_only'
+        elif watchlist_only:
+            response_data['scope'] = 'watchlist_only'
         else:
-            # Fetch for all stocks (can be limited)
-            stocks = Stock.objects.all()[:100]  # Limit to prevent timeout
+            response_data['scope'] = 'portfolio_and_watchlist'
         
-        fetcher = NewsFetcher()
-        total_saved = fetcher.fetch_and_save_news(stocks, max_articles_per_stock=10)
-        
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Fetched and saved {total_saved} news articles',
-            'stocks_processed': stocks.count(),
-            'articles_saved': total_saved
-        })
+        return JsonResponse(response_data)
         
     except Exception as e:
-        logger.error(f"Error fetching news: {e}")
+        logger.error(f"Error triggering news fetch: {e}")
         return JsonResponse({
             'status': 'error',
             'message': f'Error: {str(e)}'
