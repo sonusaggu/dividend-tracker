@@ -5,6 +5,7 @@ Uses free news APIs to fetch news articles for stocks
 import requests
 import logging
 import time
+import re
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -265,9 +266,23 @@ class NewsFetcher:
         
         return score
     
+    def _is_valid_alphavantage_ticker(self, symbol):
+        """Check if ticker symbol is valid for Alpha Vantage API
+        Alpha Vantage only accepts alphanumeric characters, colons, and underscores
+        """
+        # Alpha Vantage accepts: alphanumeric, colons (:), and underscores (_)
+        # Reject symbols with dots (.), hyphens (-), or other special characters
+        pattern = r'^[A-Za-z0-9:_]+$'
+        return bool(re.match(pattern, symbol))
+    
     def _fetch_from_alphavantage(self, stock, max_articles=20):
         """Fetch news from Alpha Vantage with relevance filtering"""
         articles = []
+        
+        # Skip Alpha Vantage for tickers with invalid characters (e.g., dots like ACO.X, ACO.Y)
+        if not self._is_valid_alphavantage_ticker(stock.symbol):
+            logger.debug(f"Skipping Alpha Vantage for {stock.symbol} - invalid ticker format (contains dots or special characters)")
+            return articles
         
         url = "https://www.alphavantage.co/query"
         params = {
