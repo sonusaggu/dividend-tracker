@@ -854,7 +854,14 @@
         },
         credentials: 'same-origin'
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => {
+            throw new Error(err.message || 'Network response was not ok');
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         button.disabled = false;
         button.style.opacity = '1';
@@ -877,15 +884,28 @@
           } else {
             location.reload();
           }
+          
+          if (typeof Toast !== 'undefined') {
+            Toast.success(data.message || 'Removed from watchlist');
+          }
+        } else if (data.status === 'added') {
+          if (typeof Toast !== 'undefined') {
+            Toast.success(data.message || 'Added to watchlist');
+          }
         } else if (data.status === 'error') {
-          alert(data.message || 'Error updating watchlist');
+          if (typeof Toast !== 'undefined') {
+            Toast.error(data.message || 'Error updating watchlist');
+          }
         }
       })
       .catch(error => {
         button.disabled = false;
         button.style.opacity = '1';
         console.error('Watchlist toggle error:', error);
-        alert('Error updating watchlist. Please try again.');
+        const errorMsg = error.message || 'Error updating watchlist. Please try again.';
+        if (typeof Toast !== 'undefined') {
+          Toast.error(errorMsg);
+        }
       });
     }
 

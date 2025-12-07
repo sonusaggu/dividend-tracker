@@ -648,7 +648,14 @@ function toggleWatchlist(stockId, button) {
         },
         credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.message || 'Network response was not ok');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         button.disabled = false;
         button.style.opacity = '1';
@@ -661,21 +668,34 @@ function toggleWatchlist(stockId, button) {
                 button.classList.remove('text-gray-400', 'hover:text-blue-600');
                 button.classList.add('text-green-600', 'hover:text-green-700');
                 svg.setAttribute('fill', 'currentColor');
+                
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(data.message || 'Added to watchlist');
+                }
             } else {
                 // Removed from watchlist
                 button.classList.remove('text-green-600', 'hover:text-green-700');
                 button.classList.add('text-gray-400', 'hover:text-blue-600');
                 svg.setAttribute('fill', 'none');
+                
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(data.message || 'Removed from watchlist');
+                }
             }
         } else if (data.status === 'error') {
-            alert(data.message || 'Error updating watchlist');
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Error updating watchlist');
+            }
         }
     })
     .catch(error => {
         button.disabled = false;
         button.style.opacity = '1';
         console.error('Watchlist toggle error:', error);
-        alert('Error updating watchlist. Please try again.');
+        const errorMsg = error.message || 'Error updating watchlist. Please try again.';
+        if (typeof Toast !== 'undefined') {
+            Toast.error(errorMsg);
+        }
     });
 }
 </script>
