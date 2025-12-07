@@ -3353,10 +3353,53 @@ def dashboard(request):
         
         # Get unique sectors
         sectors = set()
+        sector_allocation = {}
         for item in portfolio_items:
             if item.stock.sector:
                 sectors.add(item.stock.sector)
+                if item.latest_price_value and item.shares_owned:
+                    sector_value = float(item.latest_price_value * item.shares_owned)
+                    sector_allocation[item.stock.sector] = sector_allocation.get(item.stock.sector, 0) + sector_value
         sectors_count = len(sectors)
+        
+        # Calculate top performers and worst performers
+        top_performers = []
+        worst_performers = []
+        for item in portfolio_items:
+            if item.latest_price_value and item.average_cost and item.shares_owned:
+                current_value = float(item.latest_price_value * item.shares_owned)
+                cost_basis = float(item.average_cost * item.shares_owned)
+                gain_loss = current_value - cost_basis
+                gain_percent = (gain_loss / cost_basis * 100) if cost_basis > 0 else 0
+                
+                performer_data = {
+                    'stock': item.stock,
+                    'gain_loss': gain_loss,
+                    'gain_percent': gain_percent,
+                    'current_value': current_value,
+                }
+                
+                if gain_percent > 0:
+                    top_performers.append(performer_data)
+                elif gain_percent < 0:
+                    worst_performers.append(performer_data)
+        
+        # Sort and limit
+        top_performers = sorted(top_performers, key=lambda x: x['gain_percent'], reverse=True)[:3]
+        worst_performers = sorted(worst_performers, key=lambda x: x['gain_percent'])[:3]
+        
+        # Calculate sector allocation percentages and sort by value
+        sector_allocation_percent = {}
+        if total_value > 0:
+            for sector, value in sector_allocation.items():
+                sector_allocation_percent[sector] = (value / total_value) * 100
+        
+        # Sort sectors by percentage (descending) for display
+        sector_allocation_sorted = sorted(
+            sector_allocation_percent.items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )[:5]  # Top 5 sectors
         
         # Get recent news for portfolio and watchlist stocks (last 7 days)
         portfolio_stock_ids = [item.stock.id for item in portfolio_items]
@@ -3532,6 +3575,10 @@ def dashboard(request):
             'total_projected_income': total_projected_income,  # Total projected income
             'average_monthly_income': average_monthly_income,  # Average monthly income
             'news_items': recent_news,
+            'top_performers': top_performers,
+            'worst_performers': worst_performers,
+            'sector_allocation': sector_allocation_percent,
+            'sector_allocation_sorted': sector_allocation_sorted,
         }
         
         return render(request, 'dashboard.html', context)

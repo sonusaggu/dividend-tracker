@@ -160,63 +160,117 @@
       </div>
     </div>
 
-    <!-- Portfolio Performance & Watchlist -->
+    <!-- Portfolio Insights & Watchlist -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      <!-- Portfolio Performance -->
+      <!-- Portfolio Insights -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-bold text-gray-900">Portfolio Performance</h2>
-          <span class="text-sm font-semibold {% if total_value > 0 and percent_gain_loss >= 0 %}text-green-600{% elif total_value > 0 and percent_gain_loss < 0 %}text-red-600{% else %}text-gray-600{% endif %}">
-            {% if total_value > 0 %}
-              ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
-            {% else %}
-              No data
-            {% endif %}
-          </span>
+          <h2 class="text-lg font-bold text-gray-900">Portfolio Insights</h2>
+          <a href="{% url 'portfolio' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+            View All →
+          </a>
         </div>
 
-        {% if total_value > 0 and performance_data %}
-        <div class="bg-gray-50 rounded-lg p-4 h-64 mb-4 overflow-hidden relative">
-          <div class="absolute inset-0 flex justify-between items-end px-4 pb-4">
-            {% for perf in performance_data %}
-              <div class="flex flex-col items-center flex-1 mx-0.5">
-                <div class="performance-bar bg-blue-600 w-full rounded-t-lg"
-                     data-percent="{{ perf.percent }}"
-                     style="height: 0%; min-height: 4px; max-height: 100%;">
+        {% if total_value > 0 %}
+        <!-- Top Performers -->
+        {% if top_performers %}
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+            Top Performers
+          </h3>
+          <div class="space-y-2">
+            {% for performer in top_performers %}
+            <a href="{% url 'stock_detail' performer.stock.symbol %}" 
+               class="block p-3 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition group">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
+                    <p class="text-xs text-gray-600">{{ performer.stock.company_name|truncatewords:4 }}</p>
+                  </div>
                 </div>
-                <p class="text-xs mt-2 text-gray-600 font-medium">{{ perf.month }}</p>
+                <div class="text-right">
+                  <p class="text-sm font-bold text-green-600">+{{ performer.gain_percent|floatformat:1 }}%</p>
+                  <p class="text-xs text-gray-600">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
+                </div>
               </div>
+            </a>
             {% endfor %}
           </div>
         </div>
+        {% endif %}
 
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-gray-50 rounded-lg p-4 text-center">
-            <p class="text-xl font-bold {% if monthly_performance >= 0 %}text-green-600{% elif monthly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
-              {% if monthly_performance != None %}{{ monthly_performance|floatformat:2 }}%{% else %}--{% endif %}
-            </p>
-            <p class="text-xs text-gray-600 mt-1">1 Month</p>
-          </div>
-          <div class="bg-gray-50 rounded-lg p-4 text-center">
-            <p class="text-xl font-bold {% if quarterly_performance >= 0 %}text-blue-600{% elif quarterly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
-              {% if quarterly_performance != None %}{{ quarterly_performance|floatformat:2 }}%{% else %}--{% endif %}
-            </p>
-            <p class="text-xs text-gray-600 mt-1">3 Months</p>
-          </div>
-          <div class="bg-gray-50 rounded-lg p-4 text-center">
-            <p class="text-xl font-bold {% if yearly_performance >= 0 %}text-purple-600{% elif yearly_performance < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
-              {% if yearly_performance != None %}{{ yearly_performance|floatformat:2 }}%{% else %}--{% endif %}
-            </p>
-            <p class="text-xs text-gray-600 mt-1">1 Year</p>
+        <!-- Worst Performers (if any) -->
+        {% if worst_performers %}
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+            </svg>
+            Underperformers
+          </h3>
+          <div class="space-y-2">
+            {% for performer in worst_performers %}
+            <a href="{% url 'stock_detail' performer.stock.symbol %}" 
+               class="block p-3 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition group">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
+                    <p class="text-xs text-gray-600">{{ performer.stock.company_name|truncatewords:4 }}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-bold text-red-600">{{ performer.gain_percent|floatformat:1 }}%</p>
+                  <p class="text-xs text-gray-600">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
           </div>
         </div>
+        {% endif %}
+
+        <!-- Sector Allocation -->
+        {% if sector_allocation_sorted %}
+        <div>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Sector Allocation
+          </h3>
+          <div class="space-y-2">
+            {% for sector, percent in sector_allocation_sorted %}
+            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <span class="text-sm font-medium text-gray-700">{{ sector }}</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-600 rounded-full" style="width: {{ percent|floatformat:1 }}%"></div>
+                </div>
+                <span class="text-sm font-semibold text-gray-900 w-12 text-right">{{ percent|floatformat:1 }}%</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
         {% else %}
         <div class="text-center py-12">
           <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
           </svg>
           <p class="text-gray-600 font-medium mb-2">No portfolio data</p>
-          <p class="text-sm text-gray-500 mb-4">Add stocks to see performance</p>
+          <p class="text-sm text-gray-500 mb-4">Add stocks to see insights</p>
           <a href="{% url 'all_stocks' %}" 
              class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
             Browse Stocks
@@ -945,23 +999,6 @@
       }
     });
     
-    // Chart animation
-    const bars = document.querySelectorAll('.performance-bar');
-    if (bars.length > 0) {
-      bars.forEach((bar, index) => {
-        const targetHeight = bar.getAttribute('data-percent');
-        if (targetHeight) {
-          bar.style.height = '0%';
-          bar.style.opacity = '0';
-          
-          setTimeout(() => {
-            bar.style.transition = 'height 1.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease-in';
-            bar.style.height = targetHeight + '%';
-            bar.style.opacity = '1';
-          }, 500 + (index * 200));
-        }
-      });
-    }
     
     // Dividend Projection Chart
     {% if dividend_projection %}

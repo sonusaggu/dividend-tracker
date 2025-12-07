@@ -217,39 +217,39 @@
 
         <!-- Sector Allocation -->
         {% if sector_allocation %}
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-bold text-gray-900">Sector Allocation</h2>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-gray-900">Sector Allocation</h2>
                 <a href="{% url 'export_portfolio' %}" 
-                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition text-sm">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition text-xs">
+                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    Export CSV
+                    Export
                 </a>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Pie Chart -->
-                <div class="flex items-center justify-center">
-                    <canvas id="sectorPieChart" class="w-full max-w-full" style="max-width: 100%; height: auto;"></canvas>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Compact Pie Chart -->
+                <div class="flex items-center justify-center md:col-span-1">
+                    <canvas id="sectorPieChart" class="w-full max-w-full" style="max-width: 200px; height: 200px;"></canvas>
                 </div>
                 
-                <!-- Sector List -->
-                <div class="space-y-3">
+                <!-- Compact Sector List -->
+                <div class="md:col-span-2 space-y-2">
                     {% for item in sector_chart_data %}
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="flex-1">
-                            <p class="text-sm font-semibold text-gray-900 mb-2">{{ item.sector }}</p>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-32 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ item.percent }}%"></div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 mb-1.5 truncate">{{ item.sector }}</p>
+                            <div class="flex items-center space-x-2">
+                                <div class="flex-1 bg-gray-200 rounded-full h-1.5 max-w-32">
+                                    <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" style="width: {{ item.percent }}%"></div>
                                 </div>
-                                <span class="text-sm font-bold text-gray-700">{{ item.percent|floatformat:1 }}%</span>
+                                <span class="text-xs font-bold text-gray-700 whitespace-nowrap">{{ item.percent|floatformat:1 }}%</span>
                             </div>
                         </div>
-                        <div class="text-right ml-4">
-                            <p class="text-lg font-bold text-gray-900">${{ item.value|floatformat:0|intcomma }}</p>
+                        <div class="text-right ml-3 flex-shrink-0">
+                            <p class="text-sm font-bold text-gray-900">${{ item.value|floatformat:0|intcomma }}</p>
                         </div>
                     </div>
                     {% endfor %}
@@ -806,10 +806,10 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     const ctx = document.getElementById('sectorPieChart');
     if (ctx) {
-        const container = ctx.parentElement;
-        const containerSize = Math.min(container.clientWidth || 300, container.clientHeight || 300, 400);
-        ctx.width = containerSize;
-        ctx.height = containerSize;
+        // Fixed compact size
+        const chartSize = 200;
+        ctx.width = chartSize;
+        ctx.height = chartSize;
         
         const colors = [
             '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
@@ -819,9 +819,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const total = sectorData.reduce((sum, item) => sum + item.value, 0);
         let currentAngle = -Math.PI / 2;
         const canvas = ctx.getContext('2d');
-        const centerX = ctx.width / 2;
-        const centerY = ctx.height / 2;
-        const radius = Math.min(centerX, centerY) - (containerSize > 300 ? 20 : 15);
+        const centerX = chartSize / 2;
+        const centerY = chartSize / 2;
+        const radius = centerX - 15; // Compact padding
         
         sectorData.forEach((item, index) => {
             const sliceAngle = (item.value / total) * 2 * Math.PI;
@@ -836,19 +836,17 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.lineWidth = 2;
             canvas.stroke();
             
-            if (sliceAngle > 0.2 && containerSize > 250) {
+            // Only show labels for slices >= 10% to keep it clean
+            if (sliceAngle > 0.3 && item.percent >= 10) {
                 const labelAngle = currentAngle + sliceAngle / 2;
-                const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
-                const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+                const labelX = centerX + Math.cos(labelAngle) * (radius * 0.65);
+                const labelY = centerY + Math.sin(labelAngle) * (radius * 0.65);
                 
                 canvas.fillStyle = '#1F2937';
-                const fontSize = Math.max(10, containerSize / 30);
-                canvas.font = `bold ${fontSize}px Arial`;
+                canvas.font = 'bold 11px Arial';
                 canvas.textAlign = 'center';
                 canvas.textBaseline = 'middle';
-                if (item.percent >= 5) {
-                    canvas.fillText(item.percent.toFixed(1) + '%', labelX, labelY);
-                }
+                canvas.fillText(item.percent.toFixed(0) + '%', labelX, labelY);
             }
             
             currentAngle += sliceAngle;
