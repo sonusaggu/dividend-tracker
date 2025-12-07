@@ -611,6 +611,11 @@
     <!-- Footer -->
     {% include 'components/footer.html' %}
     
+    <!-- Promotional Registration Modal (only show if user is not authenticated) -->
+    {% if not user.is_authenticated %}
+    {% include 'components/promotional_registration_modal.html' %}
+    {% endif %}
+    
     <!-- Common JavaScript -->
     <script>
         // Beautiful Toast Notification System

@@ -1,0 +1,215 @@
+<!-- Promotional Registration Modal - Limited Time Offer (Compact & Mobile-Optimized) -->
+<div id="promoRegistrationModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[10000] overflow-y-auto py-4 sm:py-8 px-2 sm:px-4" style="display: none;">
+    <div class="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 w-full max-w-md relative border-2 border-yellow-400 animate-pulse-border">
+        <!-- Close Button -->
+        <button onclick="closePromoRegistrationModal()" class="absolute top-2 right-2 sm:top-3 sm:right-3 text-white hover:text-yellow-300 text-2xl sm:text-3xl transition duration-200 leading-none z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+            &times;
+        </button>
+        
+        <!-- Limited Time Badge -->
+        <div class="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 sm:px-4 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold shadow-lg whitespace-nowrap">
+            ⚡ LIMITED TIME ⚡
+        </div>
+        
+        <div class="mt-1 sm:mt-2">
+            <!-- Header -->
+            <div class="text-center mb-3 sm:mb-4">
+                <div class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-full mb-1 sm:mb-2">
+                    <span class="text-2xl sm:text-3xl">🎁</span>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-white mb-0.5 sm:mb-1">
+                    Premium Features
+                    <span class="block text-yellow-300 text-2xl sm:text-3xl mt-0.5 sm:mt-1">FREE Forever!</span>
+                </h2>
+                <p class="text-blue-100 text-xs sm:text-sm mb-1 sm:mb-2 px-2">
+                    Join now - No credit card required
+                </p>
+            </div>
+            
+            <!-- Premium Features List (Compact Grid - Responsive) -->
+            <div class="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/20">
+                <h3 class="text-xs sm:text-sm font-bold text-white mb-2 sm:mb-3 text-center">✨ What's Included:</h3>
+                <div class="grid grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">💎</span>
+                        <span class="text-white truncate">Portfolio Analytics</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">📊</span>
+                        <span class="text-white truncate">Unlimited Stocks</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">🔔</span>
+                        <span class="text-white truncate">Smart Alerts</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">📈</span>
+                        <span class="text-white truncate">Real-time Data</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">📧</span>
+                        <span class="text-white truncate">Newsletter</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">👥</span>
+                        <span class="text-white truncate">Community</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">📝</span>
+                        <span class="text-white truncate">Research Notes</span>
+                    </div>
+                    <div class="flex items-center space-x-1 sm:space-x-1.5">
+                        <span class="text-sm sm:text-base">💼</span>
+                        <span class="text-white truncate">CSV Import</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Value Proposition (Compact) -->
+            <div class="bg-yellow-400/20 border border-yellow-400 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-center">
+                <p class="text-white font-bold text-xs sm:text-sm mb-0.5 sm:mb-1">
+                    <span class="line-through text-red-300 text-[10px] sm:text-xs">$29/month</span>
+                    <span class="text-xl sm:text-2xl text-yellow-300 ml-1 sm:ml-2">FREE</span>
+                </p>
+                <p class="text-blue-100 text-[10px] sm:text-xs">For early adopters</p>
+            </div>
+            
+            <!-- CTA Button -->
+            <a href="{% url 'register' %}" 
+                    onclick="closePromoRegistrationModal();"
+                    class="block w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 shadow-xl mb-2 sm:mb-3 text-center min-h-[44px] sm:min-h-[48px] flex items-center justify-center">
+                <span class="flex items-center justify-center">
+                    <span class="mr-1.5 sm:mr-2 text-base sm:text-lg">🚀</span>
+                    <span class="whitespace-nowrap">Claim Free Premium</span>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </span>
+            </a>
+            
+            <!-- Trust Indicators (Compact) -->
+            <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-blue-200 mb-1 sm:mb-2">
+                <div class="flex items-center space-x-0.5 sm:space-x-1">
+                    <span class="text-green-300">✓</span>
+                    <span>No credit card</span>
+                </div>
+                <div class="flex items-center space-x-0.5 sm:space-x-1">
+                    <span class="text-green-300">✓</span>
+                    <span>Free forever</span>
+                </div>
+            </div>
+            
+            <!-- Fine Print -->
+            <p class="text-center text-blue-200 text-[10px] sm:text-xs px-2">
+                Limited time offer for new users
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: #facc15;
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.5);
+    }
+    50% {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 5px rgba(250, 204, 21, 0);
+    }
+}
+
+.animate-pulse-border {
+    animation: pulse-border 2s ease-in-out infinite;
+}
+</style>
+
+<script>
+// Promotional Registration Modal Functions
+(function() {
+    window.openPromoRegistrationModal = function() {
+        const modal = document.getElementById('promoRegistrationModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    window.closePromoRegistrationModal = function() {
+        const modal = document.getElementById('promoRegistrationModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            
+            // Remember that user dismissed the modal (don't show again for 24 hours)
+            localStorage.setItem('promoModalDismissed', Date.now().toString());
+        }
+    }
+    
+    // Also define as regular function for compatibility
+    function openPromoRegistrationModal() {
+        if (window.openPromoRegistrationModal) {
+            window.openPromoRegistrationModal();
+        }
+    }
+    
+    function closePromoRegistrationModal() {
+        if (window.closePromoRegistrationModal) {
+            window.closePromoRegistrationModal();
+        }
+    }
+})();
+
+// Auto-show promotional modal after delay (only if not authenticated and not recently dismissed)
+document.addEventListener('DOMContentLoaded', function() {
+    // Only show for non-authenticated users
+    {% if not user.is_authenticated %}
+    const lastDismissed = localStorage.getItem('promoModalDismissed');
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    // Show modal if:
+    // 1. Never dismissed, OR
+    // 2. Dismissed more than 24 hours ago
+    if (!lastDismissed || (now - parseInt(lastDismissed)) > oneDay) {
+        // Show after 3 seconds delay
+        setTimeout(function() {
+            openPromoRegistrationModal();
+        }, 3000);
+        
+        // Also show on scroll (after user scrolls 30% of page)
+        let scrollShown = false;
+        window.addEventListener('scroll', function() {
+            if (!scrollShown && window.scrollY > window.innerHeight * 0.3) {
+                scrollShown = true;
+                if (!document.getElementById('promoRegistrationModal').style.display || 
+                    document.getElementById('promoRegistrationModal').style.display === 'none') {
+                    openPromoRegistrationModal();
+                }
+            }
+        });
+    }
+    {% endif %}
+    
+    // Close modal when clicking outside
+    const modal = document.getElementById('promoRegistrationModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closePromoRegistrationModal();
+            }
+        });
+    }
+    
+    // Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('promoRegistrationModal');
+            if (modal && modal.style.display !== 'none') {
+                closePromoRegistrationModal();
+            }
+        }
+    });
+});
+</script>
+
