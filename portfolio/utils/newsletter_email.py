@@ -234,10 +234,13 @@ def generate_newsletter_html(content):
         sector = clean_text(str(stock.get('sector', ''))) if stock.get('sector') else ''
         frequency = clean_text(str(stock.get('frequency', '')))
         
+        # Yield is already in percentage format (0-100), no need to multiply
+        yield_value = stock.get('dividend_yield', 0) or 0
+        
         html += f"""
             <div class="stock-card">
                 <div class="stock-header">{symbol} - {company_name}</div>
-                <p><strong>Dividend:</strong> ${stock['dividend_amount']:.2f} ({stock['dividend_yield']*100:.2f}% yield)</p>
+                <p><strong>Dividend:</strong> ${stock['dividend_amount']:.2f} ({yield_value:.2f}% yield)</p>
                 <p><strong>Ex-Date:</strong> {stock['ex_dividend_date'].strftime('%B %d, %Y')} ({stock['days_until']} days)</p>
                 <p><strong>Frequency:</strong> {frequency}</p>
                 {f"<p><strong>Current Price:</strong> ${stock['current_price']:.2f}</p>" if stock.get('current_price') else ""}
@@ -292,9 +295,12 @@ Featured Stocks:
         sector = clean_text(str(stock.get('sector', ''))) if stock.get('sector') else ''
         frequency = clean_text(str(stock.get('frequency', '')))
         
+        # Yield is already in percentage format (0-100), no need to multiply
+        yield_value = stock.get('dividend_yield', 0) or 0
+        
         text += f"""
 {i}. {symbol} - {company_name}
-   Dividend: ${stock['dividend_amount']:.2f} ({stock['dividend_yield']*100:.2f}% yield)
+   Dividend: ${stock['dividend_amount']:.2f} ({yield_value:.2f}% yield)
    Ex-Date: {stock['ex_dividend_date'].strftime('%B %d, %Y')} ({stock['days_until']} days)
    Frequency: {frequency}
 """
