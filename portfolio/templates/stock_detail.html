@@ -15,28 +15,30 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Stock Header Card -->
+        
+        <!-- Stock Header -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex items-start space-x-4 mb-6 lg:mb-0">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                <!-- Left: Stock Info -->
+                <div class="flex items-start gap-4 flex-1">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                         <span class="text-2xl text-white font-bold">{{ stock.symbol|slice:":1" }}</span>
                     </div>
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3 mb-2">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-3 mb-2 flex-wrap">
                             <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">{{ stock.symbol }}</h1>
                             {% if stock.tsx60_member %}
-                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full font-medium">
                                 TSX 60
                             </span>
                             {% endif %}
                             {% if stock.is_etf %}
-                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2.5 py-1 rounded-full font-medium">
                                 ETF
                             </span>
                             {% endif %}
                         </div>
-                        <p class="text-xl text-gray-700 mb-3">{{ stock.company_name }}</p>
+                        <p class="text-lg sm:text-xl text-gray-700 mb-3">{{ stock.company_name }}</p>
                         <div class="flex flex-wrap gap-2">
                             {% if stock.sector %}
                             <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-lg font-medium">
@@ -51,11 +53,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="text-center lg:text-right">
+                
+                <!-- Right: Price -->
+                <div class="flex-shrink-0">
                     {% if latest_price %}
-                    <div class="mb-2">
-                        <div class="text-4xl font-bold text-gray-900">${{ latest_price.last_price|floatformat:2 }}</div>
-                        <div class="text-sm text-gray-600 mt-1">
+                    <div class="text-right">
+                        <div class="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">${{ latest_price.last_price|floatformat:2 }}</div>
+                        <div class="text-sm text-gray-600">
                             {% if latest_price.price_date %}
                                 As of {{ latest_price.price_date|date:"M d, Y" }}
                             {% else %}
@@ -71,13 +75,10 @@
             
             <!-- Quick Actions -->
             {% if user.is_authenticated %} 
-            <div class="bg-gray-50 rounded-lg p-6 mt-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <!-- Watchlist Button -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <button id="watchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
-                            class="flex items-center justify-center px-4 py-2.5 border {% if in_watchlist %}border-green-600 text-green-700 bg-green-50{% else %}border-gray-300 text-gray-700 bg-white{% endif %} rounded-lg hover:bg-gray-50 transition font-medium">
+                            class="flex items-center justify-center px-4 py-2.5 border {% if in_watchlist %}border-green-600 text-green-700 bg-green-50{% else %}border-gray-300 text-gray-700 bg-white{% endif %} rounded-lg hover:bg-gray-50 transition font-medium text-sm">
                         <svg id="watchlistIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {% if in_watchlist %}
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -86,47 +87,40 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             {% endif %}
                         </svg>
-                        <span id="watchlistText">
-                            {% if in_watchlist %}In Watchlist{% else %}Add to Watchlist{% endif %}
+                        <span id="watchlistText" class="hidden sm:inline">
+                            {% if in_watchlist %}In Watchlist{% else %}Watchlist{% endif %}
                         </span>
                     </button>
                     
-                    <!-- Portfolio Button -->
                     <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
-                            class="flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
+                            class="flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        <span>
-                            {% if in_portfolio %}Update Portfolio{% else %}Add to Portfolio{% endif %}
-                        </span>
+                        <span class="hidden sm:inline">{% if in_portfolio %}Update{% else %}Add{% endif %}</span>
                     </button>
                     
-                    <!-- Compare Button -->
                     <a href="{% url 'stock_comparison' %}?symbol1={{ stock.symbol }}&symbol2="
-                       class="flex items-center justify-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition font-medium">
+                       class="flex items-center justify-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition font-medium text-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
-                        <span>Compare</span>
+                        <span class="hidden sm:inline">Compare</span>
                     </a>
                     
-                    <!-- Dividend Alerts Button -->
                     {% if dividend %}
                     <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 
-                       class="flex items-center justify-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition font-medium">
+                       class="flex items-center justify-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition font-medium text-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
-                        <span>
-                            {% if has_dividend_alert %}Manage Alert{% else %}Set Alert{% endif %}
-                        </span>
+                        <span class="hidden sm:inline">{% if has_dividend_alert %}Alert{% else %}Alert{% endif %}</span>
                     </a>
                     {% endif %}
                 </div>
             </div>
             {% else %}
-            <div class="bg-blue-50 rounded-lg p-6 mt-6 border border-blue-200 text-center">
+            <div class="mt-6 pt-6 border-t border-gray-200 text-center">
                 <p class="text-gray-700 mb-4">Sign in to track this stock and manage your portfolio</p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
                     <a href="{% url 'login' %}" class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
@@ -140,36 +134,26 @@
             {% endif %}
         </div>
         
-        <!-- Key Metrics Summary -->
-        {% if dividend or valuation or latest_price %}
+        <!-- Key Metrics -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {% if dividend %}
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div class="text-xs font-medium text-gray-600 mb-1">Dividend Yield</div>
                 <div class="text-2xl font-bold text-green-600">
-                    {% if dividend.yield_percent %}
-                        {{ dividend.yield_percent|floatformat:2 }}%
-                    {% else %}
-                        N/A
-                    {% endif %}
+                    {% if dividend.yield_percent %}{{ dividend.yield_percent|floatformat:2 }}%{% else %}N/A{% endif %}
                 </div>
             </div>
-            {% endif %}
-            
-            {% if dividend %}
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div class="text-xs font-medium text-gray-600 mb-1">Dividend Amount</div>
                 <div class="text-2xl font-bold text-blue-600">${{ dividend.amount|default:"N/A" }}</div>
             </div>
             {% endif %}
-            
             {% if valuation and valuation.pe_ratio %}
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div class="text-xs font-medium text-gray-600 mb-1">P/E Ratio</div>
                 <div class="text-2xl font-bold text-purple-600">{{ valuation.pe_ratio|floatformat:2 }}</div>
             </div>
             {% endif %}
-            
             {% if valuation and valuation.market_cap %}
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div class="text-xs font-medium text-gray-600 mb-1">Market Cap</div>
@@ -177,16 +161,15 @@
             </div>
             {% endif %}
         </div>
-        {% endif %}
         
-        <!-- Main Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column (2/3 width) -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Dividend Information Card -->
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column (2/3) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Dividend Information -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-bold text-gray-900">Dividend Information</h2>
+                        <h2 class="text-xl font-bold text-gray-900">Dividend Information</h2>
                         {% if dividend %}
                         <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
                             {{ dividend.frequency|default:"N/A" }}
@@ -195,7 +178,7 @@
                     </div>
                     
                     {% if dividend %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="text-sm font-medium text-gray-600 mb-2">Dividend Amount</div>
                             <div class="text-2xl font-bold text-green-600">${{ dividend.amount }}</div>
@@ -203,53 +186,35 @@
                         </div>
                         
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="text-sm text-gray-600 mb-2">Dividend Yield</div>
-                            <div class="text-3xl font-bold text-blue-600">
-                                {% if dividend.yield_percent %}
-                                    {{ dividend.yield_percent|floatformat:2 }}%
-                                {% else %}
-                                    N/A
-                                {% endif %}
+                            <div class="text-sm font-medium text-gray-600 mb-2">Dividend Yield</div>
+                            <div class="text-2xl font-bold text-blue-600">
+                                {% if dividend.yield_percent %}{{ dividend.yield_percent|floatformat:2 }}%{% else %}N/A{% endif %}
                             </div>
-                            <div class="text-xs text-gray-500 mt-2">Annualized</div>
+                            <div class="text-xs text-gray-500 mt-1">Annualized</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200">
-                            <div class="text-sm text-gray-600 mb-2">Next Ex-Date</div>
-                            <div class="text-2xl font-bold text-purple-600">
-                                {% if dividend.ex_dividend_date %}
-                                    {{ dividend.ex_dividend_date|date:"M d, Y" }}
-                                {% else %}
-                                    TBD
-                                {% endif %}
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                            <div class="text-sm font-medium text-gray-600 mb-2">Next Ex-Date</div>
+                            <div class="text-xl font-bold text-purple-600">
+                                {% if dividend.ex_dividend_date %}{{ dividend.ex_dividend_date|date:"M d, Y" }}{% else %}TBD{% endif %}
                             </div>
-                            <div class="text-xs text-gray-500 mt-2">
-                                {% if dividend.ex_dividend_date %}
-                                    <span class="text-gray-600">
-                                        {{ dividend.ex_dividend_date|timeuntil }}
-                                    </span>
-                                {% else %}
-                                    Not scheduled
-                                {% endif %}
-                            </div>
+                            {% if dividend.ex_dividend_date %}
+                            <div class="text-xs text-gray-500 mt-1">{{ dividend.ex_dividend_date|timeuntil }}</div>
+                            {% endif %}
                         </div>
                         
-                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl border border-orange-200">
-                            <div class="text-sm text-gray-600 mb-2">Payment Date</div>
+                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                            <div class="text-sm font-medium text-gray-600 mb-2">Payment Date</div>
                             <div class="text-xl font-bold text-orange-600">
-                                {% if dividend.payment_date %}
-                                    {{ dividend.payment_date|date:"M d, Y" }}
-                                {% else %}
-                                    TBD
-                                {% endif %}
+                                {% if dividend.payment_date %}{{ dividend.payment_date|date:"M d, Y" }}{% else %}TBD{% endif %}
                             </div>
-                            <div class="text-xs text-gray-500 mt-2">Expected payment</div>
+                            <div class="text-xs text-gray-500 mt-1">Expected payment</div>
                         </div>
                     </div>
                     
-                    <div class="mt-6 flex items-center justify-between">
+                    <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                         <a href="{% url 'dividend_history' stock.symbol %}" 
-                           class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-md font-medium">
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
@@ -257,26 +222,26 @@
                         </a>
                     </div>
                     
-                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Currency:</span>
-                                <span class="font-semibold">{{ dividend.currency|default:"CAD" }}</span>
+                                <span class="font-semibold text-gray-900">{{ dividend.currency|default:"CAD" }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Frequency:</span>
-                                <span class="font-semibold">{{ dividend.frequency|default:"N/A" }}</span>
+                                <span class="font-semibold text-gray-900">{{ dividend.frequency|default:"N/A" }}</span>
                             </div>
                             {% if dividend.declaration_date %}
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Declared:</span>
-                                <span class="font-semibold">{{ dividend.declaration_date|date:"M d, Y" }}</span>
+                                <span class="font-semibold text-gray-900">{{ dividend.declaration_date|date:"M d, Y" }}</span>
                             </div>
                             {% endif %}
                             {% if dividend.record_date %}
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Record Date:</span>
-                                <span class="font-semibold">{{ dividend.record_date|date:"M d, Y" }}</span>
+                                <span class="font-semibold text-gray-900">{{ dividend.record_date|date:"M d, Y" }}</span>
                             </div>
                             {% endif %}
                         </div>
@@ -290,18 +255,13 @@
                     {% endif %}
                 </div>
 
-                <!-- Valuation Metrics Card -->
-                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                    <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white text-xl">💎</span>
-                        </span>
-                        Valuation Metrics
-                    </h2>
+                <!-- Valuation Metrics -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Valuation Metrics</h2>
                     
                     {% if valuation %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-gray-600 font-medium">P/E Ratio</span>
                                 <span class="text-2xl font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</span>
@@ -309,7 +269,7 @@
                             <div class="text-xs text-gray-500">Price-to-Earnings Ratio</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-gray-600 font-medium">EPS</span>
                                 <span class="text-2xl font-bold text-gray-900">${{ valuation.eps|default:"N/A" }}</span>
@@ -317,7 +277,7 @@
                             <div class="text-xs text-gray-500">Earnings Per Share</div>
                         </div>
                         
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-gray-600 font-medium">Market Cap</span>
                                 <span class="text-lg font-bold text-gray-900">{{ valuation.market_cap|default:"N/A" }}</span>
@@ -326,7 +286,7 @@
                         </div>
                         
                         {% if valuation.book_value %}
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-gray-600 font-medium">Book Value</span>
                                 <span class="text-lg font-bold text-gray-900">${{ valuation.book_value }}</span>
@@ -344,19 +304,14 @@
                 </div>
             </div>
 
-            <!-- Right Column (1/3 width) -->
-            <div class="space-y-8">
-                <!-- Analyst Ratings Card -->
-                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                    <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white text-xl">📈</span>
-                        </span>
-                        Analyst Ratings
-                    </h2>
+            <!-- Right Column (1/3) -->
+            <div class="space-y-6">
+                <!-- Analyst Ratings -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Analyst Ratings</h2>
                     
                     {% if analyst_rating %}
-                    <div class="text-center mb-6 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                    <div class="text-center mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                         <div class="text-4xl font-bold text-gray-900 mb-2">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
                         <div class="text-sm text-gray-600 font-medium">Consensus Rating</div>
                     </div>
@@ -414,14 +369,9 @@
                     {% endif %}
                 </div>
 
-                <!-- Stock Info Card -->
-                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                    <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-6">
-                        <span class="w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-700 rounded-lg flex items-center justify-center mr-3">
-                            <span class="text-white text-xl">ℹ️</span>
-                        </span>
-                        Stock Details
-                    </h2>
+                <!-- Stock Details -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Stock Details</h2>
                     
                     <div class="space-y-3">
                         <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -450,14 +400,11 @@
                     </div>
                 </div>
 
-                <!-- Portfolio Status Card -->
+                <!-- Portfolio Holdings -->
                 {% if user.is_authenticated and in_portfolio %}
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-6 border border-green-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <span class="text-xl mr-2">📊</span>
-                        Your Holdings
-                    </h3>
-                    <div class="space-y-2 text-sm">
+                <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Holdings</h3>
+                    <div class="space-y-2 text-sm mb-4">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shares:</span>
                             <span class="font-bold text-gray-900">{{ portfolio_item.shares_owned }}</span>
@@ -469,42 +416,92 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Value:</span>
                             <span class="font-bold text-green-600">
-                                {% if portfolio_total_value %}
-                                    ${{ portfolio_total_value|floatformat:2|intcomma }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
+                                {% if portfolio_total_value %}${{ portfolio_total_value|floatformat:2|intcomma }}{% else %}N/A{% endif %}
                             </span>
                         </div>
                     </div>
-                    <a href="{% url 'portfolio' %}" class="mt-4 block text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                    <a href="{% url 'portfolio' %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition font-medium">
                         View Portfolio
                     </a>
                 </div>
                 {% endif %}
 
-                <!-- Stock Notes Section -->
+                <!-- Dividend Analysis -->
+                {% if dividend and dividend.amount > 0 %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Dividend Analysis</h2>
+                    
+                    <div class="space-y-4">
+                        {% if dividend_growth_rate is not None %}
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                            <div class="text-sm text-gray-600 mb-2">Growth Rate (2Y)</div>
+                            <div class="text-2xl font-bold {% if dividend_growth_rate >= 0 %}text-green-700{% else %}text-red-600{% endif %}">
+                                {% if dividend_growth_rate >= 0 %}+{% endif %}{{ dividend_growth_rate|floatformat:1 }}%
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">Year-over-year change</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if dividend_consistency_score > 0 %}
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                            <div class="text-sm text-gray-600 mb-2">Consistency Score</div>
+                            <div class="text-2xl font-bold text-blue-700">{{ dividend_consistency_score|floatformat:0 }}/100</div>
+                            <div class="text-xs text-gray-500 mt-1">Payment regularity</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if annual_dividend_income > 0 %}
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                            <div class="text-sm text-gray-600 mb-2">Estimated Annual Income</div>
+                            <div class="text-xl font-bold text-purple-700">${{ annual_dividend_income|floatformat:2 }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Per share</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Portfolio Dividend Income -->
+                {% if user.is_authenticated and in_portfolio and portfolio_item and dividend_income_calculation %}
+                <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Your Dividend Income</h2>
+                    
+                    <div class="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Shares Owned:</span>
+                            <span class="font-bold text-gray-900">{{ portfolio_item.shares_owned }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Per Payment:</span>
+                            <span class="font-bold text-green-700">${{ dividend_income_calculation.per_payment|floatformat:2 }}</span>
+                        </div>
+                        {% if dividend.frequency %}
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span class="text-gray-700 font-semibold">Annual Income:</span>
+                            <span class="font-bold text-green-700 text-lg">${{ dividend_income_calculation.annual|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stock Notes -->
                 {% if user.is_authenticated %}
-                <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-                            <span class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
-                                <span class="text-white text-xl">📝</span>
-                            </span>
-                            My Notes & Journal
-                        </h2>
+                        <h2 class="text-xl font-bold text-gray-900">My Notes</h2>
                         <a href="{% url 'create_stock_note' stock.symbol %}" 
-                           class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center">
-                            + Add Note
+                           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition text-sm">
+                            + Add
                         </a>
                     </div>
                     
                     {% if user_notes %}
                     <div class="space-y-4">
                         {% for note in user_notes %}
-                        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200 hover:shadow-md transition">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex items-center space-x-2">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">
                                         {{ note.get_note_type_display }}
                                     </span>
@@ -515,12 +512,10 @@
                                     {% endif %}
                                     <span class="text-xs text-gray-500">{{ note.created_at|date:"M d, Y" }}</span>
                                 </div>
-                                <div class="flex gap-2">
-                                    <a href="{% url 'edit_stock_note' note.id %}" 
-                                       class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
-                                        Edit
-                                    </a>
-                                </div>
+                                <a href="{% url 'edit_stock_note' note.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                    Edit
+                                </a>
                             </div>
                             {% if note.title %}
                             <h4 class="font-bold text-gray-900 mb-2">{{ note.title }}</h4>
@@ -541,15 +536,15 @@
                     <div class="mt-4 text-center">
                         <a href="{% url 'stock_notes_by_symbol' stock.symbol %}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                            View All Notes for {{ stock.symbol }} →
+                            View All Notes →
                         </a>
                     </div>
                     {% else %}
                     <div class="text-center py-8">
                         <div class="text-4xl mb-3">📝</div>
-                        <p class="text-gray-600 mb-4">No notes yet. Start tracking your research and insights!</p>
+                        <p class="text-gray-600 mb-4">No notes yet. Start tracking your research!</p>
                         <a href="{% url 'create_stock_note' stock.symbol %}" 
-                           class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px]">
+                           class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition">
                             Create First Note
                         </a>
                     </div>
@@ -563,10 +558,10 @@
 
 <!-- Portfolio Modal -->
 <div id="portfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 mx-4 w-full max-w-md">
+    <div class="bg-white rounded-lg shadow-lg p-6 mx-4 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-gray-900">{% if in_portfolio %}Update{% else %}Add{% endif %} <span id="modalStockSymbol"></span> to Portfolio</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition duration-200">
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition">
                 &times;
             </button>
         </div>
@@ -604,7 +599,7 @@
                     Cancel
                 </button>
                 <button type="submit"
-                        class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition transform hover:scale-105">
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition">
                     {% if in_portfolio %}Update{% else %}Add to{% endif %} Portfolio
                 </button>
             </div>
@@ -650,12 +645,20 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
     
     // Validation
     if (!sharesInput.value || Number(sharesInput.value) < 1) {
-        Toast.error('Shares Owned must be at least 1.');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Shares Owned must be at least 1.');
+        } else {
+            alert('Shares Owned must be at least 1.');
+        }
         sharesInput.focus();
         return;
     }
     if (!costInput.value || Number(costInput.value) <= 0) {
-        Toast.error('Average Cost must be greater than $0.');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Average Cost must be greater than $0.');
+        } else {
+            alert('Average Cost must be greater than $0.');
+        }
         costInput.focus();
         return;
     }
@@ -675,15 +678,27 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
     .then(data => {
         if (data.status === 'success') {
             closeModal();
-            Toast.success(data.message || 'Portfolio updated successfully!');
+            if (typeof Toast !== 'undefined') {
+                Toast.success(data.message || 'Portfolio updated successfully!');
+            } else {
+                alert(data.message || 'Portfolio updated successfully!');
+            }
             setTimeout(() => location.reload(), 1000);
         } else {
-            Toast.error(data.message || 'Error updating portfolio.');
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Error updating portfolio.');
+            } else {
+                alert(data.message || 'Error updating portfolio.');
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        Toast.error('Error updating portfolio. Please try again.');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error updating portfolio. Please try again.');
+        } else {
+            alert('Error updating portfolio. Please try again.');
+        }
     });
 });
 
@@ -716,33 +731,28 @@ function toggleWatchlist(stockId) {
     })
     .then(data => {
         if (data.status === 'added') {
-            // Update icon to checkmark
             watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
             watchlistText.textContent = 'In Watchlist';
             watchlistBtn.classList.remove('border-gray-300', 'text-gray-700', 'bg-white');
             watchlistBtn.classList.add('border-green-600', 'text-green-700', 'bg-green-50');
             
-            // Show success message
             if (typeof Toast !== 'undefined') {
                 Toast.success(data.message || 'Added to watchlist!');
             } else {
                 alert(data.message || 'Added to watchlist!');
             }
         } else if (data.status === 'removed') {
-            // Update icon to eye icon
             watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
             watchlistText.textContent = 'Add to Watchlist';
             watchlistBtn.classList.remove('border-green-600', 'text-green-700', 'bg-green-50');
             watchlistBtn.classList.add('border-gray-300', 'text-gray-700', 'bg-white');
             
-            // Show success message
             if (typeof Toast !== 'undefined') {
                 Toast.success(data.message || 'Removed from watchlist!');
             } else {
                 alert(data.message || 'Removed from watchlist!');
             }
         } else if (data.status === 'error') {
-            // Show error message
             if (typeof Toast !== 'undefined') {
                 Toast.error(data.message || 'Error updating watchlist.');
             } else {
@@ -760,7 +770,6 @@ function toggleWatchlist(stockId) {
         }
     })
     .finally(() => {
-        // Re-enable button
         watchlistBtn.disabled = false;
         watchlistBtn.style.opacity = '1';
         watchlistBtn.style.cursor = 'pointer';

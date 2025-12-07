@@ -1202,6 +1202,66 @@ def stock_detail(request, symbol):
     else:
         user_notes = []
     
+    # Calculate dividend growth and consistency metrics
+    today = timezone.now().date()
+    all_dividends = Dividend.objects.filter(stock=stock, ex_dividend_date__isnull=False).order_by('ex_dividend_date')
+    
+    dividend_growth_rate = None
+    dividend_consistency_score = 0
+    annual_dividend_income = 0
+    
+    if all_dividends.exists() and dividend and dividend.amount:
+        # Calculate dividend growth rate (last 2 years)
+        two_years_ago = today - timedelta(days=730)
+        recent_dividends = all_dividends.filter(ex_dividend_date__gte=two_years_ago)
+        
+        if recent_dividends.count() >= 4:  # Need at least 4 dividends to calculate growth
+            first_year_dividends = recent_dividends[:recent_dividends.count()//2]
+            second_year_dividends = recent_dividends[recent_dividends.count()//2:]
+            
+            if first_year_dividends.exists() and second_year_dividends.exists():
+                first_year_avg = sum(float(d.amount) for d in first_year_dividends) / first_year_dividends.count()
+                second_year_avg = sum(float(d.amount) for d in second_year_dividends) / second_year_dividends.count()
+                
+                if first_year_avg > 0:
+                    dividend_growth_rate = ((second_year_avg - first_year_avg) / first_year_avg) * 100
+        
+        # Calculate consistency score (how regular are the payments)
+        if recent_dividends.count() >= 2:
+            dates = [d.ex_dividend_date for d in recent_dividends if d.ex_dividend_date]
+            if len(dates) >= 2:
+                # Check if dividends are roughly evenly spaced
+                intervals = []
+                for i in range(1, len(dates)):
+                    days_between = (dates[i] - dates[i-1]).days
+                    intervals.append(days_between)
+                
+                if intervals:
+                    avg_interval = sum(intervals) / len(intervals)
+                    # Score based on how consistent intervals are (lower variance = higher score)
+                    variance = sum((x - avg_interval) ** 2 for x in intervals) / len(intervals)
+                    # Normalize to 0-100 score
+                    dividend_consistency_score = max(0, min(100, 100 - (variance / 10)))
+        
+        # Calculate annual dividend income (based on current dividend)
+        if dividend.frequency:
+            if 'Monthly' in dividend.frequency:
+                annual_dividend_income = float(dividend.amount) * 12
+            elif 'Quarterly' in dividend.frequency:
+                annual_dividend_income = float(dividend.amount) * 4
+            elif 'Semi-Annual' in dividend.frequency:
+                annual_dividend_income = float(dividend.amount) * 2
+            elif 'Annual' in dividend.frequency:
+                annual_dividend_income = float(dividend.amount)
+            else:
+                # Estimate based on recent frequency
+                recent_count = recent_dividends.count()
+                if recent_count > 0:
+                    days_span = (recent_dividends.last().ex_dividend_date - recent_dividends.first().ex_dividend_date).days
+                    if days_span > 0:
+                        payments_per_year = (recent_count * 365) / days_span
+                        annual_dividend_income = float(dividend.amount) * payments_per_year
+    
     context = {
         'stock': stock,
         'latest_price': latest_price,
@@ -1214,7 +1274,10 @@ def stock_detail(request, symbol):
         'portfolio_item': portfolio_item,
         'portfolio_total_value': portfolio_total_value,
         'user_notes': user_notes,
-        'today': timezone.now().date(),
+        'dividend_growth_rate': dividend_growth_rate,
+        'dividend_consistency_score': dividend_consistency_score,
+        'annual_dividend_income': annual_dividend_income,
+        'today': today,
     }
     
     return render(request, 'stock_detail.html', context)
@@ -1609,22 +1672,58 @@ def watchlist_view(request):
         # Use service layer for optimized query
         watchlist_items = PortfolioService.get_watchlist_with_annotations(request.user)
         
-        # Prepare data efficiently
+        # Prepare data efficiently with price changes
         watchlist_data = []
         dividend_stocks_count = 0
         sectors = set()
+        today = timezone.now().date()
+        seven_days_ago = today - timedelta(days=7)
+        thirty_days_ago = today - timedelta(days=30)
+        
+        # Get upcoming dividends for watchlist stocks
+        upcoming_dividends = Dividend.objects.filter(
+            stock__in=[item.stock for item in watchlist_items],
+            ex_dividend_date__gte=today,
+            ex_dividend_date__lte=today + timedelta(days=30)
+        ).select_related('stock').order_by('ex_dividend_date')[:5]
+        
+        # Get recent news for watchlist stocks
+        from portfolio.models import StockNews
+        recent_news = StockNews.objects.filter(
+            stock__in=[item.stock for item in watchlist_items]
+        ).select_related('stock').order_by('-published_at')[:5]
         
         for item in watchlist_items:
             in_portfolio = item.stock_id in portfolio_stock_ids
             
             latest_price = None
+            price_change_7d = None
+            price_change_30d = None
             if item.latest_price_value:
                 latest_price = type('obj', (object,), {
                     'last_price': item.latest_price_value,
                     'price_date': item.latest_price_date
                 })()
+                
+                # Calculate price changes
+                price_7d_ago = StockPrice.objects.filter(
+                    stock=item.stock,
+                    price_date__lte=seven_days_ago
+                ).order_by('-price_date').first()
+                
+                price_30d_ago = StockPrice.objects.filter(
+                    stock=item.stock,
+                    price_date__lte=thirty_days_ago
+                ).order_by('-price_date').first()
+                
+                if price_7d_ago and price_7d_ago.last_price:
+                    price_change_7d = ((float(item.latest_price_value) - float(price_7d_ago.last_price)) / float(price_7d_ago.last_price)) * 100
+                
+                if price_30d_ago and price_30d_ago.last_price:
+                    price_change_30d = ((float(item.latest_price_value) - float(price_30d_ago.last_price)) / float(price_30d_ago.last_price)) * 100
             
             latest_dividend = None
+            days_until_dividend = None
             if item.latest_dividend_amount:
                 latest_dividend = type('obj', (object,), {
                     'amount': item.latest_dividend_amount,
@@ -1633,6 +1732,9 @@ def watchlist_view(request):
                     'frequency': item.latest_dividend_frequency
                 })()
                 dividend_stocks_count += 1
+                
+                if item.latest_dividend_date:
+                    days_until_dividend = (item.latest_dividend_date - today).days
             
             if item.stock.sector:
                 sectors.add(item.stock.sector)
@@ -1642,11 +1744,18 @@ def watchlist_view(request):
                 'latest_price': latest_price,
                 'latest_dividend': latest_dividend,
                 'in_portfolio': in_portfolio,
-                'watchlist_item': item
+                'watchlist_item': item,
+                'price_change_7d': price_change_7d,
+                'price_change_30d': price_change_30d,
+                'days_until_dividend': days_until_dividend,
             })
         
         # Count stocks in portfolio
         in_portfolio_count = sum(1 for item in watchlist_data if item['in_portfolio'])
+        
+        # Calculate insights
+        total_value = sum(float(item['latest_price'].last_price) for item in watchlist_data if item['latest_price'])
+        avg_yield = sum(float(item['latest_dividend'].yield_percent) for item in watchlist_data if item['latest_dividend']) / dividend_stocks_count if dividend_stocks_count > 0 else 0
         
         return render(request, 'watchlist.html', {
             'watchlist_items': watchlist_data,
@@ -1654,6 +1763,10 @@ def watchlist_view(request):
             'sectors_count': len(sectors),
             'watchlist_count': len(watchlist_items),
             'in_portfolio_count': in_portfolio_count,
+            'upcoming_dividends': upcoming_dividends,
+            'recent_news': recent_news,
+            'total_value': total_value,
+            'avg_yield': avg_yield,
         })
     
     except Exception as e:
@@ -3273,12 +3386,65 @@ def manage_dividend_alerts(request, symbol):
     # Get dividend information
     dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
     
+    # Calculate dividend income based on portfolio holdings
+    dividend_income_calculation = None
+    portfolio_item_for_calc = None
+    if request.user.is_authenticated:
+        portfolio_item_for_calc = UserPortfolio.objects.filter(user=request.user, stock=stock).first()
+        if portfolio_item_for_calc and portfolio_item_for_calc.shares_owned and dividend and dividend.amount:
+            shares = float(portfolio_item_for_calc.shares_owned)
+            div_amount = float(dividend.amount)
+            
+            # Calculate based on frequency
+            if dividend.frequency:
+                if 'Monthly' in dividend.frequency:
+                    annual_income = div_amount * 12 * shares
+                    quarterly_income = div_amount * 3 * shares
+                elif 'Quarterly' in dividend.frequency:
+                    annual_income = div_amount * 4 * shares
+                    quarterly_income = div_amount * shares
+                elif 'Semi-Annual' in dividend.frequency:
+                    annual_income = div_amount * 2 * shares
+                    quarterly_income = div_amount * shares / 2
+                elif 'Annual' in dividend.frequency:
+                    annual_income = div_amount * shares
+                    quarterly_income = div_amount * shares / 4
+                else:
+                    annual_income = div_amount * 4 * shares  # Default to quarterly
+                    quarterly_income = div_amount * shares
+                
+                dividend_income_calculation = {
+                    'shares': shares,
+                    'per_payment': div_amount * shares,
+                    'annual': annual_income,
+                    'quarterly': quarterly_income,
+                }
+    
+    # Get alert statistics
+    alert_stats = None
+    if alert:
+        # Count how many times this alert would have fired (based on past dividends)
+        today = timezone.now().date()
+        past_dividends = Dividend.objects.filter(
+            stock=stock,
+            ex_dividend_date__lte=today,
+            ex_dividend_date__isnull=False
+        ).order_by('-ex_dividend_date')[:12]  # Last 12 dividends
+        
+        alert_stats = {
+            'total_past_dividends': past_dividends.count(),
+            'alert_created_date': alert.created_at if hasattr(alert, 'created_at') else None,
+        }
+    
     context = {
         'stock': stock,
         'dividend': dividend,
         'alert': alert,
+        'dividend_income_calculation': dividend_income_calculation,
+        'alert_stats': alert_stats,
         'current_alert_count': DividendAlert.objects.filter(user=request.user).count(),
         'max_alerts': AlertService.MAX_DIVIDEND_ALERTS,
+        'today': timezone.now().date(),
     }
     
     return render(request, 'dividend_alerts.html', context)
@@ -3400,10 +3566,35 @@ def my_alerts(request):
         # Sort by days until (upcoming first)
         alerts_data.sort(key=lambda x: x['days_until'] if x['days_until'] is not None and x['days_until'] >= 0 else 999)
         
+        # Get upcoming alerts (next 7 days)
+        upcoming_alerts_7d = [a for a in alerts_data if a['days_until'] is not None and 0 <= a['days_until'] <= 7 and a['alert'].is_active]
+        
+        # Get total dividend amount from upcoming alerts
+        total_upcoming_dividend = sum(
+            float(a['latest_dividend'].amount) for a in alerts_data 
+            if a['latest_dividend'] and a['days_until'] is not None and a['days_until'] >= 0 and a['alert'].is_active
+        )
+        
+        # Get recent news for alert stocks
+        from portfolio.models import StockNews
+        alert_stocks = [a['alert'].stock for a in alerts_data]
+        recent_news = StockNews.objects.filter(
+            stock__in=alert_stocks
+        ).select_related('stock').order_by('-published_at')[:5]
+        
+        # Calculate insights
+        high_yield_stocks = [a for a in alerts_data if a['latest_dividend'] and float(a['latest_dividend'].yield_percent or 0) > 5]
+        urgent_alerts = [a for a in alerts_data if a['days_until'] is not None and 0 <= a['days_until'] <= 3 and a['alert'].is_active]
+        
         context = {
             'alerts': alerts_data,
             'active_alerts_count': active_alerts_count,
             'upcoming_alerts_count': upcoming_alerts_count,
+            'upcoming_alerts_7d': upcoming_alerts_7d,
+            'total_upcoming_dividend': total_upcoming_dividend,
+            'recent_news': recent_news,
+            'high_yield_stocks': high_yield_stocks,
+            'urgent_alerts': urgent_alerts,
         }
         
         return render(request, 'my_alerts.html', context)
