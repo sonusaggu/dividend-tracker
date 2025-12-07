@@ -20,13 +20,23 @@
                 
                 <details class="mt-4">
                     <summary class="cursor-pointer font-semibold text-blue-900 hover:text-blue-700">Expected CSV Format (Click to expand)</summary>
-                    <div class="mt-3 bg-white rounded-lg p-4 border border-blue-300">
-                        <p class="text-xs text-gray-700 mb-2 font-mono">Example CSV format:</p>
-                        <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto">Date,Symbol,Type,Quantity,Price,Fees
+                    <div class="mt-3 bg-white rounded-lg p-4 border border-blue-300 space-y-4">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Format 1: Transaction List (Standard)</p>
+                            <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto">Date,Symbol,Type,Quantity,Price,Fees
 2024-01-15,BNC,Buy,100,25.50,0.00
 2024-02-20,BNC,Sell,50,26.75,0.00
 2024-03-10,RY,Buy,25,125.30,0.00</pre>
-                        <p class="text-xs text-gray-600 mt-2">Note: Column names can vary (e.g., "Transaction Date" instead of "Date"). The system will automatically detect them.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Format 2: Monthly Statement (Auto-detected)</p>
+                            <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto">date,transaction,description,amount,balance,currency
+2025-10-15,BUY,CNR - Canadian National Railway Co.: 10.0000 Shares,134.49,5000.00,CAD
+2025-10-20,SELL,DEFI - Defi Technologies Inc.: 50.0000 Shares,2.98,4850.00,CAD
+2025-10-25,DIV,CNR - Canadian National Railway Co.: Dividend payment,25.00,4875.00,CAD</pre>
+                            <p class="text-xs text-gray-600 mt-2">Note: Stock lending transactions (LOAN, RECALL, FPLINT) are automatically skipped.</p>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-2">The system automatically detects which format you're using. Column names can vary - the system will attempt to match them automatically.</p>
                     </div>
                 </details>
             </div>
@@ -44,17 +54,17 @@
 
                 <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                     <p class="text-sm text-yellow-800 mb-2">
-                        <strong>Note:</strong> The CSV file should contain columns for Date, Symbol, Type, Quantity, Price, and Fees. 
-                        If your CSV has different column names, the import will attempt to match them automatically.
+                        <strong>Note:</strong> The system supports two CSV formats:
+                    </p>
+                    <ul class="text-sm text-yellow-800 list-disc list-inside space-y-1 mb-2">
+                        <li><strong>Transaction List:</strong> Date, Symbol, Type, Quantity, Price, Fees</li>
+                        <li><strong>Monthly Statement:</strong> date, transaction, description, amount, balance, currency (auto-detected)</li>
+                    </ul>
+                    <p class="text-sm text-yellow-800 mb-2">
+                        <strong>Supported transaction types:</strong> BUY, SELL, DIV (dividends), STKDIV, STKDIS, NCDIS, ROC
                     </p>
                     <p class="text-sm text-yellow-800">
-                        <strong>Supported column names:</strong><br>
-                        Date: Date, Transaction Date, Trade Date<br>
-                        Symbol: Symbol, Stock, Ticker, Security<br>
-                        Type: Type, Transaction Type, Action, Side<br>
-                        Quantity: Quantity, Shares, Qty, Amount<br>
-                        Price: Price, Price per Share, Unit Price, Cost<br>
-                        Fees: Fees, Commission, Fee, Charges
+                        <strong>Automatically skipped:</strong> LOAN, RECALL (stock lending), FPLINT (lending interest)
                     </p>
                 </div>
                 
@@ -69,14 +79,18 @@
                 {% endif %}
 
                 <div class="flex gap-4 pt-4">
-                    <button type="submit" 
-                            class="flex-1 inline-flex items-center justify-center px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit" id="importSubmitBtn"
+                            class="flex-1 inline-flex items-center justify-center px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg id="importIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        Import Transactions
+                        <span id="importText">Import Transactions</span>
+                        <svg id="importSpinner" class="hidden w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </button>
-                    <a href="{% url 'transactions_list' %}" 
+                    <a href="{% url 'transactions_list' %}" id="cancelBtn"
                        class="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition flex items-center justify-center">
                         Cancel
                     </a>
@@ -85,5 +99,55 @@
         </div>
     </div>
 </div>
+
+<!-- Loading Overlay -->
+<div id="importLoadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-8">
+        <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 text-green-600 animate-spin mb-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Importing Transactions</h3>
+            <p class="text-sm text-gray-600 text-center">
+                Please wait while we process your CSV file. This may take a few moments...
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="post"]');
+    const submitBtn = document.getElementById('importSubmitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const importIcon = document.getElementById('importIcon');
+    const importSpinner = document.getElementById('importSpinner');
+    const importText = document.getElementById('importText');
+    const loadingOverlay = document.getElementById('importLoadingOverlay');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('csv_file');
+            
+            // Check if file is selected
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return; // Let browser validation handle this
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            cancelBtn.style.pointerEvents = 'none';
+            cancelBtn.style.opacity = '0.5';
+            importIcon.classList.add('hidden');
+            importSpinner.classList.remove('hidden');
+            importText.textContent = 'Importing...';
+            loadingOverlay.classList.remove('hidden');
+            
+            // Form will submit normally, loading will be shown until page reloads
+        });
+    }
+});
+</script>
 {% endblock %}
 

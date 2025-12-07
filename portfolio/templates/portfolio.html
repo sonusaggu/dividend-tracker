@@ -381,6 +381,10 @@
                                             class="w-full inline-flex items-center justify-center px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium rounded-lg transition">
                                         Edit
                                     </button>
+                                    <button onclick="window.showDeletePortfolioStockConfirm('{{ item.item.stock.symbol }}', '{{ item.item.stock.company_name|escapejs }}')" 
+                                            class="w-full inline-flex items-center justify-center px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium rounded-lg transition">
+                                        Remove
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -945,6 +949,124 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     {% endif %}
+
+    // Delete Portfolio Stock - Make functions globally accessible
+    window.showDeletePortfolioStockConfirm = function(symbol, companyName) {
+        const modal = document.getElementById('deletePortfolioStockModal');
+        const modalText = document.getElementById('deletePortfolioStockModalText');
+        const form = document.getElementById('deletePortfolioStockForm');
+        
+        if (modal && modalText && form) {
+            modalText.textContent = `Are you sure you want to remove ${symbol}${companyName ? ' - ' + companyName : ''} from your portfolio? This action cannot be undone.`;
+            form.action = `/portfolio/${symbol}/delete/`;
+            modal.classList.remove('hidden');
+        }
+    };
+
+    window.closeDeletePortfolioStockModal = function() {
+        const modal = document.getElementById('deletePortfolioStockModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+});
+</script>
+
+<!-- Delete Portfolio Stock Confirmation Modal -->
+<div id="deletePortfolioStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Remove from Portfolio?</h3>
+            <p class="text-sm text-gray-600 mb-6" id="deletePortfolioStockModalText">
+                Are you sure you want to remove this stock from your portfolio?
+            </p>
+            <div class="flex gap-3">
+                <button onclick="window.closeDeletePortfolioStockModal()" 
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                    Cancel
+                </button>
+                <form id="deletePortfolioStockForm" method="post" action="" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                        Remove
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle delete portfolio stock form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deletePortfolioStockForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const formData = new FormData(form);
+            const deleteUrl = form.action;
+            
+            // Close modal
+            window.closeDeletePortfolioStockModal();
+            
+            fetch(deleteUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    return response.json().catch(() => {
+                        // If not JSON, just reload
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            })
+            .then(data => {
+                if (data) {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Error removing stock from portfolio');
+                    }
+                } else {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error removing stock from portfolio. Please try again.');
+                window.location.reload();
+            });
+        });
+    }
+    
+    // Close modal when clicking outside
+    const deleteModal = document.getElementById('deletePortfolioStockModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === deleteModal) {
+                window.closeDeletePortfolioStockModal();
+            }
+        });
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.closeDeletePortfolioStockModal();
+        }
+    });
 });
 </script>
 {% endblock %}

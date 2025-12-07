@@ -18,6 +18,7 @@ from django.core.management import call_command
 import subprocess
 import logging
 import os
+import re
 
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
@@ -1144,7 +1145,24 @@ def stock_detail(request, symbol):
     
     # Get latest data from prefetched attributes (no additional queries)
     latest_price = stock.latest_prices[0] if stock.latest_prices else None
+    
+    # If no price found, try to fetch from API
+    if not latest_price:
+        from portfolio.utils.price_fetcher import get_or_fetch_stock_price
+        latest_price = get_or_fetch_stock_price(stock)
+    
+    # Get dividend, default to 0 if not present
     dividend = stock.latest_dividends[0] if stock.latest_dividends else None
+    if not dividend:
+        # Create a default dividend object with 0 values
+        dividend = type('obj', (object,), {
+            'amount': 0,
+            'yield_percent': 0,
+            'frequency': 'Unknown',
+            'ex_dividend_date': None,
+            'currency': 'CAD'
+        })()
+    
     valuation = stock.latest_valuations[0] if stock.latest_valuations else None
     analyst_rating = stock.latest_ratings[0] if stock.latest_ratings else None
     
@@ -1657,10 +1675,25 @@ def portfolio_view(request):
         
         portfolio_data = []
         for item in portfolio_items:
+            # Check if price is missing and try to fetch it
+            price_value = item.latest_price_value
+            price_date = item.latest_price_date
+            
+            if not price_value:
+                # Try to fetch price from API
+                from portfolio.utils.price_fetcher import get_or_fetch_stock_price
+                fetched_price = get_or_fetch_stock_price(item.stock)
+                if fetched_price:
+                    price_value = fetched_price.last_price
+                    price_date = fetched_price.price_date
+                    # Update the item's annotations for consistency
+                    item.latest_price_value = price_value
+                    item.latest_price_date = price_date
+            
             # Calculate current value and gains
             current_value = 0
-            if item.latest_price_value and item.shares_owned:
-                current_value = float(item.shares_owned * item.latest_price_value)
+            if price_value and item.shares_owned:
+                current_value = float(item.shares_owned * price_value)
             
             investment_value = 0
             if item.average_cost and item.shares_owned:
@@ -1668,29 +1701,34 @@ def portfolio_view(request):
             
             gain_loss = current_value - investment_value
             
-            # Calculate dividend income using service
+            # Ensure dividend defaults to 0 if not present
+            dividend_amount = item.latest_dividend_amount if item.latest_dividend_amount else 0
+            dividend_yield = item.latest_dividend_yield if item.latest_dividend_yield else 0
+            dividend_frequency = item.latest_dividend_frequency if item.latest_dividend_frequency else 'Unknown'
+            dividend_date = item.latest_dividend_date if item.latest_dividend_date else None
+            
+            # Calculate dividend income using service (will handle 0 values)
             dividend_income = PortfolioService.calculate_annual_dividend(
-                item.latest_dividend_amount,
+                dividend_amount,
                 item.shares_owned,
-                item.latest_dividend_frequency
+                dividend_frequency
             )
             
             # Create mock objects for template compatibility
             latest_price = None
-            if item.latest_price_value:
+            if price_value:
                 latest_price = type('obj', (object,), {
-                    'last_price': item.latest_price_value,
-                    'price_date': item.latest_price_date
+                    'last_price': price_value,
+                    'price_date': price_date
                 })()
             
-            latest_dividend = None
-            if item.latest_dividend_amount:
-                latest_dividend = type('obj', (object,), {
-                    'amount': item.latest_dividend_amount,
-                    'yield_percent': item.latest_dividend_yield,
-                    'frequency': item.latest_dividend_frequency,
-                    'ex_dividend_date': item.latest_dividend_date
-                })()
+            # Always create dividend object, defaulting to 0 if not present
+            latest_dividend = type('obj', (object,), {
+                'amount': dividend_amount,
+                'yield_percent': dividend_yield,
+                'frequency': dividend_frequency,
+                'ex_dividend_date': dividend_date
+            })()
             
             # Calculate percentage gain/loss (ROI)
             roi_percent = 0
@@ -1705,10 +1743,10 @@ def portfolio_view(request):
             # Calculate portfolio allocation percentage
             portfolio_allocation = 0  # Will be calculated after total_value
             
-            # Calculate expected dividend for upcoming payment
+            # Calculate expected dividend for upcoming payment (default to 0 if no dividend)
             expected_dividend = 0
-            if item.latest_dividend_amount and item.shares_owned:
-                expected_dividend = float(item.latest_dividend_amount * item.shares_owned)
+            if dividend_amount and item.shares_owned:
+                expected_dividend = float(dividend_amount * item.shares_owned)
             
             portfolio_data.append({
                 'item': item,
@@ -2233,11 +2271,15 @@ def delete_transaction(request, transaction_id):
         
         transaction.delete()
         
-        # Update portfolio from transactions
-        TransactionService.update_portfolio_from_transactions(request.user, stock)
+        # Update portfolio from transactions - recalculate from ALL remaining transactions
+        TransactionService.update_portfolio_from_transactions(request.user, stock, recalculate_all=True)
         
         messages.success(request, 'Transaction deleted successfully!')
-        return redirect('transactions_list', symbol=symbol)
+        # Redirect to transactions list, optionally filtered by symbol
+        if symbol:
+            return redirect('transactions_list_by_symbol', symbol=symbol)
+        else:
+            return redirect('transactions_list')
     except (ProgrammingError, OperationalError, DatabaseError) as e:
         logger.warning(f"Transaction table not found: {e}")
         messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
@@ -2246,6 +2288,80 @@ def delete_transaction(request, transaction_id):
         logger.error(f"Error deleting transaction: {e}")
         messages.error(request, 'An error occurred while deleting the transaction.')
         return redirect('transactions_list')
+
+
+@login_required
+@require_POST
+def delete_all_transactions(request):
+    """Delete all transactions for the current user"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        # Get count before deletion
+        transaction_count = Transaction.objects.filter(user=request.user).count()
+        
+        if transaction_count == 0:
+            messages.info(request, 'You have no transactions to delete.')
+            return redirect('transactions_list')
+        
+        # Get all unique stocks before deletion
+        affected_stocks = set(
+            Transaction.objects.filter(user=request.user)
+            .values_list('stock', flat=True)
+            .distinct()
+        )
+        
+        # Delete all transactions
+        Transaction.objects.filter(user=request.user).delete()
+        
+        # Recalculate portfolio for all affected stocks (will remove them if no shares left)
+        for stock_id in affected_stocks:
+            try:
+                from portfolio.models import Stock
+                stock = Stock.objects.get(id=stock_id)
+                TransactionService.update_portfolio_from_transactions(request.user, stock, recalculate_all=True)
+            except Stock.DoesNotExist:
+                continue
+        
+        messages.success(request, f'Successfully deleted all {transaction_count} transaction(s) and cleared your portfolio.')
+        return redirect('transactions_list')
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Transaction table not found: {e}")
+        messages.error(request, 'Transaction feature is not available yet. Please run migrations.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error deleting all transactions: {e}", exc_info=True)
+        messages.error(request, 'An error occurred while deleting transactions.')
+        return redirect('transactions_list')
+
+
+@login_required
+@require_POST
+def delete_portfolio_stock(request, symbol):
+    """Remove a stock from user's portfolio"""
+    try:
+        from django.db import DatabaseError, ProgrammingError, OperationalError
+        
+        stock = get_object_or_404(Stock, symbol=symbol.upper())
+        portfolio_item = UserPortfolio.objects.filter(user=request.user, stock=stock).first()
+        
+        if not portfolio_item:
+            messages.warning(request, f'{symbol} is not in your portfolio.')
+            return redirect('portfolio')
+        
+        # Delete the portfolio entry
+        portfolio_item.delete()
+        
+        messages.success(request, f'{symbol} has been removed from your portfolio.')
+        return redirect('portfolio')
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        logger.warning(f"Database error: {e}")
+        messages.error(request, 'An error occurred. Please try again.')
+        return redirect('portfolio')
+    except Exception as e:
+        logger.error(f"Error deleting portfolio stock: {e}", exc_info=True)
+        messages.error(request, 'An error occurred while removing the stock from your portfolio.')
+        return redirect('portfolio')
 
 
 @login_required
@@ -2314,7 +2430,12 @@ def import_wealthsimple_csv(request):
                 # Log available columns for debugging
                 logger.info(f"CSV columns detected: {reader.fieldnames}")
                 
+                # Detect CSV format - check if this is Wealthsimple statement format
+                row_lower_headers = {k.lower().strip(): k for k in reader.fieldnames if k}
+                is_statement_format = 'description' in row_lower_headers and 'transaction' in row_lower_headers
+                
                 imported_count = 0
+                skipped_count = 0
                 errors = []
                 
                 for row_num, row in enumerate(reader, start=2):  # Start at 2 because row 1 is header
@@ -2323,63 +2444,186 @@ def import_wealthsimple_csv(request):
                         if not any(row.values()):
                             continue
                         
-                        # Wealthsimple CSV format may vary, try to parse common fields
-                        # Try multiple column name variations (case-insensitive)
-                        date_str = None
-                        symbol = None
-                        trans_type = None
-                        quantity = None
-                        price = None
-                        fees = '0'
-                        
                         # Case-insensitive column matching
                         row_lower = {k.lower().strip(): v for k, v in row.items() if k}
                         
-                        # Date
-                        for key in ['date', 'transaction date', 'transaction_date', 'trade date', 'trade_date']:
-                            if key in row_lower and row_lower[key]:
-                                date_str = row_lower[key].strip()
-                                break
+                        # Handle Wealthsimple statement format
+                        if is_statement_format:
+                            date_str = row_lower.get('date', '').strip() if 'date' in row_lower else None
+                            transaction_code = row_lower.get('transaction', '').strip().upper() if 'transaction' in row_lower else None
+                            description = row_lower.get('description', '').strip() if 'description' in row_lower else ''
+                            amount_str = row_lower.get('amount', '').strip() if 'amount' in row_lower else '0'
+                            currency = row_lower.get('currency', 'CAD').strip().upper() if 'currency' in row_lower else 'CAD'
+                            
+                            # Skip non-trade transactions
+                            skip_transactions = ['LOAN', 'RECALL', 'FPLINT']  # Stock lending transactions
+                            if transaction_code in skip_transactions:
+                                skipped_count += 1
+                                continue
+                            
+                            # Skip if no date or transaction code
+                            if not date_str or not transaction_code:
+                                continue
+                            
+                            # Parse description to extract symbol and quantity
+                            symbol = None
+                            quantity = None
+                            
+                            # Pattern: "SYMBOL - Company Name: X.XXXX Shares..."
+                            # Or: "SYMBOL - Company Name: X.XXXX Shares on loan"
+                            symbol_match = re.search(r'^([A-Z0-9\.]+)\s*-\s*', description, re.IGNORECASE)
+                            if symbol_match:
+                                symbol = symbol_match.group(1).upper().strip()
+                            
+                            # Extract quantity from description
+                            # Pattern: "X.XXXX Shares" or "X.XXXX shares"
+                            qty_match = re.search(r'(\d+\.?\d*)\s+shares?', description, re.IGNORECASE)
+                            if qty_match:
+                                quantity = qty_match.group(1)
+                            
+                            # Map transaction codes to our transaction types
+                            transaction_type_mapping = {
+                                'BUY': 'BUY',
+                                'SELL': 'SELL',
+                                'DIV': 'DIVIDEND',
+                                'STKDIV': 'DIVIDEND',
+                                'STKDIS': 'DIVIDEND',  # Stock distribution
+                                'NCDIS': 'DIVIDEND',   # Non-cash distribution
+                                'ROC': 'DIVIDEND',     # Return of capital (treat as dividend)
+                            }
+                            
+                            trans_type = transaction_type_mapping.get(transaction_code)
+                            
+                            # Skip if we can't map the transaction type or don't have symbol
+                            if not trans_type or not symbol:
+                                skipped_count += 1
+                                continue
+                            
+                            # For dividends, if no quantity, set to 0 (cash dividend)
+                            if trans_type == 'DIVIDEND' and not quantity:
+                                quantity = '0'
+                            
+                            # For BUY/SELL, we need quantity
+                            if trans_type in ['BUY', 'SELL'] and not quantity:
+                                errors.append(f"Row {row_num}: Cannot extract quantity from description: '{description}'")
+                                continue
+                            
+                            # Calculate price from amount and quantity
+                            price = None
+                            try:
+                                amount = float(amount_str.replace(',', '').replace('$', '').strip() or '0')
+                                qty = float(quantity.replace(',', '').strip() or '0')
+                                
+                                if trans_type == 'DIVIDEND':
+                                    # For dividends, amount is the dividend payment
+                                    # We'll use a price of 0 and store amount in notes
+                                    price = '0'
+                                    quantity = '0'  # Cash dividend, no shares
+                                elif qty > 0:
+                                    # Price per share = total amount / quantity
+                                    price = str(abs(amount / qty))
+                                else:
+                                    errors.append(f"Row {row_num}: Invalid quantity: {quantity}")
+                                    continue
+                            except (ValueError, ZeroDivisionError) as e:
+                                errors.append(f"Row {row_num}: Could not calculate price from amount '{amount_str}' and quantity '{quantity}': {e}")
+                                continue
+                            
+                            fees = '0'  # Wealthsimple doesn't charge fees for trades
+                            
+                        else:
+                            # Original format: Date, Symbol, Type, Quantity, Price, Fees
+                            date_str = None
+                            symbol = None
+                            trans_type = None
+                            quantity = None
+                            price = None
+                            fees = '0'
+                            
+                            # Date
+                            for key in ['date', 'transaction date', 'transaction_date', 'trade date', 'trade_date']:
+                                if key in row_lower and row_lower[key]:
+                                    date_str = row_lower[key].strip()
+                                    break
+                            
+                            # Symbol
+                            for key in ['symbol', 'stock', 'ticker', 'security', 'instrument']:
+                                if key in row_lower and row_lower[key]:
+                                    symbol = row_lower[key].strip()
+                                    break
+                            
+                            # Type
+                            for key in ['type', 'transaction type', 'transaction_type', 'action', 'side']:
+                                if key in row_lower and row_lower[key]:
+                                    trans_type = row_lower[key].strip()
+                                    break
+                            
+                            # Quantity/Shares
+                            for key in ['quantity', 'shares', 'qty', 'amount', 'units']:
+                                if key in row_lower and row_lower[key]:
+                                    quantity = row_lower[key].strip()
+                                    break
+                            
+                            # Price
+                            for key in ['price', 'price per share', 'price_per_share', 'unit price', 'unit_price', 'cost']:
+                                if key in row_lower and row_lower[key]:
+                                    price = row_lower[key].strip()
+                                    break
+                            
+                            # Fees
+                            for key in ['fees', 'commission', 'fee', 'charges']:
+                                if key in row_lower and row_lower[key]:
+                                    fees = row_lower[key].strip() or '0'
+                                    break
+                            
+                            # Validate required fields
+                            if not all([date_str, symbol, trans_type, quantity, price]):
+                                missing = []
+                                if not date_str: missing.append('Date')
+                                if not symbol: missing.append('Symbol')
+                                if not trans_type: missing.append('Type')
+                                if not quantity: missing.append('Quantity')
+                                if not price: missing.append('Price')
+                                errors.append(f"Row {row_num}: Missing fields: {', '.join(missing)}. Available columns: {', '.join(reader.fieldnames)}")
+                                continue
+                            
+                            # Map transaction type (case-insensitive)
+                            type_mapping = {
+                                'buy': 'BUY',
+                                'sell': 'SELL',
+                                'dividend': 'DIVIDEND',
+                                'purchase': 'BUY',
+                                'sale': 'SELL',
+                                'deposit': 'BUY',
+                                'withdrawal': 'SELL',
+                            }
+                            trans_type = type_mapping.get(trans_type.lower().strip(), 'BUY')
                         
-                        # Symbol
-                        for key in ['symbol', 'stock', 'ticker', 'security', 'instrument']:
-                            if key in row_lower and row_lower[key]:
-                                symbol = row_lower[key].strip()
-                                break
+                        # Parse date - try multiple formats
+                        if not date_str:
+                            continue
                         
-                        # Type
-                        for key in ['type', 'transaction type', 'transaction_type', 'action', 'side']:
-                            if key in row_lower and row_lower[key]:
-                                trans_type = row_lower[key].strip()
-                                break
+                        transaction_date = None
+                        date_formats = [
+                            '%Y-%m-%d',
+                            '%m/%d/%Y',
+                            '%d/%m/%Y',
+                            '%Y/%m/%d',
+                            '%m-%d-%Y',
+                            '%d-%m-%Y',
+                            '%Y-%m-%d %H:%M:%S',
+                            '%m/%d/%Y %H:%M:%S',
+                        ]
                         
-                        # Quantity/Shares
-                        for key in ['quantity', 'shares', 'qty', 'amount', 'units']:
-                            if key in row_lower and row_lower[key]:
-                                quantity = row_lower[key].strip()
+                        for date_format in date_formats:
+                            try:
+                                transaction_date = datetime.strptime(date_str.strip(), date_format).date()
                                 break
+                            except ValueError:
+                                continue
                         
-                        # Price
-                        for key in ['price', 'price per share', 'price_per_share', 'unit price', 'unit_price', 'cost']:
-                            if key in row_lower and row_lower[key]:
-                                price = row_lower[key].strip()
-                                break
-                        
-                        # Fees
-                        for key in ['fees', 'commission', 'fee', 'charges']:
-                            if key in row_lower and row_lower[key]:
-                                fees = row_lower[key].strip() or '0'
-                                break
-                        
-                        # Validate required fields
-                        if not all([date_str, symbol, trans_type, quantity, price]):
-                            missing = []
-                            if not date_str: missing.append('Date')
-                            if not symbol: missing.append('Symbol')
-                            if not trans_type: missing.append('Type')
-                            if not quantity: missing.append('Quantity')
-                            if not price: missing.append('Price')
-                            errors.append(f"Row {row_num}: Missing fields: {', '.join(missing)}. Available columns: {', '.join(reader.fieldnames)}")
+                        if transaction_date is None:
+                            errors.append(f"Row {row_num}: Could not parse date '{date_str}'. Supported formats: YYYY-MM-DD, MM/DD/YYYY")
                             continue
                         
                         # Parse date - try multiple formats
@@ -2413,18 +2657,6 @@ def import_wealthsimple_csv(request):
                             defaults={'code': symbol_upper, 'company_name': symbol_upper}
                         )
                         
-                        # Map transaction type (case-insensitive)
-                        type_mapping = {
-                            'buy': 'BUY',
-                            'sell': 'SELL',
-                            'dividend': 'DIVIDEND',
-                            'purchase': 'BUY',
-                            'sale': 'SELL',
-                            'deposit': 'BUY',
-                            'withdrawal': 'SELL',
-                        }
-                        transaction_type = type_mapping.get(trans_type.lower().strip(), 'BUY')
-                        
                         # Parse numeric values - handle commas and currency symbols
                         try:
                             quantity_clean = quantity.replace(',', '').replace('$', '').strip()
@@ -2435,27 +2667,37 @@ def import_wealthsimple_csv(request):
                             price_per_share = float(price_clean)
                             fees_amount = float(fees_clean) if fees_clean else 0.0
                             
-                            if shares <= 0 or price_per_share <= 0:
+                            # For dividends, shares can be 0 (cash dividend)
+                            if trans_type == 'DIVIDEND':
+                                if shares < 0:
+                                    errors.append(f"Row {row_num}: Invalid shares value for dividend: {shares}")
+                                    continue
+                            elif shares <= 0 or price_per_share < 0:
                                 errors.append(f"Row {row_num}: Invalid values - shares: {shares}, price: {price_per_share}")
                                 continue
                         except ValueError as e:
                             errors.append(f"Row {row_num}: Could not parse numeric values - Quantity: '{quantity}', Price: '{price}', Fees: '{fees}'")
                             continue
                         
+                        # Build notes
+                        notes = "Imported from Wealthsimple CSV"
+                        if is_statement_format and description:
+                            notes = f"Imported from Wealthsimple CSV: {description}"
+                        
                         # Create transaction
                         transaction = Transaction.objects.create(
                             user=request.user,
                             stock=stock,
-                            transaction_type=transaction_type,
+                            transaction_type=trans_type,
                             transaction_date=transaction_date,
                             shares=shares,
                             price_per_share=price_per_share,
                             fees=fees_amount,
-                            notes=f"Imported from Wealthsimple CSV"
+                            notes=notes
                         )
                         
                         # For sell transactions, calculate realized gain/loss
-                        if transaction_type == 'SELL':
+                        if trans_type == 'SELL':
                             try:
                                 cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
                                     request.user, stock, shares, 'FIFO'
@@ -2500,9 +2742,15 @@ def import_wealthsimple_csv(request):
                 
                 # Show results
                 if imported_count > 0:
-                    messages.success(request, f'Successfully imported {imported_count} transaction(s)!')
+                    success_msg = f'Successfully imported {imported_count} transaction(s)!'
+                    if skipped_count > 0:
+                        success_msg += f' ({skipped_count} non-trade transaction(s) skipped: LOAN, RECALL, FPLINT, etc.)'
+                    messages.success(request, success_msg)
                 else:
-                    messages.warning(request, 'No transactions were imported. Please check your CSV format.')
+                    if skipped_count > 0:
+                        messages.warning(request, f'No transactions were imported. {skipped_count} row(s) were skipped (non-trade transactions). Please ensure your CSV contains BUY, SELL, or DIV transactions.')
+                    else:
+                        messages.warning(request, 'No transactions were imported. Please check your CSV format.')
                 
                 if errors:
                     error_summary = f'{len(errors)} error(s) occurred. '

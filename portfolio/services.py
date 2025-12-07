@@ -552,21 +552,44 @@ class TransactionService:
         }
     
     @staticmethod
-    def update_portfolio_from_transactions(user, stock):
-        """Update UserPortfolio based on transactions"""
-        buy_transactions = Transaction.objects.filter(
-            user=user,
-            stock=stock,
-            transaction_type='BUY',
-            is_processed=False
-        )
+    def update_portfolio_from_transactions(user, stock, recalculate_all=False):
+        """
+        Update UserPortfolio based on transactions
         
-        sell_transactions = Transaction.objects.filter(
-            user=user,
-            stock=stock,
-            transaction_type='SELL',
-            is_processed=False
-        )
+        Args:
+            user: User object
+            stock: Stock object
+            recalculate_all: If True, recalculate from all transactions (used after deletion).
+                           If False, only use unprocessed transactions (default for new transactions).
+        """
+        if recalculate_all:
+            # After deletion, recalculate from ALL remaining transactions
+            buy_transactions = Transaction.objects.filter(
+                user=user,
+                stock=stock,
+                transaction_type='BUY'
+            )
+            
+            sell_transactions = Transaction.objects.filter(
+                user=user,
+                stock=stock,
+                transaction_type='SELL'
+            )
+        else:
+            # For new transactions, only use unprocessed ones
+            buy_transactions = Transaction.objects.filter(
+                user=user,
+                stock=stock,
+                transaction_type='BUY',
+                is_processed=False
+            )
+            
+            sell_transactions = Transaction.objects.filter(
+                user=user,
+                stock=stock,
+                transaction_type='SELL',
+                is_processed=False
+            )
         
         total_shares = Decimal('0.00')
         total_cost = Decimal('0.00')

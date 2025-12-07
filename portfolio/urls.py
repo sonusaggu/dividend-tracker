@@ -126,9 +126,11 @@ urlpatterns = [
     path('transactions/export/', views.export_transactions, name='export_transactions'),
     path('transactions/<int:transaction_id>/edit/', views.edit_transaction, name='edit_transaction'),
     path('transactions/<int:transaction_id>/delete/', views.delete_transaction, name='delete_transaction'),
+    path('transactions/delete-all/', views.delete_all_transactions, name='delete_all_transactions'),
     path('transactions/<str:symbol>/create/', views.create_transaction, name='create_transaction_by_symbol'),
     path('transactions/<str:symbol>/', views.transactions_list, name='transactions_list_by_symbol'),
     path('transactions/', views.transactions_list, name='transactions_list'),
+    path('portfolio/<str:symbol>/delete/', views.delete_portfolio_stock, name='delete_portfolio_stock'),
     
     # Website Analytics (staff only)
     path('analytics/', views.website_analytics, name='website_analytics'),
