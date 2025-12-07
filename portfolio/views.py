@@ -790,6 +790,16 @@ def all_stocks_view(request):
     sector_filter = request.GET.get('sector', '')
     sort_by = request.GET.get('sort_by', 'dividend_date')
     
+    # New advanced filters
+    min_yield = request.GET.get('min_yield', '').strip()
+    max_yield = request.GET.get('max_yield', '').strip()
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    dividend_frequency = request.GET.get('frequency', '')
+    tsx60_only = request.GET.get('tsx60', '') == 'on'
+    etf_only = request.GET.get('etf', '') == 'on'
+    has_dividend_filter = request.GET.get('has_dividend', '')
+    
     # Save recent search to session
     if search_query:
         recent_searches = request.session.get('recent_searches', [])
@@ -799,7 +809,7 @@ def all_stocks_view(request):
             request.session['recent_searches'] = recent_searches
             request.session.modified = True
 
-    valid_sort_options = ['symbol', 'yield', 'sector', 'dividend_date', 'dividend_amount']
+    valid_sort_options = ['symbol', 'yield', 'sector', 'dividend_date', 'dividend_amount', 'price']
     if sort_by not in valid_sort_options:
         sort_by = 'dividend_date'
 
@@ -818,6 +828,49 @@ def all_stocks_view(request):
         stocks = stocks.filter(sector=sector_filter)
     else:
         sector_filter = ''
+    
+    # Advanced filters
+    if min_yield:
+        try:
+            min_yield_val = float(min_yield)
+            stocks = stocks.filter(latest_dividend_yield__gte=min_yield_val)
+        except (ValueError, TypeError):
+            min_yield = ''
+    
+    if max_yield:
+        try:
+            max_yield_val = float(max_yield)
+            stocks = stocks.filter(latest_dividend_yield__lte=max_yield_val)
+        except (ValueError, TypeError):
+            max_yield = ''
+    
+    if min_price:
+        try:
+            min_price_val = float(min_price)
+            stocks = stocks.filter(latest_price_value__gte=min_price_val)
+        except (ValueError, TypeError):
+            min_price = ''
+    
+    if max_price:
+        try:
+            max_price_val = float(max_price)
+            stocks = stocks.filter(latest_price_value__lte=max_price_val)
+        except (ValueError, TypeError):
+            max_price = ''
+    
+    if dividend_frequency:
+        stocks = stocks.filter(latest_dividend_frequency=dividend_frequency)
+    
+    if tsx60_only:
+        stocks = stocks.filter(tsx60_member=True)
+    
+    if etf_only:
+        stocks = stocks.filter(is_etf=True)
+    
+    if has_dividend_filter == 'yes':
+        stocks = stocks.filter(has_dividend=True)
+    elif has_dividend_filter == 'no':
+        stocks = stocks.filter(has_dividend=False)
 
     # --- 7️⃣ Sorting map (simpler than if/elif chain)
     sort_map = {
@@ -825,6 +878,7 @@ def all_stocks_view(request):
         'yield': ['-latest_dividend_yield', 'symbol'],
         'sector': ['sector', 'symbol'],
         'dividend_amount': ['-latest_dividend_amount', 'symbol'],
+        'price': ['-latest_price_value', 'symbol'],
         'dividend_date': [
             Case(
                 When(upcoming_dividend_date__isnull=True, then=Value(1)),
@@ -842,6 +896,16 @@ def all_stocks_view(request):
 
     # --- 9️⃣ Prepare context list — already annotated, no extra DB calls
     today = timezone.now().date()
+    
+    # Get user's watchlist if authenticated
+    user_watchlist_ids = set()
+    if request.user.is_authenticated:
+        from portfolio.models import Watchlist
+        user_watchlist_ids = set(
+            Watchlist.objects.filter(user=request.user)
+            .values_list('stock_id', flat=True)
+        )
+    
     stocks_with_data = [
         {
             'stock': stock,
@@ -862,10 +926,19 @@ def all_stocks_view(request):
                 } if stock.latest_price_value else None
             ),
             'has_dividend': stock.has_dividend,
+            'in_watchlist': stock.id in user_watchlist_ids,
         }
         for stock in page_obj
     ]
 
+    # Get unique dividend frequencies for filter dropdown
+    frequencies = list(
+        Dividend.objects.exclude(frequency='')
+        .values_list('frequency', flat=True)
+        .distinct()
+        .order_by('frequency')
+    )
+    
     # --- 🔟 Stats (could be cached if large)
     context = {
         'stocks_with_dividends': stocks_with_data,
@@ -874,9 +947,19 @@ def all_stocks_view(request):
         'sector_filter': sector_filter,
         'sort_by': sort_by,
         'sectors': sectors,
+        'frequencies': frequencies,
         'total_stocks_count': Stock.objects.count(),
         'dividend_stocks_count': Dividend.objects.values('stock').distinct().count(),
         'sectors_count': len(sectors),
+        # Advanced filter values
+        'min_yield': min_yield,
+        'max_yield': max_yield,
+        'min_price': min_price,
+        'max_price': max_price,
+        'dividend_frequency': dividend_frequency,
+        'tsx60_only': tsx60_only,
+        'etf_only': etf_only,
+        'has_dividend_filter': has_dividend_filter,
     }
 
     # Add recent searches to context
@@ -898,6 +981,33 @@ def all_stocks_view(request):
     # If 2 or less, show all
     
     context['sponsored_content'] = featured_stocks
+    
+    # Handle CSV export
+    if request.GET.get('export') == '1':
+        import csv
+        from django.http import HttpResponse
+        from datetime import datetime
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="stocks_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Symbol', 'Company Name', 'Sector', 'Price', 'Dividend Amount', 'Yield %', 'Frequency', 'Next Ex-Date', 'Days Until'])
+        
+        for item in stocks_with_data:
+            writer.writerow([
+                item['stock'].symbol,
+                item['stock'].company_name,
+                item['stock'].sector or '',
+                item['latest_price']['price'] if item['latest_price'] else '',
+                item['latest_dividend']['amount'] if item['latest_dividend'] else '',
+                item['latest_dividend']['yield_percent'] if item['latest_dividend'] and item['latest_dividend']['yield_percent'] else '',
+                item['latest_dividend']['frequency'] if item['latest_dividend'] else '',
+                item['upcoming_dividend_date'].strftime('%Y-%m-%d') if item['upcoming_dividend_date'] else '',
+                item['days_until'] if item['days_until'] is not None else '',
+            ])
+        
+        return response
     
     return render(request, 'all_stocks.html', context)
 
@@ -1437,6 +1547,14 @@ def dividend_calendar(request):
     # Get filter type (all, portfolio, watchlist)
     filter_type = request.GET.get('filter', 'all')  # all, portfolio, watchlist
     
+    # Advanced filters
+    sector_filter = request.GET.get('sector', '')
+    min_yield = request.GET.get('min_yield', '').strip()
+    max_yield = request.GET.get('max_yield', '').strip()
+    min_amount = request.GET.get('min_amount', '').strip()
+    max_amount = request.GET.get('max_amount', '').strip()
+    search_query = request.GET.get('search', '').strip()
+    
     # Get month/year from query params (default to current month)
     today = timezone.now().date()
     try:
@@ -1489,6 +1607,44 @@ def dividend_calendar(request):
             # No stocks in watchlist, return empty queryset
             dividend_query = dividend_query.none()
     
+    # Apply advanced filters
+    if sector_filter:
+        dividend_query = dividend_query.filter(stock__sector=sector_filter)
+    
+    if search_query:
+        dividend_query = dividend_query.filter(
+            Q(stock__symbol__icontains=search_query)
+            | Q(stock__company_name__icontains=search_query)
+        )
+    
+    if min_yield:
+        try:
+            min_yield_val = float(min_yield)
+            dividend_query = dividend_query.filter(yield_percent__gte=min_yield_val)
+        except (ValueError, TypeError):
+            min_yield = ''
+    
+    if max_yield:
+        try:
+            max_yield_val = float(max_yield)
+            dividend_query = dividend_query.filter(yield_percent__lte=max_yield_val)
+        except (ValueError, TypeError):
+            max_yield = ''
+    
+    if min_amount:
+        try:
+            min_amount_val = float(min_amount)
+            dividend_query = dividend_query.filter(amount__gte=min_amount_val)
+        except (ValueError, TypeError):
+            min_amount = ''
+    
+    if max_amount:
+        try:
+            max_amount_val = float(max_amount)
+            dividend_query = dividend_query.filter(amount__lte=max_amount_val)
+        except (ValueError, TypeError):
+            max_amount = ''
+    
     # Group dividends by date
     dividends_by_date = defaultdict(list)
     total_amount_by_date = defaultdict(float)
@@ -1530,6 +1686,26 @@ def dividend_calendar(request):
         for div in dividends:
             unique_stocks.add(div.stock)
     
+    # Calculate portfolio income if portfolio filter is active
+    portfolio_income = None
+    if filter_type == 'portfolio' and request.user.is_authenticated:
+        portfolio_income = 0
+        portfolio_items = UserPortfolio.objects.filter(user=request.user).select_related('stock')
+        portfolio_dict = {item.stock_id: item.shares_owned for item in portfolio_items}
+        
+        for dividend in dividend_query:
+            if dividend.stock_id in portfolio_dict:
+                shares = portfolio_dict[dividend.stock_id]
+                portfolio_income += float(dividend.amount or 0) * shares
+    
+    # Get unique sectors for filter dropdown
+    sectors = list(
+        Stock.objects.exclude(sector='')
+        .values_list('sector', flat=True)
+        .distinct()
+        .order_by('sector')
+    )
+    
     # Calculate previous/next month
     if month == 1:
         prev_month = 12
@@ -1545,6 +1721,33 @@ def dividend_calendar(request):
         next_month = month + 1
         next_year = year
     
+    # Handle CSV export
+    if request.GET.get('export') == '1':
+        import csv
+        from django.http import HttpResponse
+        from datetime import datetime
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="dividend_calendar_{year}_{month:02d}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Symbol', 'Company Name', 'Dividend Amount', 'Yield %', 'Frequency', 'Sector'])
+        
+        for day_data in calendar_days:
+            if day_data['is_current_month'] and day_data['dividends']:
+                for dividend in day_data['dividends']:
+                    writer.writerow([
+                        day_data['date'].strftime('%Y-%m-%d'),
+                        dividend.stock.symbol,
+                        dividend.stock.company_name,
+                        dividend.amount or '',
+                        dividend.yield_percent or '',
+                        dividend.frequency or '',
+                        dividend.stock.sector or '',
+                    ])
+        
+        return response
+    
     context = {
         'year': year,
         'month': month,
@@ -1559,6 +1762,14 @@ def dividend_calendar(request):
         'next_year': next_year,
         'next_month': next_month,
         'today': today,
+        'sectors': sectors,
+        'sector_filter': sector_filter,
+        'search_query': search_query,
+        'min_yield': min_yield,
+        'max_yield': max_yield,
+        'min_amount': min_amount,
+        'max_amount': max_amount,
+        'portfolio_income': portfolio_income,
     }
     
     return render(request, 'dividend_calendar.html', context)

@@ -20,7 +20,7 @@
           </h1>
           <p class="text-gray-600">Your portfolio overview</p>
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-3 flex-wrap">
           <a href="{% url 'all_stocks' %}" 
              class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,6 +32,15 @@
              class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
             Portfolio
           </a>
+          {% if total_value > 0 %}
+          <a href="{% url 'export_portfolio' %}" 
+             class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export
+          </a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -61,38 +70,58 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Portfolio Value -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
         <div class="flex items-center justify-between mb-3">
           <p class="text-sm font-medium text-gray-600">Portfolio Value</p>
-          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
         </div>
         <p class="text-2xl font-bold text-gray-900 mb-1">${{ total_value|floatformat:2|intcomma|default:"0.00" }}</p>
         {% if total_value > 0 %}
-        <p class="text-sm font-medium {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-          ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-medium {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            ${{ total_gain_loss|floatformat:2|intcomma }} ({{ percent_gain_loss|floatformat:2 }}%)
+          </p>
+          {% if total_gain_loss >= 0 %}
+          <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          {% else %}
+          <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          {% endif %}
+        </div>
         {% else %}
         <p class="text-sm text-gray-500">No investments yet</p>
         {% endif %}
       </div>
 
       <!-- Annual Dividends -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
         <div class="flex items-center justify-between mb-3">
           <p class="text-sm font-medium text-gray-600">Annual Dividends</p>
-          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 {% if dividend_yield >= 5 %}bg-green-100{% elif dividend_yield >= 3 %}bg-blue-100{% else %}bg-gray-100{% endif %} rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 {% if dividend_yield >= 5 %}text-green-600{% elif dividend_yield >= 3 %}text-blue-600{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
             </svg>
           </div>
         </div>
         <p class="text-2xl font-bold text-gray-900 mb-1">${{ annual_dividends|floatformat:2|intcomma|default:"0.00" }}</p>
         {% if total_value > 0 and annual_dividends > 0 %}
-        <p class="text-sm font-medium text-blue-600">{{ dividend_yield|floatformat:2 }}% yield</p>
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-medium {% if dividend_yield >= 5 %}text-green-600{% elif dividend_yield >= 3 %}text-blue-600{% else %}text-gray-600{% endif %}">
+            {{ dividend_yield|floatformat:2 }}% yield
+          </p>
+          {% if dividend_yield >= 5 %}
+          <span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">High</span>
+          {% elif dividend_yield >= 3 %}
+          <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-semibold">Good</span>
+          {% endif %}
+        </div>
         {% else %}
         <p class="text-sm text-gray-500">0.00% yield</p>
         {% endif %}
@@ -249,10 +278,22 @@
                   {% endif %}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center">
-                  <a href="{% url 'stock_detail' item.stock.symbol %}" 
-                     class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
-                    View
-                  </a>
+                  <div class="flex items-center justify-center gap-2">
+                    <button 
+                      onclick="toggleWatchlist({{ item.stock.id }}, this)"
+                      data-in-watchlist="true"
+                      class="text-red-500 hover:text-red-700 transition p-1.5 rounded-lg hover:bg-red-50"
+                      title="Remove from watchlist"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                      </svg>
+                    </button>
+                    <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                       class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
+                      View
+                    </a>
+                  </div>
                 </td>
               </tr>
               {% endfor %}
@@ -781,22 +822,89 @@
     }
   })();
 
-  // Modal functions
-  function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+    // Get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
     }
-  }
-  
-  function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add('hidden');
-      document.body.style.overflow = 'auto';
+
+    // Watchlist Toggle
+    function toggleWatchlist(stockId, button) {
+      const isInWatchlist = button.dataset.inWatchlist === 'true';
+      
+      // Disable button during request
+      button.disabled = true;
+      button.style.opacity = '0.6';
+      
+      fetch(`/watchlist/toggle/${stockId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => response.json())
+      .then(data => {
+        button.disabled = false;
+        button.style.opacity = '1';
+        
+        if (data.status === 'removed') {
+          // Remove the row from the table
+          const row = button.closest('tr');
+          if (row) {
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              row.remove();
+              // Reload if no more items
+              const remainingRows = document.querySelectorAll('tbody tr');
+              if (remainingRows.length === 0) {
+                location.reload();
+              }
+            }, 300);
+          } else {
+            location.reload();
+          }
+        } else if (data.status === 'error') {
+          alert(data.message || 'Error updating watchlist');
+        }
+      })
+      .catch(error => {
+        button.disabled = false;
+        button.style.opacity = '1';
+        console.error('Watchlist toggle error:', error);
+        alert('Error updating watchlist. Please try again.');
+      });
     }
-  }
+
+    // Modal functions
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    }
   
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[id$="Modal"]').forEach(modal => {
