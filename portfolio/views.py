@@ -4666,6 +4666,176 @@ def fetch_news(request):
         }, status=500)
 
 
+def big6_banks_dashboard(request):
+    """Big 6 Canadian Banks Dividend Comparison Dashboard - Accessible to all users"""
+    from django.db.models import Subquery, OuterRef, Q, Avg
+    from datetime import timedelta
+    from portfolio.models import Stock, StockPrice, Dividend, UserPortfolio, Watchlist
+    
+    # Big 6 Canadian Banks
+    BIG_6_BANKS = {
+        'RY': {'name': 'Royal Bank of Canada', 'full_name': 'Royal Bank of Canada'},
+        'TD': {'name': 'TD Bank', 'full_name': 'The Toronto-Dominion Bank'},
+        'BNS': {'name': 'Bank of Nova Scotia', 'full_name': 'Bank of Nova Scotia'},
+        'BMO': {'name': 'Bank of Montreal', 'full_name': 'Bank of Montreal'},
+        'CM': {'name': 'CIBC', 'full_name': 'Canadian Imperial Bank of Commerce'},
+        'NA': {'name': 'National Bank', 'full_name': 'National Bank of Canada'},
+    }
+    
+    # Get stocks with annotations
+    bank_symbols = list(BIG_6_BANKS.keys())
+    stocks = Stock.objects.filter(symbol__in=bank_symbols).annotate(
+        latest_price_value=Subquery(
+            StockPrice.objects.filter(stock=OuterRef('pk'))
+            .order_by('-price_date').values('last_price')[:1]
+        ),
+        latest_price_date=Subquery(
+            StockPrice.objects.filter(stock=OuterRef('pk'))
+            .order_by('-price_date').values('price_date')[:1]
+        ),
+        latest_dividend_amount=Subquery(
+            Dividend.objects.filter(stock=OuterRef('pk'))
+            .order_by('-ex_dividend_date').values('amount')[:1]
+        ),
+        latest_dividend_yield=Subquery(
+            Dividend.objects.filter(stock=OuterRef('pk'))
+            .order_by('-ex_dividend_date').values('yield_percent')[:1]
+        ),
+        latest_dividend_frequency=Subquery(
+            Dividend.objects.filter(stock=OuterRef('pk'))
+            .order_by('-ex_dividend_date').values('frequency')[:1]
+        ),
+        latest_dividend_date=Subquery(
+            Dividend.objects.filter(stock=OuterRef('pk'))
+            .order_by('-ex_dividend_date').values('ex_dividend_date')[:1]
+        ),
+        next_dividend_date=Subquery(
+            Dividend.objects.filter(
+                stock=OuterRef('pk'),
+                ex_dividend_date__gte=timezone.now().date()
+            ).order_by('ex_dividend_date').values('ex_dividend_date')[:1]
+        ),
+    )
+    
+    # Calculate additional metrics for each bank
+    banks_data = []
+    today = timezone.now().date()
+    one_year_ago = today - timedelta(days=365)
+    three_years_ago = today - timedelta(days=1095)
+    
+    for stock in stocks:
+        if stock.symbol not in BIG_6_BANKS:
+            continue
+            
+        bank_info = BIG_6_BANKS[stock.symbol]
+        
+        # Get dividend history for growth calculation
+        dividends = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date')
+        recent_dividends = dividends[:4]  # Last 4 dividends
+        
+        # Calculate dividend growth (1-year and 3-year)
+        dividend_growth_1y = None
+        dividend_growth_3y = None
+        
+        if dividends.count() >= 2:
+            latest = dividends[0]
+            one_year_ago_dividend = dividends.filter(ex_dividend_date__lte=one_year_ago).first()
+            three_years_ago_dividend = dividends.filter(ex_dividend_date__lte=three_years_ago).first()
+            
+            if one_year_ago_dividend:
+                growth = ((float(latest.amount) - float(one_year_ago_dividend.amount)) / 
+                         float(one_year_ago_dividend.amount)) * 100
+                dividend_growth_1y = round(growth, 2)
+            
+            if three_years_ago_dividend:
+                growth = ((float(latest.amount) - float(three_years_ago_dividend.amount)) / 
+                         float(three_years_ago_dividend.amount)) * 100
+                dividend_growth_3y = round(growth, 2)
+        
+        # Calculate consecutive increases (dividend growth streak)
+        growth_streak = 0
+        sorted_dividends = list(dividends[:10])  # Check last 10 dividends
+        for i in range(len(sorted_dividends) - 1):
+            if float(sorted_dividends[i].amount) > float(sorted_dividends[i + 1].amount):
+                growth_streak += 1
+            else:
+                break
+        
+        # Calculate annual dividend
+        annual_dividend = 0
+        if stock.latest_dividend_amount and stock.latest_dividend_frequency:
+            frequency_multiplier = {
+                'Monthly': 12,
+                'Quarterly': 4,
+                'Semi-Annual': 2,
+                'Annual': 1,
+            }.get(stock.latest_dividend_frequency, 4)  # Default to quarterly
+            annual_dividend = float(stock.latest_dividend_amount) * frequency_multiplier
+        
+        # Check if user owns this stock
+        user_owns = False
+        user_shares = 0
+        if request.user.is_authenticated:
+            portfolio_item = UserPortfolio.objects.filter(
+                user=request.user, 
+                stock=stock
+            ).first()
+            if portfolio_item:
+                user_owns = True
+                user_shares = portfolio_item.shares_owned
+        
+        # Check if in watchlist
+        in_watchlist = False
+        if request.user.is_authenticated:
+            in_watchlist = Watchlist.objects.filter(user=request.user, stock=stock).exists()
+        
+        banks_data.append({
+            'stock': stock,
+            'name': bank_info['name'],
+            'full_name': bank_info['full_name'],
+            'symbol': stock.symbol,
+            'price': stock.latest_price_value,
+            'price_date': stock.latest_price_date,
+            'dividend_amount': stock.latest_dividend_amount,
+            'dividend_yield': stock.latest_dividend_yield,
+            'dividend_frequency': stock.latest_dividend_frequency or 'Quarterly',
+            'annual_dividend': annual_dividend,
+            'dividend_growth_1y': dividend_growth_1y,
+            'dividend_growth_3y': dividend_growth_3y,
+            'growth_streak': growth_streak,
+            'next_dividend_date': stock.next_dividend_date,
+            'user_owns': user_owns,
+            'user_shares': user_shares,
+            'in_watchlist': in_watchlist,
+        })
+    
+    # Sort by yield (highest first) or by symbol
+    sort_by = request.GET.get('sort', 'yield')
+    if sort_by == 'yield':
+        banks_data.sort(key=lambda x: x['dividend_yield'] or 0, reverse=True)
+    elif sort_by == 'growth':
+        banks_data.sort(key=lambda x: x['dividend_growth_1y'] or 0, reverse=True)
+    elif sort_by == 'streak':
+        banks_data.sort(key=lambda x: x['growth_streak'], reverse=True)
+    elif sort_by == 'symbol':
+        banks_data.sort(key=lambda x: x['symbol'])
+    
+    # Calculate averages
+    avg_yield = sum(b['dividend_yield'] or 0 for b in banks_data) / len(banks_data) if banks_data else 0
+    avg_growth_1y = sum(b['dividend_growth_1y'] or 0 for b in banks_data) / len([b for b in banks_data if b['dividend_growth_1y']]) if any(b['dividend_growth_1y'] for b in banks_data) else 0
+    avg_growth_streak = sum(b['growth_streak'] for b in banks_data) / len(banks_data) if banks_data else 0
+    
+    context = {
+        'banks_data': banks_data,
+        'avg_yield': round(avg_yield, 2),
+        'avg_growth_1y': round(avg_growth_1y, 2),
+        'avg_growth_streak': round(avg_growth_streak, 1),
+        'sort_by': sort_by,
+    }
+    
+    return render(request, 'big6_banks_dashboard.html', context)
+
+
 def canadian_tools(request):
     """Canadian tax and investment tools page - accessible to all users"""
     context = {

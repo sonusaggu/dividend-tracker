@@ -83,6 +83,7 @@ urlpatterns = [
     path('fetch-news/', views.fetch_news, name='fetch_news'),
     # Canadian tools
     path('tools/', views.canadian_tools, name='canadian_tools'),
+    path('big6-banks/', views.big6_banks_dashboard, name='big6_banks_dashboard'),
     # Contact Us
     path('contact/', views.contact_us, name='contact_us'),
     # Donations

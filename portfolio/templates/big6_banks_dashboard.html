@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Big 6 Canadian Banks - Dividend Comparison | StockFolio{% endblock %}
+{% block meta_title %}Big 6 Canadian Banks Dividend Dashboard{% endblock %}
+{% block meta_description %}Compare dividend yields, growth rates, and metrics for Canada's Big 6 banks: RY, TD, BNS, BMO, CM, and NA.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Big 6 Canadian Banks</h1>
+                    <p class="text-gray-600">Compare dividend yields, growth, and metrics for Canada's major banks</p>
+                </div>
+                <div class="flex gap-3 flex-wrap">
+                    <a href="{% url 'canadian_tools' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Canadian Tools
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Average Dividend Yield</p>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ avg_yield|floatformat:2 }}%</p>
+                <p class="text-xs text-gray-500 mt-1">Across all 6 banks</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Average 1-Year Growth</p>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ avg_growth_1y|floatformat:2 }}%</p>
+                <p class="text-xs text-gray-500 mt-1">Dividend growth rate</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-600">Average Growth Streak</p>
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ avg_growth_streak|floatformat:1 }}</p>
+                <p class="text-xs text-gray-500 mt-1">Consecutive increases</p>
+            </div>
+        </div>
+
+        <!-- Sort Options -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm font-medium text-gray-700">Sort by:</span>
+                <a href="?sort=yield" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition {% if sort_by == 'yield' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Yield (High to Low)
+                </a>
+                <a href="?sort=growth" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition {% if sort_by == 'growth' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Growth Rate
+                </a>
+                <a href="?sort=streak" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition {% if sort_by == 'streak' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Growth Streak
+                </a>
+                <a href="?sort=symbol" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition {% if sort_by == 'symbol' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Symbol (A-Z)
+                </a>
+            </div>
+        </div>
+
+        <!-- Banks Comparison Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Bank</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Dividend</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Yield</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Annual</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">1Y Growth</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">3Y Growth</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Streak</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Next Ex-Date</th>
+                            <th class="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for bank in banks_data %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">{{ bank.symbol }}</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-semibold text-gray-900">{{ bank.symbol }}</div>
+                                        <div class="text-xs text-gray-500">{{ bank.name }}</div>
+                                        {% if bank.user_owns %}
+                                        <div class="text-xs text-green-600 font-medium mt-1">✓ You own {{ bank.user_shares|intcomma }} shares</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.price %}
+                                    <div class="text-sm font-semibold text-gray-900">${{ bank.price|floatformat:2 }}</div>
+                                    {% if bank.price_date %}
+                                    <div class="text-xs text-gray-500">{{ bank.price_date|date:"M d" }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.dividend_amount %}
+                                    <div class="text-sm font-semibold text-gray-900">${{ bank.dividend_amount|floatformat:4 }}</div>
+                                    <div class="text-xs text-gray-500">{{ bank.dividend_frequency }}</div>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.dividend_yield %}
+                                    <div class="text-sm font-bold {% if bank.dividend_yield >= avg_yield %}text-green-600{% else %}text-gray-900{% endif %}">
+                                        {{ bank.dividend_yield|floatformat:2 }}%
+                                    </div>
+                                    {% if bank.dividend_yield >= avg_yield %}
+                                    <div class="text-xs text-green-600">Above avg</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.annual_dividend %}
+                                    <div class="text-sm font-semibold text-gray-900">${{ bank.annual_dividend|floatformat:2 }}</div>
+                                    <div class="text-xs text-gray-500">per share</div>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.dividend_growth_1y is not None %}
+                                    <div class="text-sm font-semibold {% if bank.dividend_growth_1y > 0 %}text-green-600{% elif bank.dividend_growth_1y < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                                        {% if bank.dividend_growth_1y > 0 %}+{% endif %}{{ bank.dividend_growth_1y|floatformat:2 }}%
+                                    </div>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                {% if bank.dividend_growth_3y is not None %}
+                                    <div class="text-sm font-semibold {% if bank.dividend_growth_3y > 0 %}text-green-600{% elif bank.dividend_growth_3y < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                                        {% if bank.dividend_growth_3y > 0 %}+{% endif %}{{ bank.dividend_growth_3y|floatformat:2 }}%
+                                    </div>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                {% if bank.growth_streak > 0 %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {% if bank.growth_streak >= 5 %}bg-green-100 text-green-800{% elif bank.growth_streak >= 3 %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ bank.growth_streak }} year{{ bank.growth_streak|pluralize }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                {% if bank.next_dividend_date %}
+                                    <div class="text-sm font-medium text-gray-900">{{ bank.next_dividend_date|date:"M d, Y" }}</div>
+                                    <div class="text-xs text-gray-500">{{ bank.next_dividend_date|timeuntil }}</div>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <a href="{% url 'stock_detail' bank.symbol %}" 
+                                       class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition group relative"
+                                       title="View Details">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </a>
+                                    {% if request.user.is_authenticated %}
+                                    <button onclick="toggleWatchlist({{ bank.stock.id }}, this)" 
+                                            data-in-watchlist="{{ bank.in_watchlist|lower }}"
+                                            class="p-2 {% if bank.in_watchlist %}bg-green-100 text-green-700 hover:bg-green-200{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} rounded-lg transition group relative"
+                                            title="{% if bank.in_watchlist %}Remove from Watchlist{% else %}Add to Watchlist{% endif %}">
+                                        {% if bank.in_watchlist %}
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        {% else %}
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                        </svg>
+                                        {% endif %}
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm border border-blue-200 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                Key Insights
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-lg p-4 border border-blue-100">
+                    <h3 class="font-semibold text-gray-900 mb-2">Highest Yield</h3>
+                    {% with highest_yield=banks_data|dictsort:"dividend_yield"|last %}
+                    <p class="text-sm text-gray-600">
+                        <span class="font-bold">{{ highest_yield.symbol }}</span> offers the highest dividend yield at 
+                        <span class="font-bold">{{ highest_yield.dividend_yield|floatformat:2 }}%</span>
+                    </p>
+                    {% endwith %}
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-blue-100">
+                    <h3 class="font-semibold text-gray-900 mb-2">Best Growth</h3>
+                    {% with best_growth=banks_data|dictsort:"dividend_growth_1y"|last %}
+                    <p class="text-sm text-gray-600">
+                        <span class="font-bold">{{ best_growth.symbol }}</span> has the highest 1-year dividend growth at 
+                        <span class="font-bold">{% if best_growth.dividend_growth_1y %}+{{ best_growth.dividend_growth_1y|floatformat:2 }}%{% else %}N/A{% endif %}</span>
+                    </p>
+                    {% endwith %}
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-blue-100">
+                    <h3 class="font-semibold text-gray-900 mb-2">Longest Streak</h3>
+                    {% with longest_streak=banks_data|dictsort:"growth_streak"|last %}
+                    <p class="text-sm text-gray-600">
+                        <span class="font-bold">{{ longest_streak.symbol }}</span> has the longest dividend growth streak with 
+                        <span class="font-bold">{{ longest_streak.growth_streak }} consecutive increases</span>
+                    </p>
+                    {% endwith %}
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-blue-100">
+                    <h3 class="font-semibold text-gray-900 mb-2">About Big 6 Banks</h3>
+                    <p class="text-sm text-gray-600">
+                        Canada's Big 6 banks are among the most stable dividend payers globally, with strong regulatory oversight and consistent dividend growth.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if request.user.is_authenticated %}
+<script>
+function toggleWatchlist(stockId, button) {
+    const isInWatchlist = button.dataset.inWatchlist === 'true';
+    
+    button.disabled = true;
+    button.style.opacity = '0.6';
+    
+    fetch(`/watchlist/toggle/${stockId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            button.dataset.inWatchlist = (!isInWatchlist).toString();
+            if (!isInWatchlist) {
+                // Update to checked state
+                button.className = 'p-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition group relative';
+                button.title = 'Remove from Watchlist';
+                button.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>';
+            } else {
+                // Update to unchecked state
+                button.className = 'p-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition group relative';
+                button.title = 'Add to Watchlist';
+                button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>';
+            }
+            if (typeof Toast !== 'undefined') {
+                Toast.success(data.message || 'Watchlist updated');
+            }
+        } else {
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Error updating watchlist');
+            } else {
+                alert(data.message || 'Error updating watchlist');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error updating watchlist');
+        } else {
+            alert('Error updating watchlist');
+        }
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.style.opacity = '1';
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endif %}
+{% endblock %}
+
