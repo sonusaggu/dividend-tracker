@@ -4,12 +4,14 @@ Custom middleware for security and logging
 import logging
 import time
 import re
+import threading
 from django.http import HttpResponse, HttpResponseServerError
 from django.template.loader import render_to_string
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
 from django.contrib.auth.models import AnonymousUser
 from django.db import OperationalError, DatabaseError, InterfaceError
+from django.db import connection
 
 logger = logging.getLogger(__name__)
 
@@ -178,88 +180,35 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
                 response_time = (time.time() - request._metrics_start_time) * 1000
                 response_time_ms = int(response_time)
             
-            # Get location from IP (country, city, region, timezone)
-            location_data = self._get_location_from_ip(ip_address)
-            country = location_data.get('country', '')
-            city = location_data.get('city', '')
-            region = location_data.get('region', '')
-            timezone = location_data.get('timezone', '')
-            
-            # Import here to avoid circular imports
-            from portfolio.models import WebsiteMetric
-            
             # Final safety check - ensure session_key is a string
             session_key = str(session_key) if session_key is not None else ''
             
-            # Create metric record
-            try:
-                WebsiteMetric.objects.create(
-                    user=user,
-                    session_key=session_key,
-                    ip_address=ip_address,
-                    user_agent=user_agent[:500],  # Limit length
-                    referrer=referrer[:500],
-                    path=request.path[:500],
-                    method=request.method,
-                    status_code=response.status_code,
-                    response_time_ms=response_time_ms,
-                    is_authenticated=user is not None,
-                    is_mobile=is_mobile,
-                    is_bot=is_bot,
-                    country=country,
-                    city=city,
-                    region=region,
-                    timezone=timezone,
-                )
-            except (OperationalError, DatabaseError, InterfaceError) as db_error:
-                # If there's a database connection error, log it but don't break the request
-                error_str = str(db_error).lower()
-                if any(keyword in error_str for keyword in [
-                    'connection refused', 'connection', 'server', 'tcp/ip',
-                    'could not connect', 'unable to connect', 'connection timeout'
-                ]):
-                    logger.warning(f"Database connection error in metrics tracking (non-critical): {db_error}")
-                    # Don't re-raise - just skip metrics tracking
-                else:
-                    logger.error(f"Database error creating WebsiteMetric: {db_error}")
-                    logger.debug(f"session_key value: {repr(session_key)}, type: {type(session_key)}")
-            except Exception as db_error:
-                # For other errors, log but don't break the request
-                logger.error(f"Error creating WebsiteMetric: {db_error}")
-                logger.debug(f"session_key value: {repr(session_key)}, type: {type(session_key)}")
+            # Prepare metric data for async saving
+            # Note: Location lookup will be done asynchronously to avoid blocking
+            metric_data = {
+                'user_id': user.id if user else None,
+                'session_key': session_key,
+                'ip_address': ip_address,
+                'user_agent': user_agent[:500],  # Limit length
+                'referrer': referrer[:500],
+                'path': request.path[:500],
+                'method': request.method,
+                'status_code': response.status_code,
+                'response_time_ms': response_time_ms,
+                'is_authenticated': user is not None,
+                'is_mobile': is_mobile,
+                'is_bot': is_bot,
+                # Location will be fetched asynchronously
+            }
             
-            # Update or create user session (only if session_key exists and is not empty)
-            if session_key and session_key.strip():
-                try:
-                    from portfolio.models import UserSession
-                    session, created = UserSession.objects.get_or_create(
-                        session_key=session_key,
-                        defaults={
-                            'user': user,
-                            'ip_address': ip_address,
-                            'user_agent': user_agent[:500],
-                            'referrer': referrer[:500],
-                            'country': country,
-                        }
-                    )
-                    if not created:
-                        # Update existing session
-                        session.last_activity = timezone.now()
-                        session.page_views += 1
-                        session.save(update_fields=['last_activity', 'page_views'])
-                except (OperationalError, DatabaseError, InterfaceError) as e:
-                    # Log database connection errors but don't break the request
-                    error_str = str(e).lower()
-                    if any(keyword in error_str for keyword in [
-                        'connection refused', 'connection', 'server', 'tcp/ip',
-                        'could not connect', 'unable to connect', 'connection timeout'
-                    ]):
-                        logger.debug(f"Database connection error updating user session (non-critical): {e}")
-                    else:
-                        logger.debug(f"Database error updating user session: {e}")
-                except Exception as e:
-                    # Log but don't break the request
-                    logger.debug(f"Error updating user session: {e}")
+            # Save metrics asynchronously to avoid blocking the response
+            # Use a background thread to save metrics (includes location lookup)
+            thread = threading.Thread(
+                target=self._save_metrics_async,
+                args=(metric_data,),
+                daemon=True  # Daemon thread won't prevent app shutdown
+            )
+            thread.start()
             
         except Exception as e:
             # Log error but don't break the request
@@ -338,6 +287,106 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
         """Get country code from IP address (legacy method, kept for compatibility)"""
         location = self._get_location_from_ip(ip_address)
         return location.get('country', '')
+    
+    def _save_metrics_async(self, metric_data):
+        """Save metrics asynchronously in a background thread"""
+        try:
+            # Close the connection from the main thread and open a new one for this thread
+            connection.close()
+            
+            # Get location from IP asynchronously (this was blocking before)
+            ip_address = metric_data['ip_address']
+            location_data = self._get_location_from_ip(ip_address)
+            country = location_data.get('country', '')
+            city = location_data.get('city', '')
+            region = location_data.get('region', '')
+            timezone_str = location_data.get('timezone', '')
+            
+            # Import here to avoid circular imports
+            from portfolio.models import WebsiteMetric, UserSession
+            from django.contrib.auth.models import User
+            
+            # Get user object if user_id is provided
+            user = None
+            if metric_data['user_id']:
+                try:
+                    user = User.objects.get(pk=metric_data['user_id'])
+                except User.DoesNotExist:
+                    user = None
+            
+            # Create metric record
+            try:
+                WebsiteMetric.objects.create(
+                    user=user,
+                    session_key=metric_data['session_key'],
+                    ip_address=metric_data['ip_address'],
+                    user_agent=metric_data['user_agent'],
+                    referrer=metric_data['referrer'],
+                    path=metric_data['path'],
+                    method=metric_data['method'],
+                    status_code=metric_data['status_code'],
+                    response_time_ms=metric_data['response_time_ms'],
+                    is_authenticated=metric_data['is_authenticated'],
+                    is_mobile=metric_data['is_mobile'],
+                    is_bot=metric_data['is_bot'],
+                    country=country,
+                    city=city,
+                    region=region,
+                    timezone=timezone_str,
+                )
+            except (OperationalError, DatabaseError, InterfaceError) as db_error:
+                # If there's a database connection error, log it but don't break the request
+                error_str = str(db_error).lower()
+                if any(keyword in error_str for keyword in [
+                    'connection refused', 'connection', 'server', 'tcp/ip',
+                    'could not connect', 'unable to connect', 'connection timeout'
+                ]):
+                    logger.warning(f"Database connection error in async metrics tracking (non-critical): {db_error}")
+                    # Don't re-raise - just skip metrics tracking
+                else:
+                    logger.error(f"Database error creating WebsiteMetric (async): {db_error}")
+            except Exception as db_error:
+                # For other errors, log but don't break the request
+                logger.error(f"Error creating WebsiteMetric (async): {db_error}")
+            
+            # Update or create user session (only if session_key exists and is not empty)
+            session_key = metric_data['session_key']
+            if session_key and session_key.strip():
+                try:
+                    session, created = UserSession.objects.get_or_create(
+                        session_key=session_key,
+                        defaults={
+                            'user': user,
+                            'ip_address': metric_data['ip_address'],
+                            'user_agent': metric_data['user_agent'],
+                            'referrer': metric_data['referrer'],
+                            'country': country,
+                        }
+                    )
+                    if not created:
+                        # Update existing session
+                        session.last_activity = timezone.now()
+                        session.page_views += 1
+                        session.save(update_fields=['last_activity', 'page_views'])
+                except (OperationalError, DatabaseError, InterfaceError) as e:
+                    # Log database connection errors but don't break the request
+                    error_str = str(e).lower()
+                    if any(keyword in error_str for keyword in [
+                        'connection refused', 'connection', 'server', 'tcp/ip',
+                        'could not connect', 'unable to connect', 'connection timeout'
+                    ]):
+                        logger.debug(f"Database connection error updating user session (async, non-critical): {e}")
+                    else:
+                        logger.debug(f"Database error updating user session (async): {e}")
+                except Exception as e:
+                    # Log but don't break the request
+                    logger.debug(f"Error updating user session (async): {e}")
+        except Exception as e:
+            # Log error but don't break the request
+            logger.error(f"Error in async metrics tracking: {e}", exc_info=True)
+        finally:
+            # Always close the connection when done
+            connection.close()
 
 
 

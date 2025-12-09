@@ -194,14 +194,10 @@ def login_view(request):
             
             # Redirect to next page if provided, otherwise to dashboard
             next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
-            # Validate next URL to prevent open redirects
-            # Only allow relative URLs (starting with /) or named URL patterns
-            if next_url.startswith('http://') or next_url.startswith('https://'):
-                # Block external URLs - only allow same domain
-                if not next_url.startswith(request.build_absolute_uri('/')):
-                    next_url = 'dashboard'
-            elif next_url and not next_url.startswith('/'):
-                # If it's not a relative URL and not empty, check if it's a valid URL name
+            # Validate next URL to prevent open redirects using Django's utility
+            from django.utils.http import is_safe_url
+            if not is_safe_url(next_url, allowed_hosts={request.get_host()}):
+                next_url = 'dashboard'
                 # For now, default to dashboard if it doesn't start with /
                 next_url = 'dashboard'
             
