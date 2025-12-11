@@ -17,10 +17,16 @@
                     <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">My Watchlist</h1>
                     <p class="text-gray-600">Track stocks you're interested in</p>
                 </div>
-                <a href="{% url 'all_stocks' %}" 
-                   class="mt-4 md:mt-0 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition min-h-[44px] flex items-center justify-center">
-                    + Add Stocks
-                </a>
+                <div class="mt-4 md:mt-0 flex gap-3 flex-wrap">
+                    <a href="{% url 'all_stocks' %}" 
+                       class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition min-h-[44px] flex items-center justify-center">
+                        + Add Stocks
+                    </a>
+                    <a href="{% url 'manage_watchlist_groups' %}" 
+                       class="px-6 py-2.5 bg-white border-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50 rounded-lg font-semibold transition min-h-[44px] flex items-center justify-center shadow-sm hover:shadow-md">
+                        📁 Manage Groups
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -133,6 +139,50 @@
             </div>
         </div>
 
+        <!-- Watchlist Groups -->
+        {% if watchlist_by_group %}
+        <div class="space-y-6 mb-6">
+            {% for group_id, group_data in watchlist_by_group.items %}
+            <div class="bg-white rounded-lg shadow-sm border-2" style="border-color: {{ group_data.group.color }};">
+                <div class="px-6 py-4 border-b" style="background-color: {{ group_data.group.color }}20;">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 rounded-full" style="background-color: {{ group_data.group.color }};"></div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ group_data.group.name }}</h3>
+                            <span class="text-sm text-gray-600">({{ group_data.items|length }} stock{{ group_data.items|length|pluralize }})</span>
+                        </div>
+                        <a href="{% url 'edit_watchlist_group' group_data.group.id %}" 
+                           class="text-sm text-gray-600 hover:text-gray-900">
+                            Edit
+                        </a>
+                    </div>
+                    {% if group_data.group.description %}
+                    <p class="text-sm text-gray-600 mt-2">{{ group_data.group.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="overflow-x-auto">
+                    {% include 'watchlist/watchlist_table.html' with watchlist_items=group_data.items %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Ungrouped Items -->
+        {% if ungrouped_items %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900">Ungrouped</h3>
+                <p class="text-sm text-gray-600">Stocks not assigned to any group</p>
+            </div>
+            <div class="overflow-x-auto">
+                {% include 'watchlist/watchlist_table.html' with watchlist_items=ungrouped_items %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- All Watchlist Items (if no groups) -->
+        {% if not watchlist_by_group and not ungrouped_items and watchlist_items %}
         <!-- Watchlist Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto md:overflow-x-visible">
@@ -170,6 +220,13 @@
                                                 In Portfolio
                                             </span>
                                             {% endif %}
+                                            {% if item.tags %}
+                                            {% for tag in item.tags %}
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0" style="background-color: {{ tag.color }};">
+                                                {{ tag.name }}
+                                            </span>
+                                            {% endfor %}
+                                            {% endif %}
                                         </div>
                                         <div class="text-xs text-gray-500 font-medium">
                                             {% if item.latest_dividend and item.latest_dividend.frequency %}
@@ -187,6 +244,13 @@
                                 <div class="text-sm font-semibold text-gray-900" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
                                 {% if item.stock.sector %}
                                 <div class="text-xs text-gray-500 mt-1" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto;">{{ item.stock.sector }}</div>
+                                {% endif %}
+                                {% if item.watchlist_item.group %}
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white" style="background-color: {{ item.watchlist_item.group.color }};">
+                                        {{ item.watchlist_item.group.name }}
+                                    </span>
+                                </div>
                                 {% endif %}
                             </td>
                             
@@ -281,6 +345,15 @@
                                     </a>
                                     {% endif %}
                                     
+                                    <!-- Set Group Button -->
+                                    <button onclick="openGroupModal({{ item.watchlist_item.id }}, '{{ item.stock.symbol|escapejs }}')" 
+                                            class="inline-flex items-center justify-center px-2 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition font-medium text-xs"
+                                            title="Set group">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                        </svg>
+                                    </button>
+                                    
                                     <!-- Remove Button -->
                                     <button onclick="showRemoveConfirm({{ item.stock.id }}, '{{ item.stock.symbol|escapejs }}')" 
                                             class="inline-flex items-center justify-center px-2 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 rounded-lg transition font-medium text-xs"
@@ -297,6 +370,7 @@
                 </table>
             </div>
         </div>
+        {% endif %}
         {% else %}
         <!-- Empty State -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
@@ -319,6 +393,84 @@
             </div>
         </div>
         {% endif %}
+    </div>
+</div>
+
+<!-- Group Selection Modal -->
+<div id="groupModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+        <!-- Close Button -->
+        <button onclick="closeGroupModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- Header -->
+        <div class="mb-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Select Group</h3>
+            <p class="text-gray-600" id="groupModalStockInfo">Choose a group for this stock</p>
+        </div>
+        
+        <!-- Group Options -->
+        <div class="space-y-3 mb-6 max-h-96 overflow-y-auto">
+            <!-- No Group Option -->
+            <button onclick="selectGroup(null)" 
+                    class="w-full flex items-center justify-between p-4 border-2 border-gray-300 hover:border-blue-500 rounded-lg transition group">
+                <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full bg-gray-300"></div>
+                    <div class="text-left">
+                        <div class="font-semibold text-gray-900">No Group</div>
+                        <div class="text-sm text-gray-500">Ungrouped</div>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+            
+            <!-- Group Options -->
+            {% for group in all_groups %}
+            <button onclick="selectGroup({{ group.id }})" 
+                    class="w-full flex items-center justify-between p-4 border-2 border-gray-300 hover:border-blue-500 rounded-lg transition group"
+                    style="border-color: {{ group.color }}30;">
+                <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background-color: {{ group.color }};"></div>
+                    <div class="text-left">
+                        <div class="font-semibold text-gray-900">{{ group.name }}</div>
+                        {% if group.description %}
+                        <div class="text-sm text-gray-500">{{ group.description }}</div>
+                        {% else %}
+                        <div class="text-sm text-gray-500">{{ group.watchlist_items.count }} stock{{ group.watchlist_items.count|pluralize }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+            {% empty %}
+            <div class="text-center py-8 text-gray-500">
+                <p class="mb-4">No groups created yet.</p>
+                <a href="{% url 'manage_watchlist_groups' %}" 
+                   class="text-blue-600 hover:text-blue-700 font-medium">
+                    Create a group →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Footer -->
+        <div class="flex gap-3">
+            <button onclick="closeGroupModal()" 
+                    class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition">
+                Cancel
+            </button>
+            <a href="{% url 'manage_watchlist_groups' %}" 
+               class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-center">
+                Manage Groups
+            </a>
+        </div>
     </div>
 </div>
 
@@ -598,5 +750,75 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Group management
+let currentWatchlistId = null;
+
+function openGroupModal(watchlistId, symbol) {
+    currentWatchlistId = watchlistId;
+    document.getElementById('groupModalStockInfo').innerText = `Choose a group for ${symbol}`;
+    document.getElementById('groupModal').classList.remove('hidden');
+    document.getElementById('groupModal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeGroupModal() {
+    document.getElementById('groupModal').classList.add('hidden');
+    document.getElementById('groupModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+    currentWatchlistId = null;
+}
+
+function selectGroup(groupId) {
+    if (!currentWatchlistId) {
+        alert('Error: Watchlist item not found');
+        return;
+    }
+    
+    const formData = new FormData();
+    if (groupId !== null && groupId !== undefined) {
+        formData.append('group_id', groupId);
+    }
+    // If groupId is null, we don't append it, which will set group to None
+    
+    fetch(`/watchlist/${currentWatchlistId}/set-group/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeGroupModal();
+            // Reload the page to show updated groups
+            window.location.reload();
+        } else {
+            alert(data.message || 'Error setting group');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error setting group');
+    });
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeGroupModal();
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('groupModal');
+    if (modal && event.target === modal) {
+        closeGroupModal();
+    }
+});
 </script>
 {% endblock %}

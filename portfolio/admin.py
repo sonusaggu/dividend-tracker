@@ -3,7 +3,7 @@ from .models import (
     Stock, StockPrice, Dividend, ValuationMetric, AnalystRating,
     UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews,
     AffiliateLink, SponsoredContent, UserProfile, Follow, Post, Comment, PostLike, CommentLike,
-    StockNote, Transaction, WebsiteMetric, UserSession
+    StockNote, Transaction, WebsiteMetric, UserSession, WatchlistGroup, StockTag, TaggedStock
 )
 
 
@@ -67,11 +67,35 @@ class UserAlertAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+@admin.register(WatchlistGroup)
+class WatchlistGroupAdmin(admin.ModelAdmin):
+    list_display = ('user', 'name', 'color', 'order', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'name')
+    readonly_fields = ('created_at',)
+
+
 @admin.register(Watchlist)
 class WatchlistAdmin(admin.ModelAdmin):
-    list_display = ('user', 'stock', 'created_at')
-    list_filter = ('created_at',)
+    list_display = ('user', 'stock', 'group', 'created_at')
+    list_filter = ('created_at', 'group')
     search_fields = ('user__username', 'stock__symbol')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(StockTag)
+class StockTagAdmin(admin.ModelAdmin):
+    list_display = ('user', 'name', 'color', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'name')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(TaggedStock)
+class TaggedStockAdmin(admin.ModelAdmin):
+    list_display = ('tag', 'stock', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('tag__name', 'stock__symbol')
     readonly_fields = ('created_at',)
 
 

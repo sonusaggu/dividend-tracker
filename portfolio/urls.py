@@ -135,5 +135,16 @@ urlpatterns = [
     
     # Website Analytics (staff only)
     path('analytics/', views.website_analytics, name='website_analytics'),
+    
+    # Tags and Watchlist Groups
+    path('tags/', views.manage_tags, name='manage_tags'),
+    path('tags/create/', views.create_tag, name='create_tag'),
+    path('tags/<int:tag_id>/delete/', views.delete_tag, name='delete_tag'),
+    path('tags/<int:tag_id>/toggle/<str:symbol>/', views.toggle_stock_tag, name='toggle_stock_tag'),
+    path('watchlist-groups/', views.manage_watchlist_groups, name='manage_watchlist_groups'),
+    path('watchlist-groups/create/', views.create_watchlist_group, name='create_watchlist_group'),
+    path('watchlist-groups/<int:group_id>/edit/', views.edit_watchlist_group, name='edit_watchlist_group'),
+    path('watchlist-groups/<int:group_id>/delete/', views.delete_watchlist_group, name='delete_watchlist_group'),
+    path('watchlist/<int:watchlist_id>/set-group/', views.set_watchlist_group, name='set_watchlist_group'),
 
 ]

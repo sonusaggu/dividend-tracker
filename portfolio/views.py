@@ -23,6 +23,7 @@ import re
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
 from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote, Transaction
+from .models import WatchlistGroup, StockTag, TaggedStock
 from .services import PortfolioService, StockService, AlertService, TransactionService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
@@ -1291,10 +1292,30 @@ def stock_detail(request, symbol):
             portfolio_total_value = float(portfolio_item.shares_owned * latest_price.last_price)
         
         # Combine exists() checks - could be optimized further but exists() is already efficient
-        in_watchlist = Watchlist.objects.filter(user=request.user, stock=stock).exists()
+        watchlist_item = Watchlist.objects.filter(user=request.user, stock=stock).select_related('group').first()
+        in_watchlist = watchlist_item is not None
+        watchlist_group = watchlist_item.group if watchlist_item else None
+        
         has_dividend_alert = DividendAlert.objects.filter(
             user=request.user, stock=stock, is_active=True
         ).exists()
+        
+        # Get user's tags for this stock
+        try:
+            stock_tags = TaggedStock.objects.filter(
+                tag__user=request.user,
+                stock=stock
+            ).select_related('tag')
+            user_tags = [tagged.tag for tagged in stock_tags]
+        except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+            user_tags = []
+            logger.warning(f"TaggedStock table not found: {e}")
+        
+        # Get all available tags for the user
+        try:
+            available_tags = StockTag.objects.filter(user=request.user).order_by('name')
+        except (ProgrammingError, OperationalError, DatabaseError, Exception) as e:
+            available_tags = []
         
         # Get user's notes for this stock
         try:
@@ -1307,6 +1328,9 @@ def stock_detail(request, symbol):
             logger.warning(f"StockNote table not found: {e}")
     else:
         user_notes = []
+        user_tags = []
+        available_tags = []
+        watchlist_group = None
     
     # Calculate dividend growth and consistency metrics
     today = timezone.now().date()
@@ -1375,11 +1399,14 @@ def stock_detail(request, symbol):
         'valuation': valuation,
         'analyst_rating': analyst_rating,
         'in_watchlist': in_watchlist,
+        'watchlist_group': watchlist_group if request.user.is_authenticated else None,
         'in_portfolio': in_portfolio,
         'has_dividend_alert': has_dividend_alert,
         'portfolio_item': portfolio_item,
         'portfolio_total_value': portfolio_total_value,
         'user_notes': user_notes,
+        'user_tags': user_tags if request.user.is_authenticated else [],
+        'available_tags': available_tags if request.user.is_authenticated else [],
         'dividend_growth_rate': dividend_growth_rate,
         'dividend_consistency_score': dividend_consistency_score,
         'annual_dividend_income': annual_dividend_income,
@@ -1876,11 +1903,16 @@ def watchlist_view(request):
             .values_list('stock_id', flat=True)
         )
         
+        # Get watchlist groups
+        watchlist_groups = WatchlistGroup.objects.filter(user=request.user).order_by('order', 'name')
+        
         # Use service layer for optimized query
-        watchlist_items = PortfolioService.get_watchlist_with_annotations(request.user)
+        watchlist_items = PortfolioService.get_watchlist_with_annotations(request.user).select_related('group')
         
         # Prepare data efficiently with price changes
         watchlist_data = []
+        watchlist_by_group = {}  # Group watchlist items by group
+        ungrouped_items = []  # Items without a group
         dividend_stocks_count = 0
         sectors = set()
         today = timezone.now().date()
@@ -1899,6 +1931,20 @@ def watchlist_view(request):
         recent_news = StockNews.objects.filter(
             stock__in=[item.stock for item in watchlist_items]
         ).select_related('stock').order_by('-published_at')[:5]
+        
+        # Get tags for all watchlist stocks
+        watchlist_stock_ids = [item.stock_id for item in watchlist_items]
+        tagged_stocks = TaggedStock.objects.filter(
+            tag__user=request.user,
+            stock_id__in=watchlist_stock_ids
+        ).select_related('tag', 'stock')
+        
+        # Create a mapping of stock_id to tags
+        stock_tags_map = {}
+        for tagged in tagged_stocks:
+            if tagged.stock_id not in stock_tags_map:
+                stock_tags_map[tagged.stock_id] = []
+            stock_tags_map[tagged.stock_id].append(tagged.tag)
         
         for item in watchlist_items:
             in_portfolio = item.stock_id in portfolio_stock_ids
@@ -1929,6 +1975,7 @@ def watchlist_view(request):
                 if price_30d_ago and price_30d_ago.last_price:
                     price_change_30d = ((float(item.latest_price_value) - float(price_30d_ago.last_price)) / float(price_30d_ago.last_price)) * 100
             
+            # Get latest dividend
             latest_dividend = None
             days_until_dividend = None
             if item.latest_dividend_amount:
@@ -1940,13 +1987,17 @@ def watchlist_view(request):
                 })()
                 dividend_stocks_count += 1
                 
-                if item.latest_dividend_date:
+                if item.latest_dividend_date and item.latest_dividend_date >= today:
                     days_until_dividend = (item.latest_dividend_date - today).days
             
+            # Track sectors
             if item.stock.sector:
                 sectors.add(item.stock.sector)
             
-            watchlist_data.append({
+            # Get tags for this stock
+            stock_tags = stock_tags_map.get(item.stock_id, [])
+            
+            watchlist_item_data = {
                 'stock': item.stock,
                 'latest_price': latest_price,
                 'latest_dividend': latest_dividend,
@@ -1955,7 +2006,21 @@ def watchlist_view(request):
                 'price_change_7d': price_change_7d,
                 'price_change_30d': price_change_30d,
                 'days_until_dividend': days_until_dividend,
-            })
+                'tags': stock_tags,
+            }
+            
+            watchlist_data.append(watchlist_item_data)
+            
+            # Group by watchlist group
+            if item.group:
+                if item.group.id not in watchlist_by_group:
+                    watchlist_by_group[item.group.id] = {
+                        'group': item.group,
+                        'items': []
+                    }
+                watchlist_by_group[item.group.id]['items'].append(watchlist_item_data)
+            else:
+                ungrouped_items.append(watchlist_item_data)
         
         # Count stocks in portfolio
         in_portfolio_count = sum(1 for item in watchlist_data if item['in_portfolio'])
@@ -1966,6 +2031,10 @@ def watchlist_view(request):
         
         return render(request, 'watchlist.html', {
             'watchlist_items': watchlist_data,
+            'watchlist_groups': watchlist_groups,
+            'watchlist_by_group': watchlist_by_group,
+            'ungrouped_items': ungrouped_items,
+            'all_groups': watchlist_groups,  # For the group selection modal
             'dividend_stocks_count': dividend_stocks_count,
             'sectors_count': len(sectors),
             'watchlist_count': len(watchlist_items),
@@ -5763,3 +5832,209 @@ def website_analytics(request):
     }
     
     return render(request, 'website_analytics.html', context)
+
+
+# ==================== Stock Tags Management ====================
+
+@login_required
+def manage_tags(request):
+    """View and manage user's stock tags"""
+    tags = StockTag.objects.filter(user=request.user).prefetch_related('tagged_stocks__stock')
+    
+    # Get tag usage counts
+    tags_with_counts = []
+    for tag in tags:
+        count = tag.tagged_stocks.count()
+        tags_with_counts.append({
+            'tag': tag,
+            'count': count
+        })
+    
+    context = {
+        'tags': tags_with_counts,
+    }
+    return render(request, 'tags/manage_tags.html', context)
+
+
+@login_required
+@require_POST
+def create_tag(request):
+    """Create a new stock tag"""
+    name = request.POST.get('name', '').strip()
+    color = request.POST.get('color', '#6B7280').strip()
+    
+    if not name:
+        messages.error(request, 'Tag name is required.')
+        return redirect('manage_tags')
+    
+    # Validate color format
+    if not color.startswith('#'):
+        color = '#' + color
+    
+    try:
+        tag = StockTag.objects.create(
+            user=request.user,
+            name=name,
+            color=color
+        )
+        messages.success(request, f'Tag "{name}" created successfully.')
+    except Exception as e:
+        messages.error(request, f'Error creating tag: {str(e)}')
+    
+    return redirect('manage_tags')
+
+
+@login_required
+@require_POST
+def delete_tag(request, tag_id):
+    """Delete a stock tag"""
+    tag = get_object_or_404(StockTag, id=tag_id, user=request.user)
+    tag_name = tag.name
+    tag.delete()
+    messages.success(request, f'Tag "{tag_name}" deleted successfully.')
+    return redirect('manage_tags')
+
+
+@login_required
+@require_POST
+def toggle_stock_tag(request, tag_id, symbol):
+    """Add or remove a tag from a stock"""
+    tag = get_object_or_404(StockTag, id=tag_id, user=request.user)
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    
+    tagged_stock, created = TaggedStock.objects.get_or_create(tag=tag, stock=stock)
+    
+    if not created:
+        # Remove tag
+        tagged_stock.delete()
+        return JsonResponse({'status': 'removed', 'message': f'Removed tag "{tag.name}" from {stock.symbol}'})
+    else:
+        # Added tag
+        return JsonResponse({'status': 'added', 'message': f'Added tag "{tag.name}" to {stock.symbol}'})
+
+
+# ==================== Watchlist Groups Management ====================
+
+@login_required
+def manage_watchlist_groups(request):
+    """View and manage user's watchlist groups"""
+    groups = WatchlistGroup.objects.filter(user=request.user).prefetch_related('watchlist_items__stock')
+    
+    # Get group usage counts
+    groups_with_counts = []
+    for group in groups:
+        count = group.watchlist_items.count()
+        groups_with_counts.append({
+            'group': group,
+            'count': count
+        })
+    
+    context = {
+        'groups': groups_with_counts,
+    }
+    return render(request, 'watchlist/manage_groups.html', context)
+
+
+@login_required
+@require_POST
+def create_watchlist_group(request):
+    """Create a new watchlist group"""
+    name = request.POST.get('name', '').strip()
+    color = request.POST.get('color', '#3B82F6').strip()
+    description = request.POST.get('description', '').strip()
+    
+    if not name:
+        messages.error(request, 'Group name is required.')
+        return redirect('manage_watchlist_groups')
+    
+    # Validate color format
+    if not color.startswith('#'):
+        color = '#' + color
+    
+    try:
+        # Get max order value
+        max_order = WatchlistGroup.objects.filter(user=request.user).aggregate(Max('order'))['order__max'] or 0
+        
+        group = WatchlistGroup.objects.create(
+            user=request.user,
+            name=name,
+            color=color,
+            description=description,
+            order=max_order + 1
+        )
+        messages.success(request, f'Group "{name}" created successfully.')
+    except Exception as e:
+        messages.error(request, f'Error creating group: {str(e)}')
+    
+    return redirect('manage_watchlist_groups')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_watchlist_group(request, group_id):
+    """Edit a watchlist group"""
+    group = get_object_or_404(WatchlistGroup, id=group_id, user=request.user)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        color = request.POST.get('color', '#3B82F6').strip()
+        description = request.POST.get('description', '').strip()
+        order = request.POST.get('order', group.order)
+        
+        if not name:
+            messages.error(request, 'Group name is required.')
+            return render(request, 'watchlist/edit_group.html', {'group': group})
+        
+        # Validate color format
+        if not color.startswith('#'):
+            color = '#' + color
+        
+        try:
+            group.name = name
+            group.color = color
+            group.description = description
+            group.order = int(order) if order else group.order
+            group.save()
+            messages.success(request, f'Group "{name}" updated successfully.')
+            return redirect('manage_watchlist_groups')
+        except Exception as e:
+            messages.error(request, f'Error updating group: {str(e)}')
+    
+    return render(request, 'watchlist/edit_group.html', {'group': group})
+
+
+@login_required
+@require_POST
+def delete_watchlist_group(request, group_id):
+    """Delete a watchlist group (removes group from watchlist items)"""
+    group = get_object_or_404(WatchlistGroup, id=group_id, user=request.user)
+    group_name = group.name
+    
+    # Remove group from all watchlist items (set to None)
+    Watchlist.objects.filter(user=request.user, group=group).update(group=None)
+    
+    group.delete()
+    messages.success(request, f'Group "{group_name}" deleted successfully.')
+    return redirect('manage_watchlist_groups')
+
+
+@login_required
+@require_POST
+def set_watchlist_group(request, watchlist_id):
+    """Set the group for a watchlist item"""
+    watchlist_item = get_object_or_404(Watchlist, id=watchlist_id, user=request.user)
+    group_id = request.POST.get('group_id')
+    
+    if group_id:
+        group = get_object_or_404(WatchlistGroup, id=group_id, user=request.user)
+        watchlist_item.group = group
+    else:
+        watchlist_item.group = None
+    
+    watchlist_item.save()
+    
+    return JsonResponse({
+        'status': 'success',
+        'message': 'Group updated successfully',
+        'group_name': watchlist_item.group.name if watchlist_item.group else None
+    })

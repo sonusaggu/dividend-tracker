@@ -230,9 +230,30 @@ class UserAlert(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.stock.symbol} - {self.alert_type}"
 
+class WatchlistGroup(models.Model):
+    """Groups/categories for organizing watchlist items"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist_groups', db_index=True)
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#3B82F6', help_text='Hex color code for the group')
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order = models.IntegerField(default=0, help_text='Order for displaying groups')
+    
+    class Meta:
+        unique_together = ['user', 'name']
+        ordering = ['order', 'name']
+        indexes = [
+            models.Index(fields=['user', 'order']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
+
+
 class Watchlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlists', db_index=True)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True)
+    group = models.ForeignKey(WatchlistGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='watchlist_items', db_index=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -241,10 +262,47 @@ class Watchlist(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', 'stock']),
+            models.Index(fields=['user', 'group']),
         ]
     
     def __str__(self):
         return f"{self.user.username} - {self.stock.symbol}"
+
+
+class StockTag(models.Model):
+    """User-defined tags for organizing stocks"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stock_tags', db_index=True)
+    name = models.CharField(max_length=50)
+    color = models.CharField(max_length=7, default='#6B7280', help_text='Hex color code for the tag')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'name']
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['user', 'name']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
+
+
+class TaggedStock(models.Model):
+    """Many-to-many relationship between stocks and tags"""
+    tag = models.ForeignKey(StockTag, on_delete=models.CASCADE, related_name='tagged_stocks', db_index=True)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='tags', db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['tag', 'stock']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tag', 'stock']),
+            models.Index(fields=['stock']),
+        ]
+    
+    def __str__(self):
+        return f"{self.tag.name} - {self.stock.symbol}"
 
 class DividendAlert(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dividend_alerts', db_index=True)
