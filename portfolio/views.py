@@ -876,6 +876,8 @@ def all_stocks_view(request):
         'sector': ['sector', 'symbol'],
         'dividend_amount': ['-latest_dividend_amount', 'symbol'],
         'price': ['-latest_price_value', 'symbol'],
+        'market_cap': ['-market_cap_value', 'symbol'],
+        'pe_ratio': ['pe_ratio_value', 'symbol'],
         'dividend_date': [
             Case(
                 When(upcoming_dividend_date__isnull=True, then=Value(1)),
@@ -903,8 +905,36 @@ def all_stocks_view(request):
             .values_list('stock_id', flat=True)
         )
     
-    stocks_with_data = [
-        {
+    # Calculate price changes for stocks
+    from portfolio.models import StockPrice
+    seven_days_ago = today - timedelta(days=7)
+    thirty_days_ago = today - timedelta(days=30)
+    
+    stocks_with_data = []
+    for stock in page_obj:
+        price_change_7d = None
+        price_change_30d = None
+        
+        if stock.latest_price_value and stock.latest_price_date:
+            # Get price 7 days ago
+            price_7d = StockPrice.objects.filter(
+                stock=stock,
+                price_date__lte=seven_days_ago
+            ).order_by('-price_date').first()
+            
+            # Get price 30 days ago
+            price_30d = StockPrice.objects.filter(
+                stock=stock,
+                price_date__lte=thirty_days_ago
+            ).order_by('-price_date').first()
+            
+            if price_7d and price_7d.last_price:
+                price_change_7d = ((float(stock.latest_price_value) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+            
+            if price_30d and price_30d.last_price:
+                price_change_30d = ((float(stock.latest_price_value) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+        
+        stocks_with_data.append({
             'stock': stock,
             'latest_dividend': (
                 {
@@ -922,11 +952,11 @@ def all_stocks_view(request):
                     'date': stock.latest_price_date,
                 } if stock.latest_price_value else None
             ),
+            'price_change_7d': price_change_7d,
+            'price_change_30d': price_change_30d,
             'has_dividend': stock.has_dividend,
             'in_watchlist': stock.id in user_watchlist_ids,
-        }
-        for stock in page_obj
-    ]
+        })
 
     # Get unique dividend frequencies for filter dropdown
     frequencies = list(
@@ -1204,6 +1234,150 @@ def health_check(request):
     }
     
     return JsonResponse(health_status, status=http_status)
+
+
+def stock_quick_view(request, symbol):
+    """API endpoint for quick view modal - returns JSON with stock details"""
+    if not symbol or not isinstance(symbol, str) or len(symbol) > 20:  # Increased limit for symbols with dots
+        return JsonResponse({'error': 'Invalid stock symbol'}, status=400)
+    
+    try:
+        # URL decode the symbol in case it was encoded
+        from urllib.parse import unquote
+        symbol = unquote(symbol)
+        
+        stock = Stock.objects.prefetch_related(
+            Prefetch('prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices'),
+            Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='latest_dividends'),
+            Prefetch('valuations', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
+            Prefetch('analyst_ratings', queryset=AnalystRating.objects.order_by('-rating_date'), to_attr='latest_ratings'),
+        ).get(symbol=symbol.upper())
+        
+        latest_price = stock.latest_prices[0] if stock.latest_prices else None
+        dividend = stock.latest_dividends[0] if stock.latest_dividends else None
+        valuation = stock.latest_valuations[0] if stock.latest_valuations else None
+        analyst_rating = stock.latest_ratings[0] if stock.latest_ratings else None
+        
+        # Check if in watchlist/portfolio
+        in_watchlist = False
+        in_portfolio = False
+        if request.user.is_authenticated:
+            in_watchlist = Watchlist.objects.filter(user=request.user, stock=stock).exists()
+            in_portfolio = UserPortfolio.objects.filter(user=request.user, stock=stock).exists()
+        
+        # Calculate price changes
+        price_change_7d = None
+        price_change_30d = None
+        today = timezone.now().date()
+        
+        if latest_price and latest_price.last_price:
+            seven_days_ago = today - timedelta(days=7)
+            thirty_days_ago = today - timedelta(days=30)
+            
+            try:
+                price_7d = StockPrice.objects.filter(
+                    stock=stock,
+                    price_date__lte=seven_days_ago
+                ).order_by('-price_date').first()
+                
+                price_30d = StockPrice.objects.filter(
+                    stock=stock,
+                    price_date__lte=thirty_days_ago
+                ).order_by('-price_date').first()
+                
+                if price_7d and price_7d.last_price:
+                    price_change_7d = ((float(latest_price.last_price) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+                
+                if price_30d and price_30d.last_price:
+                    price_change_30d = ((float(latest_price.last_price) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Error calculating price changes for {symbol}: {e}")
+        
+        # Get upcoming dividend
+        upcoming_dividend = Dividend.objects.filter(
+            stock=stock,
+            ex_dividend_date__gte=today
+        ).order_by('ex_dividend_date').first()
+        
+        days_until = None
+        if upcoming_dividend and upcoming_dividend.ex_dividend_date:
+            days_until = (upcoming_dividend.ex_dividend_date - today).days
+        
+        # Build response with safe value extraction
+        response_data = {
+            'symbol': stock.symbol,
+            'company_name': stock.company_name or '',
+            'sector': stock.sector or '',
+            'code': stock.code or '',
+            'tsx60_member': getattr(stock, 'tsx60_member', False),
+            'is_etf': getattr(stock, 'is_etf', False),
+            'price': {
+                'value': float(latest_price.last_price) if latest_price and latest_price.last_price else None,
+                'date': latest_price.price_date.isoformat() if latest_price and latest_price.price_date else None,
+                'change_7d': round(price_change_7d, 2) if price_change_7d is not None else None,
+                'change_30d': round(price_change_30d, 2) if price_change_30d is not None else None,
+                '52w_high': float(latest_price.fiftytwo_week_high) if latest_price and latest_price.fiftytwo_week_high else None,
+                '52w_low': float(latest_price.fiftytwo_week_low) if latest_price and latest_price.fiftytwo_week_low else None,
+            },
+            'dividend': None,
+            'upcoming_dividend': None,
+            'valuation': None,
+            'analyst_rating': None,
+            'in_watchlist': in_watchlist,
+            'in_portfolio': in_portfolio,
+            'detail_url': f'/stocks/{stock.symbol}/',
+        }
+        
+        # Safely add dividend data
+        if dividend:
+            try:
+                response_data['dividend'] = {
+                    'amount': float(dividend.amount) if dividend.amount else None,
+                    'yield_percent': float(dividend.yield_percent) if dividend.yield_percent else None,
+                    'frequency': dividend.frequency if dividend.frequency else None,
+                }
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Error processing dividend for {symbol}: {e}")
+        
+        # Safely add upcoming dividend data
+        if upcoming_dividend:
+            try:
+                response_data['upcoming_dividend'] = {
+                    'date': upcoming_dividend.ex_dividend_date.isoformat() if upcoming_dividend.ex_dividend_date else None,
+                    'amount': float(upcoming_dividend.amount) if upcoming_dividend.amount else None,
+                    'days_until': days_until,
+                }
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Error processing upcoming dividend for {symbol}: {e}")
+        
+        # Safely add valuation data
+        if valuation:
+            try:
+                response_data['valuation'] = {
+                    'market_cap': valuation.market_cap if valuation.market_cap else None,
+                    'pe_ratio': float(valuation.pe_ratio) if valuation.pe_ratio else None,
+                    'pb_ratio': float(valuation.pb_ratio) if valuation.pb_ratio else None,
+                }
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Error processing valuation for {symbol}: {e}")
+        
+        # Safely add analyst rating data
+        if analyst_rating:
+            try:
+                response_data['analyst_rating'] = {
+                    'rating': analyst_rating.rating if analyst_rating.rating else None,
+                    'target_price': float(analyst_rating.target_price) if analyst_rating.target_price else None,
+                }
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Error processing analyst rating for {symbol}: {e}")
+        
+        return JsonResponse(response_data)
+    except Stock.DoesNotExist:
+        logger.warning(f"Stock not found: {symbol}")
+        return JsonResponse({'error': 'Stock not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in stock_quick_view for symbol {symbol}: {e}", exc_info=True)
+        return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
 def stock_search_autocomplete(request):

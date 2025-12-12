@@ -94,6 +94,7 @@ urlpatterns = [
     # API Endpoints
     path('api/health/', views.health_check, name='health_check'),
     path('api/stock-search/', views.stock_search_autocomplete, name='stock_search_autocomplete'),
+    path('api/stock/<str:symbol>/quick-view/', views.stock_quick_view, name='stock_quick_view'),
     # Affiliate and Sponsored Content
     path('affiliate/<int:affiliate_id>/', views.track_affiliate_click, name='track_affiliate_click'),
     path('sponsored/<int:content_id>/', views.track_sponsored_click, name='track_sponsored_click'),

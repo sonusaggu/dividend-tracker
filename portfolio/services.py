@@ -283,12 +283,14 @@ class StockService:
     @staticmethod
     def get_stocks_with_annotations():
         """Get stocks with all required annotations for listing"""
+        from .models import ValuationMetric
         latest_dividends = Dividend.objects.filter(stock=OuterRef('pk')).order_by('-ex_dividend_date')
         upcoming_dividends = Dividend.objects.filter(
             stock=OuterRef('pk'),
             ex_dividend_date__gte=timezone.now().date()
         ).order_by('ex_dividend_date')
         latest_prices = StockPrice.objects.filter(stock=OuterRef('pk')).order_by('-price_date')
+        latest_valuations = ValuationMetric.objects.filter(stock=OuterRef('pk')).order_by('-metric_date')
         
         return Stock.objects.all().annotate(
             latest_dividend_amount=Subquery(latest_dividends.values('amount')[:1]),
@@ -298,6 +300,8 @@ class StockService:
             upcoming_dividend_date=Subquery(upcoming_dividends.values('ex_dividend_date')[:1]),
             latest_price_value=Subquery(latest_prices.values('last_price')[:1]),
             latest_price_date=Subquery(latest_prices.values('price_date')[:1]),
+            market_cap_value=Subquery(latest_valuations.values('market_cap')[:1]),
+            pe_ratio_value=Subquery(latest_valuations.values('pe_ratio')[:1]),
             has_dividend=Exists(Dividend.objects.filter(stock=OuterRef('pk')))
         )
     

@@ -92,7 +92,9 @@
                             <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
                             <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount</option>
                             <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Dividend Yield</option>
-                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price (High to Low)</option>
+                            <option value="market_cap" {% if sort_by == 'market_cap' %}selected{% endif %}>Market Cap</option>
+                            <option value="pe_ratio" {% if sort_by == 'pe_ratio' %}selected{% endif %}>P/E Ratio</option>
                             <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol (A-Z)</option>
                             <option value="sector" {% if sort_by == 'sector' %}selected{% endif %}>Sector</option>
                         </select>
@@ -270,28 +272,90 @@
             </form>
         </div>
 
-        <!-- Results Info and Export -->
+        <!-- Quick Filter Presets -->
+        <div class="mb-4 sm:mb-6">
+            <div class="flex flex-wrap gap-2">
+                <a href="?min_yield=3&sort_by=yield" 
+                   class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    High Yield (3%+)
+                </a>
+                <a href="?sort_by=dividend_date" 
+                   class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Upcoming Dividends
+                </a>
+                <a href="?tsx60=on" 
+                   class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                    </svg>
+                    TSX 60
+                </a>
+                <a href="?min_yield=1&max_yield=5&sort_by=yield" 
+                   class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Balanced Yield
+                </a>
+                {% if user.is_authenticated %}
+                <a href="?has_dividend=yes&sort_by=dividend_date" 
+                   class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Dividend Payers
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Results Info, View Toggle, and Export -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
             <div class="text-xs sm:text-sm text-gray-600">
                 Showing <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span> - 
                 <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span> of 
                 <span class="font-semibold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> stocks
             </div>
-            {% if user.is_authenticated and page_obj.paginator.count > 0 %}
-            <a 
-                href="?export=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if min_yield %}&min_yield={{ min_yield }}{% endif %}{% if max_yield %}&max_yield={{ max_yield }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if dividend_frequency %}&frequency={{ dividend_frequency }}{% endif %}{% if tsx60_only %}&tsx60=on{% endif %}{% if etf_only %}&etf=on{% endif %}{% if has_dividend_filter %}&has_dividend={{ has_dividend_filter }}{% endif %}" 
-                class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition text-xs sm:text-sm whitespace-nowrap"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Export CSV
-            </a>
-            {% endif %}
+            <div class="flex items-center gap-2">
+                <!-- View Toggle -->
+                <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <button onclick="setViewMode('table')" id="view-table-btn" 
+                            class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition view-toggle-btn active">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Table
+                    </button>
+                    <button onclick="setViewMode('grid')" id="view-grid-btn" 
+                            class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition view-toggle-btn">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                        Grid
+                    </button>
+                </div>
+                {% if user.is_authenticated and page_obj.paginator.count > 0 %}
+                <a 
+                    href="?export=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if min_yield %}&min_yield={{ min_yield }}{% endif %}{% if max_yield %}&max_yield={{ max_yield }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if dividend_frequency %}&frequency={{ dividend_frequency }}{% endif %}{% if tsx60_only %}&tsx60=on{% endif %}{% if etf_only %}&etf=on{% endif %}{% if has_dividend_filter %}&has_dividend={{ has_dividend_filter }}{% endif %}" 
+                    class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition text-xs sm:text-sm whitespace-nowrap"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export CSV
+                </a>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Stocks Table View -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div id="table-view" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto md:overflow-x-visible">
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="bg-gray-50 border-b border-gray-200">
@@ -343,6 +407,14 @@
                             <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right hidden sm:table-cell">
                                 {% if item.latest_price %}
                                 <div class="text-sm sm:text-base font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                                {% if item.price_change_7d is not None %}
+                                <div class="flex items-center justify-end gap-1 mt-0.5">
+                                    <span class="text-xs font-medium {% if item.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {% if item.price_change_7d >= 0 %}+{% endif %}{{ item.price_change_7d|floatformat:1 }}%
+                                    </span>
+                                    <span class="text-xs text-gray-400">7d</span>
+                                </div>
+                                {% endif %}
                                 {% else %}
                                 <span class="text-xs sm:text-sm text-gray-400">—</span>
                                 {% endif %}
@@ -448,6 +520,152 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Stocks Grid View -->
+        <div id="grid-view" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {% for item in stocks_with_dividends %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden group">
+                <!-- Card Header -->
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                                <span class="text-white font-bold text-sm">{{ item.stock.symbol|slice:":1" }}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h3 class="text-base font-bold text-gray-900 truncate">{{ item.stock.symbol }}</h3>
+                                    {% if item.has_dividend %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200 flex-shrink-0">
+                                        Div
+                                    </span>
+                                    {% endif %}
+                                    {% if item.stock.tsx60_member %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200 flex-shrink-0">
+                                        TSX60
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-xs text-gray-500 truncate mt-0.5">{{ item.stock.company_name }}</p>
+                            </div>
+                        </div>
+                        {% if user.is_authenticated %}
+                        <button 
+                            onclick="toggleWatchlist({{ item.stock.id }}, this)"
+                            data-in-watchlist="{% if item.in_watchlist %}true{% else %}false{% endif %}"
+                            class="flex-shrink-0 {% if item.in_watchlist %}text-green-600 hover:text-green-700{% else %}text-gray-400 hover:text-blue-600{% endif %} transition p-1 rounded-lg hover:bg-gray-100"
+                            title="{% if item.in_watchlist %}Remove from watchlist{% else %}Add to watchlist{% endif %}"
+                        >
+                            <svg class="w-5 h-5" fill="{% if item.in_watchlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="p-4 space-y-3">
+                    <!-- Price -->
+                    <div>
+                        <div class="text-xs text-gray-600 mb-1">Price</div>
+                        {% if item.latest_price %}
+                        <div class="text-lg font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                        {% if item.price_change_7d is not None %}
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <span class="text-xs font-medium {% if item.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if item.price_change_7d >= 0 %}+{% endif %}{{ item.price_change_7d|floatformat:1 }}%
+                            </span>
+                            <span class="text-xs text-gray-400">7d</span>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-sm text-gray-400">—</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Dividend Info -->
+                    {% if item.latest_dividend %}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Dividend</div>
+                            <div class="text-sm font-bold text-gray-900">${{ item.latest_dividend.amount|floatformat:4 }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Yield</div>
+                            {% if item.latest_dividend.yield_percent %}
+                            {% with yield_val=item.latest_dividend.yield_percent %}
+                            <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border {% if yield_val >= 5 %}bg-red-100 text-red-700 border-red-200{% elif yield_val >= 3 %}bg-orange-100 text-orange-700 border-orange-200{% elif yield_val >= 1 %}bg-green-100 text-green-700 border-green-200{% else %}bg-blue-100 text-blue-700 border-blue-200{% endif %}">
+                                {{ yield_val|floatformat:2 }}%
+                            </div>
+                            {% endwith %}
+                            {% else %}
+                            <span class="text-xs text-gray-400">—</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Ex-Date -->
+                    {% if item.upcoming_dividend_date %}
+                    <div>
+                        <div class="text-xs text-gray-600 mb-1">Next Ex-Date</div>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-sm font-semibold text-blue-600">{{ item.upcoming_dividend_date|date:"M d, Y" }}</span>
+                        </div>
+                        {% if item.days_until is not None %}
+                        <div class="text-xs font-medium mt-0.5 {% if item.days_until <= 3 %}text-red-600{% elif item.days_until <= 7 %}text-orange-600{% else %}text-green-600{% endif %}">
+                            {% if item.days_until == 0 %}Today{% elif item.days_until < 0 %}Passed{% else %}{{ item.days_until }} days{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Sector -->
+                    {% if item.stock.sector %}
+                    <div>
+                        <div class="text-xs text-gray-600 mb-1">Sector</div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {{ item.stock.sector }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Card Footer -->
+                <div class="p-4 border-t border-gray-100 bg-gray-50">
+                    <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                       class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No stocks found</h3>
+                <p class="text-gray-600 mb-6">
+                    {% if search_query or sector_filter %}
+                    Try adjusting your search or filters.
+                    {% else %}
+                    No stocks available at the moment.
+                    {% endif %}
+                </p>
+                {% if search_query or sector_filter %}
+                <a href="{% url 'all_stocks' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                    Clear Filters
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
 
         <!-- Pagination -->
@@ -698,5 +916,52 @@ function toggleWatchlist(stockId, button) {
         }
     });
 }
+
+// View Mode Toggle
+function setViewMode(mode) {
+    const tableView = document.getElementById('table-view');
+    const gridView = document.getElementById('grid-view');
+    const tableBtn = document.getElementById('view-table-btn');
+    const gridBtn = document.getElementById('view-grid-btn');
+    
+    if (mode === 'table') {
+        tableView.classList.remove('hidden');
+        gridView.classList.add('hidden');
+        tableBtn.classList.add('active', 'bg-blue-600', 'text-white');
+        tableBtn.classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+        gridBtn.classList.remove('active', 'bg-blue-600', 'text-white');
+        gridBtn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+        localStorage.setItem('stocksViewMode', 'table');
+    } else {
+        tableView.classList.add('hidden');
+        gridView.classList.remove('hidden');
+        gridBtn.classList.add('active', 'bg-blue-600', 'text-white');
+        gridBtn.classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+        tableBtn.classList.remove('active', 'bg-blue-600', 'text-white');
+        tableBtn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+        localStorage.setItem('stocksViewMode', 'grid');
+    }
+}
+
+// Restore view mode from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const savedMode = localStorage.getItem('stocksViewMode') || 'table';
+    setViewMode(savedMode);
+});
+
 </script>
+
+<style>
+.view-toggle-btn.active {
+    background-color: #2563eb;
+    color: white;
+}
+.view-toggle-btn:not(.active) {
+    background-color: white;
+    color: #374151;
+}
+.view-toggle-btn:not(.active):hover {
+    background-color: #f9fafb;
+}
+</style>
 {% endblock %}
