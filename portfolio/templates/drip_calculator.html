@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}DRIP Calculator - Dividend Reinvestment Plan | StockFolio{% endblock %}
+{% block meta_title %}DRIP Calculator - See Your Portfolio Growth with Dividend Reinvestment{% endblock %}
+{% block meta_description %}Calculate how much your portfolio could grow with a Dividend Reinvestment Plan (DRIP). Compare scenarios with and without reinvesting dividends.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">DRIP Calculator</h1>
+                    <p class="text-gray-600">See how dividend reinvestment can grow your portfolio over time</p>
+                </div>
+                <a href="{% url 'portfolio' %}" 
+                   class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    View Portfolio
+                </a>
+            </div>
+        </div>
+
+        {% if portfolio_data %}
+        <!-- Current Portfolio Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border border-blue-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Current Portfolio Value</p>
+                <p class="text-3xl font-bold text-gray-900">${{ total_value|floatformat:2|intcomma }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg border border-green-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Annual Dividends</p>
+                <p class="text-3xl font-bold text-gray-900">${{ annual_dividends|floatformat:2|intcomma }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg border border-purple-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Current Yield</p>
+                <p class="text-3xl font-bold text-gray-900">{{ current_yield|floatformat:2 }}%</p>
+            </div>
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border border-orange-200 p-6">
+                <p class="text-sm font-medium text-gray-600 mb-2">Dividend Stocks</p>
+                <p class="text-3xl font-bold text-gray-900">{{ total_holdings }}</p>
+            </div>
+        </div>
+
+        <!-- Calculator Controls -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Calculator Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="years" class="block text-sm font-medium text-gray-700 mb-2">
+                        Projection Period (Years)
+                    </label>
+                    <input type="number" 
+                           id="years" 
+                           min="1" 
+                           max="30" 
+                           value="10" 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="dividend_growth" class="block text-sm font-medium text-gray-700 mb-2">
+                        Annual Dividend Growth Rate (%)
+                    </label>
+                    <input type="number" 
+                           id="dividend_growth" 
+                           min="0" 
+                           max="20" 
+                           step="0.1" 
+                           value="3" 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="price_growth" class="block text-sm font-medium text-gray-700 mb-2">
+                        Annual Stock Price Growth (%)
+                    </label>
+                    <input type="number" 
+                           id="price_growth" 
+                           min="-10" 
+                           max="20" 
+                           step="0.1" 
+                           value="5" 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div class="mt-4">
+                <button onclick="calculateDRIP()" 
+                        class="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105">
+                    Calculate DRIP Projection
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Without DRIP (Cash Dividends)</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Final Portfolio Value:</span>
+                            <span id="no-drip-value" class="font-bold text-gray-900">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Dividends Received:</span>
+                            <span id="no-drip-dividends" class="font-bold text-green-600">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Value:</span>
+                            <span id="no-drip-total" class="font-bold text-gray-900">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="mr-2">🚀</span>
+                        With DRIP (Reinvested)
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Final Portfolio Value:</span>
+                            <span id="drip-value" class="font-bold text-gray-900">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Dividends Reinvested:</span>
+                            <span id="drip-dividends" class="font-bold text-green-600">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Value:</span>
+                            <span id="drip-total" class="font-bold text-green-700 text-xl">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Difference Card -->
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg border-2 border-blue-300 p-6 mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">DRIP Advantage</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Additional Value Created</p>
+                        <p id="drip-advantage" class="text-2xl font-bold text-green-700">$0.00</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Percentage Increase</p>
+                        <p id="drip-percentage" class="text-2xl font-bold text-blue-700">0%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Extra Shares Acquired</p>
+                        <p id="drip-shares" class="text-2xl font-bold text-purple-700">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Portfolio Value Comparison</h3>
+                    <canvas id="valueChart" height="300"></canvas>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Dividend Income Over Time</h3>
+                    <canvas id="dividendChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Year-by-Year Breakdown -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Year-by-Year Breakdown</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead class="bg-gray-50 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Year</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Without DRIP</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">With DRIP</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Difference</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Annual Dividends</th>
+                            </tr>
+                        </thead>
+                        <tbody id="yearly-breakdown" class="divide-y divide-gray-200">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No Dividend Stocks in Portfolio</h3>
+            <p class="text-gray-600 mb-6">Add dividend-paying stocks to your portfolio to use the DRIP calculator.</p>
+            <a href="{% url 'all_stocks' %}" 
+               class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                Browse Dividend Stocks
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Portfolio data from Django
+const portfolioData = {{ portfolio_data|safe }};
+const currentValue = {{ total_value }};
+const annualDividends = {{ annual_dividends }};
+
+let valueChart = null;
+let dividendChart = null;
+
+function calculateDRIP() {
+    const years = parseInt(document.getElementById('years').value) || 10;
+    const dividendGrowthRate = parseFloat(document.getElementById('dividend_growth').value) || 3;
+    const priceGrowthRate = parseFloat(document.getElementById('price_growth').value) || 5;
+    
+    // Initialize stock tracking
+    const stockTracking = {};
+    portfolioData.forEach(stock => {
+        stockTracking[stock.symbol] = {
+            initialShares: stock.shares,
+            currentSharesNoDrip: stock.shares,
+            currentSharesDrip: stock.shares,
+            initialPrice: stock.current_price,
+        };
+    });
+    
+    // Initialize calculations
+    let noDripValue = currentValue;
+    let noDripDividends = 0;
+    let dripValue = currentValue;
+    let dripDividends = 0;
+    
+    const yearlyData = [];
+    const valueDataNoDrip = [currentValue];
+    const valueDataDrip = [currentValue];
+    const dividendData = [annualDividends];
+    
+    // Calculate for each year
+    for (let year = 1; year <= years; year++) {
+        let yearDividendsNoDrip = 0;
+        let yearDividendsDrip = 0;
+        let noDripPortfolioValue = 0;
+        let dripPortfolioValue = 0;
+        
+        // Calculate for each stock
+        portfolioData.forEach(stock => {
+            const tracking = stockTracking[stock.symbol];
+            
+            // Calculate current price (with growth)
+            const currentPrice = tracking.initialPrice * Math.pow(1 + priceGrowthRate / 100, year);
+            
+            // Calculate annual dividend per share for this year (with growth)
+            const dividendPerShareAnnual = stock.dividend_per_share_annual * Math.pow(1 + dividendGrowthRate / 100, year);
+            
+            // NO DRIP scenario: shares stay the same, dividends are cash
+            const sharesNoDrip = tracking.currentSharesNoDrip;
+            const stockValueNoDrip = sharesNoDrip * currentPrice;
+            const stockDividendNoDrip = dividendPerShareAnnual * sharesNoDrip;
+            
+            noDripPortfolioValue += stockValueNoDrip;
+            yearDividendsNoDrip += stockDividendNoDrip;
+            
+            // DRIP scenario: reinvest dividends to buy more shares
+            let sharesDrip = tracking.currentSharesDrip;
+            const stockValueDrip = sharesDrip * currentPrice;
+            const stockDividendDrip = dividendPerShareAnnual * sharesDrip;
+            
+            // Reinvest dividends to buy more shares
+            const sharesFromDividend = stockDividendDrip / currentPrice;
+            sharesDrip += sharesFromDividend;
+            
+            // Update tracking for next year
+            tracking.currentSharesDrip = sharesDrip;
+            
+            dripPortfolioValue += sharesDrip * currentPrice;
+            yearDividendsDrip += stockDividendDrip;
+        });
+        
+        // Update totals
+        noDripValue = noDripPortfolioValue;
+        noDripDividends += yearDividendsNoDrip;
+        
+        dripValue = dripPortfolioValue;
+        dripDividends += yearDividendsDrip;
+        
+        valueDataNoDrip.push(noDripValue);
+        valueDataDrip.push(dripValue);
+        dividendData.push(yearDividendsDrip);
+        
+        yearlyData.push({
+            year: year,
+            noDripValue: noDripValue,
+            dripValue: dripValue,
+            dividends: yearDividendsDrip,
+            difference: dripValue - (noDripValue + noDripDividends),
+        });
+    }
+    
+    // Update summary cards
+    const noDripTotal = noDripValue + noDripDividends;
+    const dripTotal = dripValue;
+    const advantage = dripTotal - noDripTotal;
+    const percentageIncrease = ((advantage / noDripTotal) * 100);
+    
+    document.getElementById('no-drip-value').textContent = '$' + noDripValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('no-drip-dividends').textContent = '$' + noDripDividends.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('no-drip-total').textContent = '$' + noDripTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    document.getElementById('drip-value').textContent = '$' + dripValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('drip-dividends').textContent = '$' + dripDividends.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('drip-total').textContent = '$' + dripTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    document.getElementById('drip-advantage').textContent = '$' + advantage.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('drip-percentage').textContent = percentageIncrease.toFixed(2) + '%';
+    
+    // Calculate total extra shares
+    let totalExtraShares = 0;
+    Object.keys(stockTracking).forEach(symbol => {
+        const tracking = stockTracking[symbol];
+        totalExtraShares += tracking.currentSharesDrip - tracking.initialShares;
+    });
+    document.getElementById('drip-shares').textContent = totalExtraShares.toFixed(2);
+    
+    // Update charts
+    updateCharts(yearlyData, valueDataNoDrip, valueDataDrip, dividendData);
+    
+    // Update yearly breakdown table
+    updateYearlyBreakdown(yearlyData);
+    
+    // Show results
+    document.getElementById('results-section').classList.remove('hidden');
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateCharts(yearlyData, valueDataNoDrip, valueDataDrip, dividendData) {
+    const years = yearlyData.length;
+    const labels = ['Year 0', ...yearlyData.map((_, i) => `Year ${i + 1}`)];
+    
+    // Portfolio Value Chart
+    const valueCtx = document.getElementById('valueChart').getContext('2d');
+    if (valueChart) {
+        valueChart.destroy();
+    }
+    valueChart = new Chart(valueCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Without DRIP',
+                data: valueDataNoDrip,
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'With DRIP',
+                data: valueDataDrip,
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 1000).toFixed(0) + 'k';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Dividend Income Chart
+    const dividendCtx = document.getElementById('dividendChart').getContext('2d');
+    if (dividendChart) {
+        dividendChart.destroy();
+    }
+    dividendChart = new Chart(dividendCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Annual Dividend Income',
+                data: dividendData,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: 'rgb(59, 130, 246)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 1000).toFixed(1) + 'k';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateYearlyBreakdown(yearlyData) {
+    const tbody = document.getElementById('yearly-breakdown');
+    tbody.innerHTML = '';
+    
+    let cumulativeNoDripDividends = 0;
+    
+    yearlyData.forEach((data) => {
+        cumulativeNoDripDividends += data.dividends;
+        const noDripTotal = data.noDripValue + cumulativeNoDripDividends;
+        const difference = data.dripValue - noDripTotal;
+        
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.innerHTML = `
+            <td class="px-4 py-3 text-sm font-medium text-gray-900">Year ${data.year}</td>
+            <td class="px-4 py-3 text-sm text-right text-gray-900">$${noDripTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-4 py-3 text-sm text-right font-semibold text-green-700">$${data.dripValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-4 py-3 text-sm text-right font-bold text-blue-700">$${difference.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="px-4 py-3 text-sm text-right text-gray-600">$${data.dividends.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Auto-calculate on page load if portfolio data exists
+{% if portfolio_data %}
+document.addEventListener('DOMContentLoaded', function() {
+    calculateDRIP();
+});
+{% endif %}
+</script>
+{% endblock %}
+

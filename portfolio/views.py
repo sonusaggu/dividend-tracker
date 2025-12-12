@@ -3630,6 +3630,98 @@ def dashboard_redirect(request, invalid_path):
     return redirect('dashboard')
 
 @login_required
+def drip_calculator(request):
+    """DRIP (Dividend Reinvestment Plan) Calculator"""
+    try:
+        # Get user's portfolio with annotations
+        portfolio_items = PortfolioService.get_portfolio_with_annotations(request.user)
+        
+        # Calculate current portfolio metrics
+        total_value = 0
+        total_investment = 0
+        annual_dividends = 0
+        portfolio_data = []
+        
+        for item in portfolio_items:
+            # Calculate current value
+            current_value = 0
+            if item.latest_price_value and item.shares_owned:
+                current_value = float(item.latest_price_value * item.shares_owned)
+                total_value += current_value
+            
+            # Calculate investment value
+            investment_value = 0
+            if item.average_cost and item.shares_owned:
+                investment_value = float(item.shares_owned * item.average_cost)
+                total_investment += investment_value
+            
+            # Calculate annual dividend for this stock
+            annual_dividend = PortfolioService.calculate_annual_dividend(
+                item.latest_dividend_amount,
+                item.shares_owned,
+                item.latest_dividend_frequency
+            )
+            annual_dividends += annual_dividend
+            
+            # Only include stocks with dividends for DRIP calculation
+            if annual_dividend > 0 and item.latest_price_value:
+                # Calculate annual dividend per share
+                dividend_per_share_annual = annual_dividend / float(item.shares_owned) if item.shares_owned > 0 else 0
+                
+                portfolio_data.append({
+                    'symbol': item.stock.symbol,
+                    'company_name': item.stock.company_name,
+                    'shares': float(item.shares_owned),
+                    'current_price': float(item.latest_price_value),
+                    'annual_dividend': annual_dividend,
+                    'dividend_per_share_annual': dividend_per_share_annual,
+                    'frequency': item.latest_dividend_frequency or 'Quarterly',
+                    'current_value': current_value,
+                })
+        
+        # Calculate current dividend yield
+        current_yield = (annual_dividends / total_value * 100) if total_value > 0 else 0
+        
+        # Serialize portfolio data for JavaScript
+        import json
+        portfolio_data_json = json.dumps([
+            {
+                'symbol': item['symbol'],
+                'company_name': item['company_name'],
+                'shares': item['shares'],
+                'current_price': item['current_price'],
+                'annual_dividend': item['annual_dividend'],
+                'dividend_per_share_annual': item['dividend_per_share_annual'],
+                'frequency': item['frequency'],
+                'current_value': item['current_value'],
+            }
+            for item in portfolio_data
+        ])
+        
+        context = {
+            'portfolio_data': portfolio_data_json,
+            'total_value': total_value,
+            'total_investment': total_investment,
+            'annual_dividends': annual_dividends,
+            'current_yield': current_yield,
+            'total_holdings': len(portfolio_data),
+        }
+        
+        return render(request, 'drip_calculator.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error in drip_calculator view: {e}", exc_info=True)
+        messages.error(request, 'An error occurred while loading the DRIP calculator.')
+        return render(request, 'drip_calculator.html', {
+            'portfolio_data': [],
+            'total_value': 0,
+            'total_investment': 0,
+            'annual_dividends': 0,
+            'current_yield': 0,
+            'total_holdings': 0,
+        })
+
+@login_required
 def dashboard(request):
     """User dashboard with portfolio overview - Optimized with annotations"""
     try:
