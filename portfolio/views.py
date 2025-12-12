@@ -3571,13 +3571,28 @@ def dashboard(request):
             Prefetch('stock__prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='latest_prices')
         )[:5]
         watchlist_stocks = []
+        today = timezone.now().date()
+        seven_days_ago = today - timedelta(days=7)
         for item in watchlist_items:
             stock = item.stock
             latest_price = stock.latest_prices[0] if stock.latest_prices else None
+            
+            # Calculate 7-day price change
+            price_change_7d = None
+            if latest_price and latest_price.last_price:
+                price_7d = StockPrice.objects.filter(
+                    stock=stock,
+                    price_date__lte=seven_days_ago
+                ).order_by('-price_date').first()
+                
+                if price_7d and price_7d.last_price:
+                    price_change_7d = ((float(latest_price.last_price) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+            
             watchlist_stocks.append({
                 'stock': stock,
                 'latest_price': latest_price.last_price if latest_price else None,
                 'price_date': latest_price.price_date if latest_price else None,
+                'price_change_7d': price_change_7d,
             })
         
         # Calculate additional metrics
@@ -3791,6 +3806,16 @@ def dashboard(request):
         for content in sponsored_content:
             content.track_view()
         
+        # Get recent transactions (last 5)
+        recent_transactions = []
+        try:
+            from .models import Transaction
+            recent_transactions = Transaction.objects.filter(
+                user=request.user
+            ).select_related('stock').order_by('-transaction_date', '-created_at')[:5]
+        except Exception as e:
+            logger.debug(f"Could not get recent transactions: {e}")
+        
         context = {
             'portfolio_items': portfolio_items,
             'affiliate_links': affiliate_links,
@@ -3818,6 +3843,7 @@ def dashboard(request):
             'worst_performers': worst_performers,
             'sector_allocation': sector_allocation_percent,
             'sector_allocation_sorted': sector_allocation_sorted,
+            'recent_transactions': recent_transactions,
         }
         
         return render(request, 'dashboard.html', context)
@@ -3833,6 +3859,7 @@ def dashboard(request):
             'upcoming_dividends': [],
             'watchlist_stocks': [],
             'upcoming_dividends_count': 0,
+            'recent_transactions': [],
         })
 
 @login_required
