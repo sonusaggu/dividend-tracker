@@ -53,6 +53,8 @@ urlpatterns = [
     path('resend-verification/', views.resend_verification_email, name='resend_verification'),
     
     path('dashboard/', views.dashboard, name='dashboard'),
+    # Catch-all for invalid dashboard URLs (e.g., /dashboard/NULL, /dashboard/NULL/)
+    path('dashboard/<path:invalid_path>', views.dashboard_redirect, name='dashboard_redirect'),
     path('stocks/', views.all_stocks_view, name='all_stocks'),
     path('stocks/compare/', views.stock_comparison, name='stock_comparison'),
     path('stocks/<str:symbol>/', views.stock_detail, name='stock_detail'),

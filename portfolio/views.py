@@ -79,7 +79,20 @@ def login_view(request):
     # If user is already authenticated, redirect to dashboard
     if request.user.is_authenticated:
         next_url = request.GET.get('next', 'dashboard')
-        return redirect(next_url)
+        # Validate next_url to prevent NULL or invalid values
+        if next_url and next_url.strip().lower() not in ['null', 'none', '']:
+            from django.utils.http import url_has_allowed_host_and_scheme
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                if not next_url.startswith('/') and not next_url.startswith('http'):
+                    try:
+                        from django.urls import reverse
+                        redirect_url = reverse(next_url)
+                        return redirect(redirect_url)
+                    except:
+                        pass
+                else:
+                    return redirect(next_url)
+        return redirect('dashboard')
     
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -195,14 +208,29 @@ def login_view(request):
             
             # Redirect to next page if provided, otherwise to dashboard
             next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
-            # Validate next URL to prevent open redirects using Django's utility
-            from django.utils.http import is_safe_url
-            if not is_safe_url(next_url, allowed_hosts={request.get_host()}):
-                next_url = 'dashboard'
-                # For now, default to dashboard if it doesn't start with /
-                next_url = 'dashboard'
             
-            return redirect(next_url)
+            # Validate next URL to prevent open redirects and handle NULL/None values
+            from django.utils.http import url_has_allowed_host_and_scheme
+            
+            # Check if next_url is valid and not NULL/None/empty string
+            if next_url and next_url.strip().lower() not in ['null', 'none', '']:
+                # Check if it's a safe URL
+                if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                    # If it's a URL name (doesn't start with / or http), try to reverse it
+                    if not next_url.startswith('/') and not next_url.startswith('http'):
+                        try:
+                            from django.urls import reverse
+                            redirect_url = reverse(next_url)
+                            return redirect(redirect_url)
+                        except:
+                            # If reverse fails, it's not a valid URL name, default to dashboard
+                            pass
+                    else:
+                        # It's a full URL or path, redirect to it
+                        return redirect(next_url)
+            
+            # Default to dashboard if validation fails or next_url is invalid
+            return redirect('dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
             # Don't reveal whether username exists
@@ -3596,6 +3624,10 @@ def set_alert(request, symbol):
         logger.error(f"Error setting alert: {e}")
         messages.error(request, 'An error occurred while setting the alert.')
         return redirect('stock_detail', symbol=symbol)
+
+def dashboard_redirect(request, invalid_path):
+    """Redirect invalid dashboard URLs (e.g., /dashboard/NULL) to the main dashboard"""
+    return redirect('dashboard')
 
 @login_required
 def dashboard(request):
