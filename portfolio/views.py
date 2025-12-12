@@ -1356,7 +1356,6 @@ def stock_quick_view(request, symbol):
                 response_data['valuation'] = {
                     'market_cap': valuation.market_cap if valuation.market_cap else None,
                     'pe_ratio': float(valuation.pe_ratio) if valuation.pe_ratio else None,
-                    'pb_ratio': float(valuation.pb_ratio) if valuation.pb_ratio else None,
                 }
             except (ValueError, TypeError, AttributeError) as e:
                 logger.warning(f"Error processing valuation for {symbol}: {e}")
@@ -1625,6 +1624,18 @@ def stock_comparison(request):
     # Create a dictionary for quick lookup
     stocks_dict = {stock.symbol: stock for stock in stocks}
     
+    # Calculate date ranges for price changes
+    today = timezone.now().date()
+    seven_days_ago = today - timedelta(days=7)
+    thirty_days_ago = today - timedelta(days=30)
+    
+    # Get user watchlist and portfolio for quick actions
+    user_watchlist_ids = set()
+    user_portfolio_ids = set()
+    if request.user.is_authenticated:
+        user_watchlist_ids = set(Watchlist.objects.filter(user=request.user).values_list('stock_id', flat=True))
+        user_portfolio_ids = set(UserPortfolio.objects.filter(user=request.user).values_list('stock_id', flat=True))
+    
     # Build comparison data
     stocks_data = []
     for symbol in symbols:
@@ -1646,6 +1657,39 @@ def stock_comparison(request):
                 if range_size > 0:
                     price_change_52w = ((float(latest_price.last_price) - float(latest_price.fiftytwo_week_low)) / range_size) * 100
         
+        # Calculate 7d and 30d price changes
+        price_change_7d = None
+        price_change_30d = None
+        if latest_price and latest_price.last_price:
+            price_7d = StockPrice.objects.filter(
+                stock=stock,
+                price_date__lte=seven_days_ago
+            ).order_by('-price_date').first()
+            
+            price_30d = StockPrice.objects.filter(
+                stock=stock,
+                price_date__lte=thirty_days_ago
+            ).order_by('-price_date').first()
+            
+            if price_7d and price_7d.last_price:
+                price_change_7d = ((float(latest_price.last_price) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+            
+            if price_30d and price_30d.last_price:
+                price_change_30d = ((float(latest_price.last_price) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+        
+        # Calculate dividend growth (compare last 2 dividends)
+        dividend_growth = None
+        if dividend and stock.latest_dividends and len(stock.latest_dividends) >= 2:
+            current_div = stock.latest_dividends[0]
+            previous_div = stock.latest_dividends[1]
+            if current_div.amount and previous_div.amount and float(previous_div.amount) > 0:
+                dividend_growth = ((float(current_div.amount) - float(previous_div.amount)) / float(previous_div.amount)) * 100
+        
+        # Calculate payout ratio if we have EPS and dividend
+        payout_ratio = None
+        if dividend and dividend.amount and valuation and valuation.eps and float(valuation.eps) > 0:
+            payout_ratio = (float(dividend.amount) / float(valuation.eps)) * 100
+        
         stocks_data.append({
             'stock': stock,
             'latest_price': latest_price,
@@ -1653,11 +1697,56 @@ def stock_comparison(request):
             'valuation': valuation,
             'analyst_rating': analyst_rating,
             'price_change_52w': price_change_52w,
+            'price_change_7d': price_change_7d,
+            'price_change_30d': price_change_30d,
+            'dividend_growth': dividend_growth,
+            'payout_ratio': payout_ratio,
+            'in_watchlist': stock.id in user_watchlist_ids,
+            'in_portfolio': stock.id in user_portfolio_ids,
         })
+    
+    # Calculate winners for each metric (for highlighting)
+    winners = {}
+    if len(stocks_data) >= 2:
+        # Dividend Yield (higher is better)
+        yields = [(i, float(d['dividend'].yield_percent)) for i, d in enumerate(stocks_data) if d['dividend'] and d['dividend'].yield_percent]
+        if yields:
+            winners['dividend_yield'] = max(yields, key=lambda x: x[1])[0]
+        
+        # P/E Ratio (lower is better)
+        pe_ratios = [(i, float(d['valuation'].pe_ratio)) for i, d in enumerate(stocks_data) if d['valuation'] and d['valuation'].pe_ratio and d['valuation'].pe_ratio > 0]
+        if pe_ratios:
+            winners['pe_ratio'] = min(pe_ratios, key=lambda x: x[1])[0]
+        
+        # Price Change 7d (higher is better)
+        price_changes_7d = [(i, d['price_change_7d']) for i, d in enumerate(stocks_data) if d['price_change_7d'] is not None]
+        if price_changes_7d:
+            winners['price_change_7d'] = max(price_changes_7d, key=lambda x: x[1])[0]
+        
+        # Price Change 30d (higher is better)
+        price_changes_30d = [(i, d['price_change_30d']) for i, d in enumerate(stocks_data) if d['price_change_30d'] is not None]
+        if price_changes_30d:
+            winners['price_change_30d'] = max(price_changes_30d, key=lambda x: x[1])[0]
+        
+        # Dividend Growth (higher is better)
+        div_growths = [(i, d['dividend_growth']) for i, d in enumerate(stocks_data) if d['dividend_growth'] is not None]
+        if div_growths:
+            winners['dividend_growth'] = max(div_growths, key=lambda x: x[1])[0]
+        
+        # Growth 3 Year (higher is better)
+        growths_3y = [(i, float(d['valuation'].growth_3_year)) for i, d in enumerate(stocks_data) if d['valuation'] and d['valuation'].growth_3_year is not None]
+        if growths_3y:
+            winners['growth_3_year'] = max(growths_3y, key=lambda x: x[1])[0]
+        
+        # Growth 5 Year (higher is better)
+        growths_5y = [(i, float(d['valuation'].growth_5_year)) for i, d in enumerate(stocks_data) if d['valuation'] and d['valuation'].growth_5_year is not None]
+        if growths_5y:
+            winners['growth_5_year'] = max(growths_5y, key=lambda x: x[1])[0]
     
     context = {
         'stocks_data': stocks_data,
         'symbols': symbols,
+        'winners': winners,
     }
     
     return render(request, 'stock_comparison.html', context)

@@ -90,6 +90,81 @@
         {% if stocks_data %}
         <!-- Comparison Results -->
         <div class="space-y-8">
+            <!-- Quick Actions & Summary Card -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {% for data in stocks_data %}
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">{{ data.stock.symbol }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ data.stock.company_name|truncatewords:5 }}</p>
+                        </div>
+                        {% if data.latest_price %}
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-gray-900">${{ data.latest_price.last_price|floatformat:2 }}</p>
+                            {% if data.price_change_7d is not None %}
+                            <p class="text-sm font-medium {% if data.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if data.price_change_7d >= 0 %}+{% endif %}{{ data.price_change_7d|floatformat:1 }}% (7d)
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="toggleWatchlist({{ data.stock.id }})" 
+                                id="watchlist-btn-{{ data.stock.id }}"
+                                class="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition {% if data.in_watchlist %}bg-blue-600 text-white hover:bg-blue-700{% else %}bg-white text-blue-600 border border-blue-600 hover:bg-blue-50{% endif %}">
+                            {% if data.in_watchlist %}✓ In Watchlist{% else %}+ Add to Watchlist{% endif %}
+                        </button>
+                        <button onclick="window.location.href='{% url 'add_to_portfolio' data.stock.symbol %}'" 
+                                class="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition {% if data.in_portfolio %}bg-green-600 text-white hover:bg-green-700{% else %}bg-white text-green-600 border border-green-600 hover:bg-green-50{% endif %}">
+                            {% if data.in_portfolio %}✓ In Portfolio{% else %}+ Add to Portfolio{% endif %}
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Winners Summary Card -->
+            {% if winners %}
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-lg border border-green-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    Comparison Winners
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% if winners.dividend_yield is not None %}
+                    <div class="bg-white rounded-lg p-3 border border-green-200">
+                        <p class="text-xs text-gray-600 mb-1">Best Dividend Yield</p>
+                        <p class="text-lg font-bold text-green-700">{% for data in stocks_data %}{% if forloop.counter0 == winners.dividend_yield %}{{ data.stock.symbol }}{% endif %}{% endfor %}</p>
+                    </div>
+                    {% endif %}
+                    {% if winners.pe_ratio is not None %}
+                    <div class="bg-white rounded-lg p-3 border border-blue-200">
+                        <p class="text-xs text-gray-600 mb-1">Best P/E Ratio (Lowest)</p>
+                        <p class="text-lg font-bold text-blue-700">{% for data in stocks_data %}{% if forloop.counter0 == winners.pe_ratio %}{{ data.stock.symbol }}{% endif %}{% endfor %}</p>
+                    </div>
+                    {% endif %}
+                    {% if winners.price_change_7d is not None %}
+                    <div class="bg-white rounded-lg p-3 border border-purple-200">
+                        <p class="text-xs text-gray-600 mb-1">Best 7-Day Performance</p>
+                        <p class="text-lg font-bold text-purple-700">{% for data in stocks_data %}{% if forloop.counter0 == winners.price_change_7d %}{{ data.stock.symbol }}{% endif %}{% endfor %}</p>
+                    </div>
+                    {% endif %}
+                    {% if winners.growth_3_year is not None %}
+                    <div class="bg-white rounded-lg p-3 border border-orange-200">
+                        <p class="text-xs text-gray-600 mb-1">Best 3-Year Growth</p>
+                        <p class="text-lg font-bold text-orange-700">{% for data in stocks_data %}{% if forloop.counter0 == winners.growth_3_year %}{{ data.stock.symbol }}{% endif %}{% endfor %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Price Comparison Chart -->
             <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -106,6 +181,15 @@
                     Dividend Yield Comparison
                 </h2>
                 <canvas id="yieldChart" height="80"></canvas>
+            </div>
+            
+            <!-- P/E Ratio Comparison Chart -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <span class="text-2xl mr-3">📊</span>
+                    P/E Ratio Comparison
+                </h2>
+                <canvas id="peChart" height="80"></canvas>
             </div>
             
             <!-- Side-by-Side Comparison Table -->
@@ -139,9 +223,23 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="py-4 px-4 font-medium text-gray-700">Current Price</td>
                                 {% for data in stocks_data %}
-                                <td class="py-4 px-4 text-center">
+                                <td class="py-4 px-4 text-center {% if forloop.counter0 == 0 %}border-l-4 border-blue-500{% endif %}">
                                     {% if data.latest_price %}
-                                        <span class="text-xl font-bold text-gray-900">${{ data.latest_price.last_price|floatformat:2 }}</span>
+                                        <div>
+                                            <span class="text-xl font-bold text-gray-900">${{ data.latest_price.last_price|floatformat:2 }}</span>
+                                            {% if data.price_change_7d is not None %}
+                                            <div class="text-xs mt-1">
+                                                <span class="font-medium {% if data.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                    {% if data.price_change_7d >= 0 %}+{% endif %}{{ data.price_change_7d|floatformat:1 }}% (7d)
+                                                </span>
+                                                {% if data.price_change_30d is not None %}
+                                                <span class="text-gray-500 ml-2">
+                                                    {% if data.price_change_30d >= 0 %}+{% endif %}{{ data.price_change_30d|floatformat:1 }}% (30d)
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -174,9 +272,14 @@
                             <tr class="hover:bg-gray-50 bg-green-50">
                                 <td class="py-4 px-4 font-medium text-gray-700">Dividend Yield</td>
                                 {% for data in stocks_data %}
-                                <td class="py-4 px-4 text-center">
+                                <td class="py-4 px-4 text-center {% if winners.dividend_yield == forloop.counter0 %}bg-green-100 border-2 border-green-500 rounded-lg{% endif %}">
                                     {% if data.dividend and data.dividend.yield_percent %}
-                                        <span class="text-xl font-bold text-green-600">{{ data.dividend.yield_percent|floatformat:2 }}%</span>
+                                        <div class="flex flex-col items-center">
+                                            <span class="text-xl font-bold text-green-600">{{ data.dividend.yield_percent|floatformat:2 }}%</span>
+                                            {% if winners.dividend_yield == forloop.counter0 %}
+                                            <span class="text-xs text-green-700 font-semibold mt-1">🏆 Winner</span>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -203,11 +306,53 @@
                             
                             <!-- P/E Ratio -->
                             <tr class="hover:bg-gray-50 bg-purple-50">
-                                <td class="py-4 px-4 font-medium text-gray-700">P/E Ratio</td>
+                                <td class="py-4 px-4 font-medium text-gray-700">P/E Ratio <span class="text-xs text-gray-500">(Lower is better)</span></td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center {% if winners.pe_ratio == forloop.counter0 %}bg-purple-100 border-2 border-purple-500 rounded-lg{% endif %}">
+                                    {% if data.valuation and data.valuation.pe_ratio %}
+                                        <div class="flex flex-col items-center">
+                                            <span class="text-xl font-bold text-purple-600">{{ data.valuation.pe_ratio|floatformat:2 }}</span>
+                                            {% if winners.pe_ratio == forloop.counter0 %}
+                                            <span class="text-xs text-purple-700 font-semibold mt-1">🏆 Winner</span>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Payout Ratio -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Payout Ratio</td>
                                 {% for data in stocks_data %}
                                 <td class="py-4 px-4 text-center">
-                                    {% if data.valuation and data.valuation.pe_ratio %}
-                                        <span class="text-xl font-bold text-purple-600">{{ data.valuation.pe_ratio|floatformat:2 }}</span>
+                                    {% if data.payout_ratio is not None %}
+                                        <span class="text-lg font-semibold {% if data.payout_ratio > 100 %}text-red-600{% elif data.payout_ratio > 80 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                            {{ data.payout_ratio|floatformat:1 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Dividend Growth -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium text-gray-700">Dividend Growth</td>
+                                {% for data in stocks_data %}
+                                <td class="py-4 px-4 text-center {% if winners.dividend_growth == forloop.counter0 %}bg-green-100 border-2 border-green-500 rounded-lg{% endif %}">
+                                    {% if data.dividend_growth is not None %}
+                                        <div class="flex flex-col items-center">
+                                            <span class="text-lg font-semibold {% if data.dividend_growth >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                {% if data.dividend_growth >= 0 %}+{% endif %}{{ data.dividend_growth|floatformat:1 }}%
+                                            </span>
+                                            {% if winners.dividend_growth == forloop.counter0 %}
+                                            <span class="text-xs text-green-700 font-semibold mt-1">🏆 Winner</span>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -247,11 +392,16 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="py-4 px-4 font-medium text-gray-700">3-Year Growth</td>
                                 {% for data in stocks_data %}
-                                <td class="py-4 px-4 text-center">
-                                    {% if data.valuation and data.valuation.growth_3_year %}
-                                        <span class="text-lg font-semibold {% if data.valuation.growth_3_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                            {{ data.valuation.growth_3_year|floatformat:2 }}%
-                                        </span>
+                                <td class="py-4 px-4 text-center {% if winners.growth_3_year == forloop.counter0 %}bg-green-100 border-2 border-green-500 rounded-lg{% endif %}">
+                                    {% if data.valuation and data.valuation.growth_3_year is not None %}
+                                        <div class="flex flex-col items-center">
+                                            <span class="text-lg font-semibold {% if data.valuation.growth_3_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                {{ data.valuation.growth_3_year|floatformat:2 }}%
+                                            </span>
+                                            {% if winners.growth_3_year == forloop.counter0 %}
+                                            <span class="text-xs text-green-700 font-semibold mt-1">🏆 Winner</span>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -263,11 +413,16 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="py-4 px-4 font-medium text-gray-700">5-Year Growth</td>
                                 {% for data in stocks_data %}
-                                <td class="py-4 px-4 text-center">
-                                    {% if data.valuation and data.valuation.growth_5_year %}
-                                        <span class="text-lg font-semibold {% if data.valuation.growth_5_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                            {{ data.valuation.growth_5_year|floatformat:2 }}%
-                                        </span>
+                                <td class="py-4 px-4 text-center {% if winners.growth_5_year == forloop.counter0 %}bg-green-100 border-2 border-green-500 rounded-lg{% endif %}">
+                                    {% if data.valuation and data.valuation.growth_5_year is not None %}
+                                        <div class="flex flex-col items-center">
+                                            <span class="text-lg font-semibold {% if data.valuation.growth_5_year > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                {{ data.valuation.growth_5_year|floatformat:2 }}%
+                                            </span>
+                                            {% if winners.growth_5_year == forloop.counter0 %}
+                                            <span class="text-xs text-green-700 font-semibold mt-1">🏆 Winner</span>
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -673,7 +828,108 @@ const yieldChart = new Chart(yieldCtx, {
         }
     }
 });
+
+// P/E Ratio Comparison Chart
+const peCtx = document.getElementById('peChart').getContext('2d');
+const peChart = new Chart(peCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for data in stocks_data %}'{{ data.stock.symbol }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'P/E Ratio',
+            data: [{% for data in stocks_data %}{% if data.valuation and data.valuation.pe_ratio %}{{ data.valuation.pe_ratio }}{% else %}0{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(124, 58, 237, 0.8)',
+                'rgba(109, 40, 217, 0.8)'
+            ],
+            borderColor: [
+                'rgba(139, 92, 246, 1)',
+                'rgba(124, 58, 237, 1)',
+                'rgba(109, 40, 217, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'P/E: ' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toFixed(1);
+                    }
+                }
+            }
+        }
+    }
+});
 {% endif %}
+
+// Watchlist Toggle Function
+function toggleWatchlist(stockId) {
+    const btn = document.getElementById('watchlist-btn-' + stockId);
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-spin">⏳</span> Loading...';
+    
+    fetch(`/watchlist/toggle/${stockId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'added') {
+            btn.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'hover:bg-blue-50');
+            btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+            btn.innerHTML = '✓ In Watchlist';
+        } else if (data.status === 'removed') {
+            btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+            btn.classList.add('bg-white', 'text-blue-600', 'border', 'border-blue-600', 'hover:bg-blue-50');
+            btn.innerHTML = '+ Add to Watchlist';
+        }
+        btn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        alert('An error occurred. Please try again.');
+    });
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %}
 
