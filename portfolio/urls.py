@@ -146,5 +146,8 @@ urlpatterns = [
     path('watchlist-groups/<int:group_id>/edit/', views.edit_watchlist_group, name='edit_watchlist_group'),
     path('watchlist-groups/<int:group_id>/delete/', views.delete_watchlist_group, name='delete_watchlist_group'),
     path('watchlist/<int:watchlist_id>/set-group/', views.set_watchlist_group, name='set_watchlist_group'),
+    
+    # Analyst Rating Updates
+    path('stock/<str:symbol>/update-rating-from-news/', views.update_rating_from_news, name='update_rating_from_news'),
 
 ]

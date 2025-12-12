@@ -6038,3 +6038,35 @@ def set_watchlist_group(request, watchlist_id):
         'message': 'Group updated successfully',
         'group_name': watchlist_item.group.name if watchlist_item.group else None
     })
+
+
+# ==================== Analyst Rating Updates from News ====================
+
+@login_required
+@require_POST
+def update_rating_from_news(request, symbol):
+    """Manually trigger analyst rating update based on positive news for a stock"""
+    from portfolio.utils.rating_updater import update_analyst_rating_from_news
+    
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    days = int(request.POST.get('days', 7))
+    min_news = int(request.POST.get('min_news', 2))
+    
+    success, message, rating = update_analyst_rating_from_news(stock, days=days, min_positive_news=min_news)
+    
+    if success:
+        return JsonResponse({
+            'status': 'success',
+            'message': message,
+            'rating': {
+                'analyst_rating': rating.analyst_rating,
+                'buy_count': rating.buy_count,
+                'hold_count': rating.hold_count,
+                'sell_count': rating.sell_count,
+            }
+        })
+    else:
+        return JsonResponse({
+            'status': 'error',
+            'message': message
+        }, status=400)
