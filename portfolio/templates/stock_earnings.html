@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ stock.symbol }} Earnings History - StockFolio{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ stock.symbol }} Earnings History</h1>
+                <p class="text-gray-600">{{ stock.company_name }}</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'stock_detail' stock.symbol %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    View Stock Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Earnings History Table -->
+    {% if earnings %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Quarterly Earnings</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">EPS Estimate</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">EPS Actual</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">EPS Surprise</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Revenue Estimate</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Revenue Actual</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Revenue Surprise</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for earning in earnings %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-semibold text-gray-900">{{ earning.earnings_date|date:"M d, Y" }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.eps_estimate %}
+                            <span class="text-sm font-medium text-gray-900">${{ earning.eps_estimate|floatformat:2 }}</span>
+                            {% else %}
+                            <span class="text-sm text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.eps_actual %}
+                            <span class="text-sm font-bold text-gray-900">${{ earning.eps_actual|floatformat:2 }}</span>
+                            {% else %}
+                            <span class="text-sm text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.eps_surprise %}
+                            {% if earning.eps_surprise > 0 %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">
+                                +{{ earning.eps_surprise|floatformat:1 }}%
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">
+                                {{ earning.eps_surprise|floatformat:1 }}%
+                            </span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-xs text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.revenue_estimate %}
+                            <span class="text-sm font-medium text-gray-900">${{ earning.revenue_estimate|intcomma }}</span>
+                            {% else %}
+                            <span class="text-sm text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.revenue_actual %}
+                            <span class="text-sm font-bold text-gray-900">${{ earning.revenue_actual|intcomma }}</span>
+                            {% else %}
+                            <span class="text-sm text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            {% if earning.revenue_surprise %}
+                            {% if earning.revenue_surprise > 0 %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">
+                                +{{ earning.revenue_surprise|floatformat:1 }}%
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">
+                                {{ earning.revenue_surprise|floatformat:1 }}%
+                            </span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-xs text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-md p-12 text-center border border-gray-200">
+        <div class="text-6xl mb-4">📊</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">No Earnings Data Available</h3>
+        <p class="text-gray-600 mb-6">Earnings data for {{ stock.symbol }} is not available at this time.</p>
+        <a href="{% url 'earnings_calendar' %}" 
+           class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+            View Earnings Calendar
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

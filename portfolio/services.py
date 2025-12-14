@@ -292,7 +292,7 @@ class StockService:
         latest_prices = StockPrice.objects.filter(stock=OuterRef('pk')).order_by('-price_date')
         latest_valuations = ValuationMetric.objects.filter(stock=OuterRef('pk')).order_by('-metric_date')
         
-        return Stock.objects.all().annotate(
+        return Stock.objects.filter(show_in_listing=True).annotate(
             latest_dividend_amount=Subquery(latest_dividends.values('amount')[:1]),
             latest_dividend_yield=Subquery(latest_dividends.values('yield_percent')[:1]),
             latest_dividend_date=Subquery(latest_dividends.values('ex_dividend_date')[:1]),

@@ -1,5 +1,5 @@
 <!-- Main Navigation Bar -->
-<nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+<nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-[100] backdrop-blur-sm bg-white/95">
     <div class="max-w-7xl mx-auto px-2 sm:px-4">
         <div class="flex justify-between items-center py-2 sm:py-4">
             <!-- Logo -->
@@ -44,7 +44,7 @@
                     <!-- Tools Dropdown -->
                     <div class="relative group">
                         <button onclick="toggleDropdown('tools-dropdown')" 
-                                class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 {% if request.resolver_match.url_name == 'stock_comparison' or request.resolver_match.url_name == 'dividend_calendar' or request.resolver_match.url_name == 'drip_calculator' or request.resolver_match.url_name == 'canadian_tools' %}bg-blue-50 text-blue-600{% endif %}">
+                                class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 {% if request.resolver_match.url_name == 'stock_comparison' or request.resolver_match.url_name == 'dividend_calendar' or request.resolver_match.url_name == 'earnings_calendar' or request.resolver_match.url_name == 'drip_calculator' or request.resolver_match.url_name == 'canadian_tools' %}bg-blue-50 text-blue-600{% endif %}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
                             </svg>
@@ -53,7 +53,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="tools-dropdown" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                        <div id="tools-dropdown" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
                             <a href="{% url 'stock_comparison' %}" 
                                class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,6 +67,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
                                 <span>Dividend Calendar</span>
+                            </a>
+                            <a href="{% url 'earnings_calendar' %}" 
+                               class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                <span>Earnings Calendar</span>
                             </a>
                             <a href="{% url 'drip_calculator' %}" 
                                class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
@@ -95,7 +102,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="watchlist-dropdown" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                        <div id="watchlist-dropdown" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
                             <a href="{% url 'watchlist' %}" 
                                class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +132,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="more-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                        <div id="more-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
                             <a href="{% url 'all_news' %}" 
                                class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,6 +234,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                         <span>Dividend Calendar</span>
+                    </a>
+                    <a href="{% url 'earnings_calendar' %}" 
+                       class="flex items-center space-x-3 px-4 py-2.5 ml-4 rounded-lg transition-all duration-200 font-medium {% if request.resolver_match.url_name == 'earnings_calendar' or request.resolver_match.url_name == 'stock_earnings' %}bg-blue-50 text-blue-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-blue-600{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span>Earnings Calendar</span>
                     </a>
                     <a href="{% url 'drip_calculator' %}" 
                        class="flex items-center space-x-3 px-4 py-2.5 ml-4 rounded-lg transition-all duration-200 font-medium {% if request.resolver_match.url_name == 'drip_calculator' %}bg-blue-50 text-blue-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-blue-600{% endif %}">

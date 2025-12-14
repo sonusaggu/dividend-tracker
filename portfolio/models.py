@@ -11,6 +11,7 @@ class Stock(models.Model):
     tsx60_member = models.BooleanField(default=False)
     industry = models.CharField(max_length=100, blank=True, db_index=True)
     sector = models.CharField(max_length=100, blank=True, db_index=True)
+    show_in_listing = models.BooleanField(default=True, db_index=True, help_text="If False, stock won't appear in all stocks page")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -101,6 +102,53 @@ class AnalystRating(models.Model):
     class Meta:
         unique_together = ['stock', 'rating_date']
         ordering = ['-rating_date']
+
+class Earnings(models.Model):
+    """Store earnings calendar and earnings data"""
+    TIME_CHOICES = [
+        ('bmo', 'Before Market Open'),
+        ('amc', 'After Market Close'),
+        ('dmh', 'During Market Hours'),
+        ('', 'Not Specified'),
+    ]
+    
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='earnings', db_index=True)
+    earnings_date = models.DateField(db_index=True)
+    time = models.CharField(max_length=10, choices=TIME_CHOICES, blank=True)
+    eps_estimate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    eps_actual = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    revenue_estimate = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    revenue_actual = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    source = models.CharField(max_length=50, blank=True)  # 'finnhub', 'alphavantage', 'fmp', etc.
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['stock', 'earnings_date']
+        ordering = ['-earnings_date']
+        indexes = [
+            models.Index(fields=['stock', '-earnings_date']),
+            models.Index(fields=['earnings_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.stock.symbol} - Earnings on {self.earnings_date}"
+    
+    @property
+    def eps_surprise(self):
+        """Calculate EPS surprise percentage"""
+        if self.eps_estimate and self.eps_actual:
+            if float(self.eps_estimate) != 0:
+                return ((float(self.eps_actual) - float(self.eps_estimate)) / abs(float(self.eps_estimate))) * 100
+        return None
+    
+    @property
+    def revenue_surprise(self):
+        """Calculate revenue surprise percentage"""
+        if self.revenue_estimate and self.revenue_actual:
+            if float(self.revenue_estimate) != 0:
+                return ((float(self.revenue_actual) - float(self.revenue_estimate)) / abs(float(self.revenue_estimate))) * 100
+        return None
 
 class UserPortfolio(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portfolio', db_index=True)

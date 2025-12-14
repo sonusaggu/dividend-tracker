@@ -23,7 +23,7 @@ import re
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
 from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote, Transaction
-from .models import WatchlistGroup, StockTag, TaggedStock
+from .models import WatchlistGroup, StockTag, TaggedStock, Earnings
 from .services import PortfolioService, StockService, AlertService, TransactionService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
@@ -6484,3 +6484,241 @@ def update_rating_from_news(request, symbol):
             'status': 'error',
             'message': message
         }, status=400)
+
+
+def earnings_calendar(request):
+    """Earnings calendar page - shows upcoming earnings for stocks"""
+    from portfolio.utils.earnings_fetcher import EarningsFetcher
+    from django.core.paginator import Paginator
+    
+    # Get date range (default: next 30 days)
+    today = timezone.now().date()
+    start_date = request.GET.get('start_date', today.strftime('%Y-%m-%d'))
+    end_date = request.GET.get('end_date', (today + timedelta(days=30)).strftime('%Y-%m-%d'))
+    symbol_filter = request.GET.get('symbol', '').strip().upper()
+    
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except:
+        start_date = today
+        end_date = today + timedelta(days=30)
+    
+    # Get user's portfolio and watchlist symbols for highlighting
+    user_portfolio_symbols = set()
+    user_watchlist_symbols = set()
+    if request.user.is_authenticated:
+        user_portfolio_symbols = set(
+            UserPortfolio.objects.filter(user=request.user)
+            .values_list('stock__symbol', flat=True)
+        )
+        user_watchlist_symbols = set(
+            Watchlist.objects.filter(user=request.user)
+            .values_list('stock__symbol', flat=True)
+        )
+    
+    # Try to get earnings from database first - ONLY Canadian stocks
+    # Filter for Canadian stocks: TSX60 members, or stocks with .TO/.V suffix, or TSX in code
+    earnings_query = Earnings.objects.filter(
+        earnings_date__gte=start_date,
+        earnings_date__lte=end_date
+    ).select_related('stock').filter(
+        Q(stock__tsx60_member=True) |
+        Q(stock__symbol__endswith='.TO') |
+        Q(stock__symbol__endswith='.V') |
+        Q(stock__code__icontains='TSX') |
+        Q(stock__code__icontains='.TO')
+    ).order_by('earnings_date', 'stock__symbol')
+    
+    if symbol_filter:
+        earnings_query = earnings_query.filter(stock__symbol__icontains=symbol_filter)
+    
+    earnings_list = list(earnings_query)
+    
+    # If no earnings in database, try to fetch from API
+    if not earnings_list:
+        try:
+            fetcher = EarningsFetcher()
+            api_earnings = fetcher.fetch_earnings_calendar(
+                start_date=start_date,
+                end_date=end_date,
+                symbol=symbol_filter if symbol_filter else None
+            )
+            
+            # Save to database for future use - ONLY Canadian stocks
+            for earning_data in api_earnings:
+                if earning_data.get('symbol'):
+                    try:
+                        symbol = earning_data['symbol'].upper()
+                        company_name = earning_data.get('company_name', symbol)
+                        
+                        # Get or create stock (create if doesn't exist)
+                        stock, stock_created = Stock.objects.get_or_create(
+                            symbol=symbol,
+                            defaults={
+                                'code': symbol,
+                                'company_name': company_name,
+                                'show_in_listing': False,  # Hide from all stocks page by default
+                                'sector': '',
+                                'industry': '',
+                            }
+                        )
+                        
+                        # Check if it's a Canadian stock (if newly created, verify it's Canadian)
+                        is_canadian = (
+                            stock.tsx60_member or 
+                            stock.symbol.endswith('.TO') or 
+                            stock.symbol.endswith('.V') or
+                            (stock.code and ('TSX' in stock.code.upper() or '.TO' in stock.code.upper()))
+                        )
+                        
+                        # If stock was just created, check if symbol suggests it's Canadian
+                        if stock_created:
+                            # Check symbol format for Canadian stocks
+                            if not (symbol.endswith('.TO') or symbol.endswith('.V')):
+                                # Try to determine if it's Canadian from the API data
+                                # For now, assume if it's in earnings calendar from Finnhub, it might be Canadian
+                                # But we'll keep show_in_listing=False to hide it
+                                pass
+                        
+                        # Only save earnings for Canadian stocks
+                        if is_canadian or stock_created:  # Allow newly created stocks (they're from Canadian earnings API)
+                            earnings_obj, created = Earnings.objects.get_or_create(
+                                stock=stock,
+                                earnings_date=earning_data.get('date'),
+                                defaults={
+                                    'time': earning_data.get('time', ''),
+                                    'eps_estimate': earning_data.get('eps_estimate'),
+                                    'eps_actual': earning_data.get('eps_actual'),
+                                    'revenue_estimate': earning_data.get('revenue_estimate'),
+                                    'revenue_actual': earning_data.get('revenue_actual'),
+                                    'source': earning_data.get('source', 'api')
+                                }
+                            )
+                            if created:
+                                earnings_list.append(earnings_obj)
+                            
+                            # Create a default dividend entry with 0 amount if stock was just created
+                            # This ensures the stock has dividend data (even if 0) but won't show in all stocks
+                            if stock_created:
+                                from portfolio.models import Dividend
+                                # Check if dividend already exists, if not create one with 0 amount
+                                if not Dividend.objects.filter(stock=stock).exists():
+                                    # Use a far future date to avoid conflicts, or use today
+                                    Dividend.objects.create(
+                                        stock=stock,
+                                        amount=0,
+                                        currency='CAD',
+                                        yield_percent=0,
+                                        frequency='Unknown',
+                                        ex_dividend_date=end_date + timedelta(days=365*10),  # Far future date
+                                    )
+                                logger.info(f"Created stock {symbol} with 0 dividend (hidden from all stocks page)")
+                        else:
+                            logger.debug(f"Skipping non-Canadian stock {symbol}")
+                    except Exception as e:
+                        logger.warning(f"Error processing earnings for {earning_data.get('symbol')}: {e}")
+                        continue
+        except Exception as e:
+            logger.error(f"Error fetching earnings from API: {e}")
+            messages.warning(request, 'Could not fetch earnings data from API. Showing cached data only.')
+    
+    # Calculate days until for each earnings (for display) - before pagination
+    earnings_with_days = []
+    for earning in earnings_list:
+        if earning.earnings_date > today:
+            days_until = (earning.earnings_date - today).days
+        elif earning.earnings_date == today:
+            days_until = 0
+        else:
+            days_until = None
+        earnings_with_days.append({
+            'earning': earning,
+            'days_until': days_until
+        })
+    
+    # Paginate the earnings_with_days list
+    paginator = Paginator(earnings_with_days, 50)
+    page = request.GET.get('page', 1)
+    try:
+        earnings_page = paginator.page(page)
+    except PageNotAnInteger:
+        earnings_page = paginator.page(1)
+    except EmptyPage:
+        earnings_page = paginator.page(paginator.num_pages)
+    
+    context = {
+        'earnings': earnings_page,  # This now contains earnings_with_days items
+        'start_date': start_date,
+        'end_date': end_date,
+        'symbol_filter': symbol_filter,
+        'user_portfolio_symbols': user_portfolio_symbols,
+        'user_watchlist_symbols': user_watchlist_symbols,
+        'today': today,
+    }
+    
+    return render(request, 'earnings_calendar.html', context)
+
+
+def stock_earnings(request, symbol):
+    """Show earnings history for a specific stock - Canadian stocks only"""
+    from portfolio.utils.earnings_fetcher import EarningsFetcher
+    
+    stock = get_object_or_404(Stock, symbol=symbol.upper())
+    
+    # Check if stock is Canadian - only show earnings for Canadian stocks
+    is_canadian = (
+        stock.tsx60_member or 
+        stock.symbol.endswith('.TO') or 
+        stock.symbol.endswith('.V') or
+        (stock.code and ('TSX' in stock.code.upper() or '.TO' in stock.code.upper()))
+    )
+    
+    if not is_canadian:
+        messages.info(request, f'{stock.symbol} is not a Canadian stock. Earnings calendar shows only Canadian (TSX) stocks.')
+        return redirect('earnings_calendar')
+    
+    # Get earnings from database
+    earnings_list = Earnings.objects.filter(stock=stock).order_by('-earnings_date')[:8]
+    
+    # If no earnings in database, try to fetch from API
+    if not earnings_list:
+        try:
+            fetcher = EarningsFetcher()
+            api_earnings = fetcher.fetch_stock_earnings(symbol)
+            
+            # Save to database
+            for earning_data in api_earnings:
+                if earning_data.get('date'):
+                    earnings_obj, created = Earnings.objects.get_or_create(
+                        stock=stock,
+                        earnings_date=earning_data['date'],
+                        defaults={
+                            'eps_estimate': earning_data.get('eps_estimate'),
+                            'eps_actual': earning_data.get('eps_actual'),
+                            'revenue_estimate': earning_data.get('revenue_estimate'),
+                            'revenue_actual': earning_data.get('revenue_actual'),
+                            'source': earning_data.get('source', 'api')
+                        }
+                    )
+                    if created:
+                        earnings_list = list(Earnings.objects.filter(stock=stock).order_by('-earnings_date')[:8])
+        except Exception as e:
+            logger.error(f"Error fetching earnings for {symbol}: {e}")
+            messages.warning(request, 'Could not fetch earnings data from API.')
+    
+    # Check if in user's portfolio/watchlist
+    in_portfolio = False
+    in_watchlist = False
+    if request.user.is_authenticated:
+        in_portfolio = UserPortfolio.objects.filter(user=request.user, stock=stock).exists()
+        in_watchlist = Watchlist.objects.filter(user=request.user, stock=stock).exists()
+    
+    context = {
+        'stock': stock,
+        'earnings': earnings_list,
+        'in_portfolio': in_portfolio,
+        'in_watchlist': in_watchlist,
+    }
+    
+    return render(request, 'stock_earnings.html', context)
