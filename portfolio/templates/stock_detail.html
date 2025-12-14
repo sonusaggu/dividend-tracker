@@ -14,428 +14,371 @@
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
         
-        <!-- Stock Header -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <!-- Compact Header with Price and Key Metrics -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <!-- Left: Stock Info -->
-                <div class="flex items-start gap-4 flex-1">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-2xl text-white font-bold">{{ stock.symbol|slice:":1" }}</span>
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-xl text-white font-bold">{{ stock.symbol|slice:":1" }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 mb-2 flex-wrap">
-                            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">{{ stock.symbol }}</h1>
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ stock.symbol }}</h1>
                             {% if stock.tsx60_member %}
-                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full font-medium">
-                                TSX 60
-                            </span>
+                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-medium">TSX 60</span>
                             {% endif %}
                             {% if stock.is_etf %}
-                            <span class="bg-purple-100 text-purple-800 text-xs px-2.5 py-1 rounded-full font-medium">
-                                ETF
-                            </span>
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-medium">ETF</span>
                             {% endif %}
                         </div>
-                        <p class="text-lg sm:text-xl text-gray-700 mb-3">{{ stock.company_name }}</p>
-                        <div class="flex flex-wrap gap-2">
+                        <p class="text-sm sm:text-base text-gray-700 truncate">{{ stock.company_name }}</p>
+                        <div class="flex flex-wrap gap-1.5 mt-1">
                             {% if stock.sector %}
-                            <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-lg font-medium">
-                                {{ stock.sector }}
-                            </span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-medium">{{ stock.sector }}</span>
                             {% endif %}
                             {% if stock.industry %}
-                            <span class="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-lg font-medium">
-                                {{ stock.industry }}
-                            </span>
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded font-medium">{{ stock.industry }}</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
-                <!-- Right: Price -->
-                <div class="flex-shrink-0">
+                <!-- Right: Price and Quick Actions -->
+                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-4 sm:gap-6 flex-shrink-0">
                     {% if latest_price %}
-                    <div class="text-right">
-                        <div class="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">${{ latest_price.last_price|floatformat:2 }}</div>
-                        <div class="text-sm text-gray-600">
-                            {% if latest_price.price_date %}
-                                As of {{ latest_price.price_date|date:"M d, Y" }}
-                            {% else %}
-                                Current Price
-                            {% endif %}
+                    <div class="text-right pr-0 sm:pr-4 border-r-0 sm:border-r border-gray-200">
+                        <div class="text-2xl sm:text-3xl font-bold text-gray-900">${{ latest_price.last_price|floatformat:2 }}</div>
+                        <div class="text-xs text-gray-600">
+                            {% if latest_price.price_date %}{{ latest_price.price_date|date:"M d" }}{% else %}Current{% endif %}
                         </div>
                     </div>
+                    {% endif %}
+                    
+                    <!-- Clear Action Buttons -->
+                    {% if user.is_authenticated %}
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 hover:from-purple-700 hover:via-pink-700 hover:to-red-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 relative overflow-hidden group">
+                            <span class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                            </svg>
+                            <span class="relative z-10">Share</span>
+                        </button>
+                        <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>{% if in_portfolio %}Update{% else %}Add to{% endif %} Portfolio</span>
+                        </button>
+                        <button id="watchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 {% if in_watchlist %}bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg{% else %}bg-white border-2 border-green-500 text-green-700 hover:bg-green-50 shadow-sm hover:shadow-md{% endif %} rounded-lg transition-all duration-200 font-semibold text-sm transform hover:scale-105 active:scale-95">
+                            <svg id="watchlistIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                {% if in_watchlist %}
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                {% else %}
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                {% endif %}
+                            </svg>
+                            <span id="watchlistText">{% if in_watchlist %}In Watchlist{% else %}Watchlist{% endif %}</span>
+                        </button>
+                    </div>
                     {% else %}
-                    <div class="text-gray-400">Price not available</div>
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 hover:from-purple-700 hover:via-pink-700 hover:to-red-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group">
+                            <span class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                            </svg>
+                            <span class="relative z-10">Share Stock</span>
+                        </button>
+                        <a href="{% url 'login' %}" class="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-sm">
+                            Sign In to Track
+                        </a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            {% if user.is_authenticated %} 
-            <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <button id="watchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
-                            class="flex items-center justify-center px-4 py-2.5 {% if in_watchlist %}bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg{% else %}bg-white border-2 border-green-500 text-green-700 hover:bg-green-50 shadow-sm hover:shadow-md{% endif %} rounded-lg transition-all duration-200 font-semibold text-sm transform hover:scale-105 active:scale-95">
-                        <svg id="watchlistIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            {% if in_watchlist %}
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            {% else %}
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            {% endif %}
-                        </svg>
-                        <span id="watchlistText" class="hidden sm:inline">
-                            {% if in_watchlist %}In Watchlist{% else %}Watchlist{% endif %}
-                        </span>
-                    </button>
-                    
-                    <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
-                            class="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 hover:from-purple-700 hover:via-pink-700 hover:to-red-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 relative overflow-hidden group">
-                        <span class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                        <svg class="w-5 h-5 mr-2 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                        </svg>
-                        <span class="hidden sm:inline relative z-10">Share</span>
-                        <span class="sm:hidden relative z-10">Share</span>
-                    </button>
-                    
-                    <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
-                            class="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span class="hidden sm:inline">{% if in_portfolio %}Update{% else %}Add{% endif %}</span>
-                    </button>
-                    
-                    <a href="{% url 'stock_comparison' %}?symbol1={{ stock.symbol }}&symbol2="
-                       class="flex items-center justify-center px-4 py-2.5 bg-white border-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200 font-semibold text-sm shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Compare</span>
-                    </a>
-                    
-                    {% if dividend %}
-                    <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 
-                       class="flex items-center justify-center px-4 py-2.5 bg-white border-2 border-orange-500 text-orange-700 hover:bg-orange-50 rounded-lg transition-all duration-200 font-semibold text-sm shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        <span class="hidden sm:inline">{% if has_dividend_alert %}Alert{% else %}Alert{% endif %}</span>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="text-center mb-4">
-                    <p class="text-gray-700 mb-4">Sign in to track this stock and manage your portfolio</p>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto">
-                    <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
-                            class="flex items-center justify-center px-5 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 hover:from-purple-700 hover:via-pink-700 hover:to-red-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group col-span-2 sm:col-span-1">
-                        <span class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                        <svg class="w-5 h-5 mr-2 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                        </svg>
-                        <span class="relative z-10">Share Stock</span>
-                    </button>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-3 justify-center mt-4">
-                    <a href="{% url 'login' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95">
-                        Sign In
-                    </a>
-                    <a href="{% url 'register' %}" class="inline-flex items-center px-5 py-2.5 bg-white border-2 border-gray-400 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95">
-                        Register
-                    </a>
-                </div>
-            </div>
-            {% endif %}
         </div>
         
-        <!-- Key Metrics -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <!-- Key Metrics Grid - Compact -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 mb-4">
             {% if dividend %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="text-xs font-medium text-gray-600 mb-1">Dividend Yield</div>
-                <div class="text-2xl font-bold text-green-600">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="text-xs font-medium text-gray-600 mb-1">Yield</div>
+                <div class="text-lg sm:text-xl font-bold text-green-600">
                     {% if dividend.yield_percent %}{{ dividend.yield_percent|floatformat:2 }}%{% else %}N/A{% endif %}
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="text-xs font-medium text-gray-600 mb-1">Dividend Amount</div>
-                <div class="text-2xl font-bold text-blue-600">${{ dividend.amount|default:"N/A" }}</div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="text-xs font-medium text-gray-600 mb-1">Dividend</div>
+                <div class="text-lg sm:text-xl font-bold text-blue-600">${{ dividend.amount|default:"N/A" }}</div>
             </div>
             {% endif %}
             {% if valuation and valuation.pe_ratio %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                 <div class="text-xs font-medium text-gray-600 mb-1">P/E Ratio</div>
-                <div class="text-2xl font-bold text-purple-600">{{ valuation.pe_ratio|floatformat:2 }}</div>
+                <div class="text-lg sm:text-xl font-bold text-purple-600">{{ valuation.pe_ratio|floatformat:2 }}</div>
+            </div>
+            {% endif %}
+            {% if valuation and valuation.eps %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="text-xs font-medium text-gray-600 mb-1">EPS</div>
+                <div class="text-lg sm:text-xl font-bold text-indigo-600">${{ valuation.eps|floatformat:2 }}</div>
             </div>
             {% endif %}
             {% if valuation and valuation.market_cap %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                 <div class="text-xs font-medium text-gray-600 mb-1">Market Cap</div>
-                <div class="text-lg font-bold text-orange-600">{{ valuation.market_cap }}</div>
+                <div class="text-sm font-bold text-orange-600">{{ valuation.market_cap }}</div>
+            </div>
+            {% endif %}
+            {% if analyst_rating %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div class="text-xs font-medium text-gray-600 mb-1">Rating</div>
+                <div class="text-lg sm:text-xl font-bold text-gray-900">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
             </div>
             {% endif %}
         </div>
         
-        <!-- Main Content - Single Column Full Width -->
-        <div class="space-y-6">
-            <!-- Main Content Column -->
-            <div class="space-y-6">
-                <!-- Dividend Information -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Dividend Information</h2>
-                        {% if dividend %}
-                        <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
-                            {{ dividend.frequency|default:"N/A" }}
-                        </span>
-                        {% endif %}
+        <!-- Two Column Layout for Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Left Column: Main Info (2/3 width) -->
+            <div class="lg:col-span-2 space-y-4">
+                <!-- Dividend Information - Compact -->
+                {% if dividend %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-bold text-gray-900">Dividend Information</h2>
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">{{ dividend.frequency|default:"N/A" }}</span>
                     </div>
                     
-                    {% if dividend %}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="text-sm font-medium text-gray-600 mb-2">Dividend Amount</div>
-                            <div class="text-2xl font-bold text-green-600">${{ dividend.amount }}</div>
-                            <div class="text-xs text-gray-500 mt-1">Per share</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Amount</div>
+                            <div class="text-lg font-bold text-green-600">${{ dividend.amount }}</div>
                         </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="text-sm font-medium text-gray-600 mb-2">Dividend Yield</div>
-                            <div class="text-2xl font-bold text-blue-600">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Yield</div>
+                            <div class="text-lg font-bold text-blue-600">
                                 {% if dividend.yield_percent %}{{ dividend.yield_percent|floatformat:2 }}%{% else %}N/A{% endif %}
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">Annualized</div>
                         </div>
-                        
-                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                            <div class="text-sm font-medium text-gray-600 mb-2">Next Ex-Date</div>
-                            <div class="text-xl font-bold text-purple-600">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Ex-Date</div>
+                            <div class="text-sm font-semibold text-gray-900">
                                 {% if dividend.ex_dividend_date %}{{ dividend.ex_dividend_date|date:"M d, Y" }}{% else %}TBD{% endif %}
                             </div>
-                            {% if dividend.ex_dividend_date %}
-                            <div class="text-xs text-gray-500 mt-1">{{ dividend.ex_dividend_date|timeuntil }}</div>
-                            {% endif %}
                         </div>
-                        
-                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                            <div class="text-sm font-medium text-gray-600 mb-2">Payment Date</div>
-                            <div class="text-xl font-bold text-orange-600">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Payment</div>
+                            <div class="text-sm font-semibold text-gray-900">
                                 {% if dividend.payment_date %}{{ dividend.payment_date|date:"M d, Y" }}{% else %}TBD{% endif %}
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">Expected payment</div>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                        <a href="{% url 'dividend_history' stock.symbol %}" 
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            View Dividend History
-                        </a>
-                    </div>
-                    
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Currency:</span>
-                                <span class="font-semibold text-gray-900">{{ dividend.currency|default:"CAD" }}</span>
+                    {% if dividend_growth_rate is not None or dividend_consistency_score > 0 or annual_dividend_income > 0 %}
+                    <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200">
+                        {% if dividend_growth_rate is not None %}
+                        <div class="text-center">
+                            <div class="text-xs text-gray-600 mb-1">Growth (2Y)</div>
+                            <div class="text-sm font-bold {% if dividend_growth_rate >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if dividend_growth_rate >= 0 %}+{% endif %}{{ dividend_growth_rate|floatformat:1 }}%
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Frequency:</span>
-                                <span class="font-semibold text-gray-900">{{ dividend.frequency|default:"N/A" }}</span>
-                            </div>
-                            {% if dividend.declaration_date %}
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Declared:</span>
-                                <span class="font-semibold text-gray-900">{{ dividend.declaration_date|date:"M d, Y" }}</span>
-                            </div>
-                            {% endif %}
-                            {% if dividend.record_date %}
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Record Date:</span>
-                                <span class="font-semibold text-gray-900">{{ dividend.record_date|date:"M d, Y" }}</span>
-                            </div>
-                            {% endif %}
                         </div>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-12">
-                        <div class="text-6xl mb-4">📊</div>
-                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Dividend Data</h3>
-                        <p class="text-gray-500">This stock doesn't currently pay dividends.</p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Valuation Metrics -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Valuation Metrics</h2>
-                    
-                    {% if valuation %}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-600 font-medium">P/E Ratio</span>
-                                <span class="text-2xl font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</span>
-                            </div>
-                            <div class="text-xs text-gray-500">Price-to-Earnings Ratio</div>
+                        {% endif %}
+                        {% if dividend_consistency_score > 0 %}
+                        <div class="text-center">
+                            <div class="text-xs text-gray-600 mb-1">Consistency</div>
+                            <div class="text-sm font-bold text-blue-600">{{ dividend_consistency_score|floatformat:0 }}/100</div>
                         </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-600 font-medium">EPS</span>
-                                <span class="text-2xl font-bold text-gray-900">${{ valuation.eps|default:"N/A" }}</span>
-                            </div>
-                            <div class="text-xs text-gray-500">Earnings Per Share</div>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-600 font-medium">Market Cap</span>
-                                <span class="text-lg font-bold text-gray-900">{{ valuation.market_cap|default:"N/A" }}</span>
-                            </div>
-                            <div class="text-xs text-gray-500">Market Capitalization</div>
-                        </div>
-                        
-                        {% if valuation.book_value %}
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-600 font-medium">Book Value</span>
-                                <span class="text-lg font-bold text-gray-900">${{ valuation.book_value }}</span>
-                            </div>
-                            <div class="text-xs text-gray-500">Per Share</div>
+                        {% endif %}
+                        {% if annual_dividend_income > 0 %}
+                        <div class="text-center">
+                            <div class="text-xs text-gray-600 mb-1">Annual Income</div>
+                            <div class="text-sm font-bold text-purple-600">${{ annual_dividend_income|floatformat:2 }}</div>
                         </div>
                         {% endif %}
                     </div>
-                    {% else %}
-                    <div class="text-center py-8">
-                        <div class="text-4xl mb-3">📈</div>
-                        <p class="text-gray-500">No valuation data available.</p>
+                    {% endif %}
+                    
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <a href="{% url 'dividend_history' stock.symbol %}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">View Dividend History →</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Earnings - Compact -->
+                {% if upcoming_earnings or recent_earnings %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-bold text-gray-900">Earnings</h2>
+                        <a href="{% url 'stock_earnings' symbol=stock.symbol %}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">View All →</a>
+                    </div>
+                    
+                    {% if next_earnings %}
+                    <div class="bg-blue-50 rounded-lg border border-blue-200 p-3 mb-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-sm font-medium text-gray-700">Next Earnings</div>
+                            {% if days_until_earnings is not None %}
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full {% if days_until_earnings == 0 %}bg-yellow-100 text-yellow-800{% elif days_until_earnings <= 7 %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if days_until_earnings == 0 %}Today{% elif days_until_earnings == 1 %}Tomorrow{% else %}{{ days_until_earnings }}d{% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="text-base font-bold text-gray-900">{{ next_earnings.earnings_date|date:"M d, Y" }}</div>
+                        {% if next_earnings.eps_estimate %}
+                        <div class="text-xs text-gray-600 mt-1">EPS Est: ${{ next_earnings.eps_estimate|floatformat:2 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if recent_earnings %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-2 py-1.5 text-left font-medium text-gray-700">Date</th>
+                                    <th class="px-2 py-1.5 text-left font-medium text-gray-700">EPS</th>
+                                    <th class="px-2 py-1.5 text-left font-medium text-gray-700">Revenue</th>
+                                    <th class="px-2 py-1.5 text-left font-medium text-gray-700">Surprise</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for item in recent_earnings|slice:":5" %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-2 py-1.5 font-medium text-gray-900">{{ item.earning.earnings_date|date:"M d, Y" }}</td>
+                                    <td class="px-2 py-1.5 text-gray-700">
+                                        {% if item.earning.eps_actual %}${{ item.earning.eps_actual|floatformat:2 }}{% else %}N/A{% endif %}
+                                    </td>
+                                    <td class="px-2 py-1.5 text-gray-700">
+                                        {% if item.earning.revenue_actual %}${{ item.earning.revenue_actual|intcomma }}{% else %}N/A{% endif %}
+                                    </td>
+                                    <td class="px-2 py-1.5">
+                                        {% if item.eps_surprise is not None %}
+                                            {% if item.eps_surprise > 0 %}
+                                                <span class="text-green-600 font-semibold">+{{ item.eps_surprise|floatformat:1 }}%</span>
+                                            {% elif item.eps_surprise < 0 %}
+                                                <span class="text-red-600 font-semibold">{{ item.eps_surprise|floatformat:1 }}%</span>
+                                            {% else %}
+                                                <span class="text-gray-600">0%</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-gray-400">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
 
-                <!-- Analyst Ratings -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Analyst Ratings</h2>
+                <!-- Valuation Metrics - Compact -->
+                {% if valuation %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">Valuation Metrics</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">P/E Ratio</div>
+                            <div class="text-base font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">EPS</div>
+                            <div class="text-base font-bold text-gray-900">${{ valuation.eps|default:"N/A" }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">Market Cap</div>
+                            <div class="text-sm font-bold text-gray-900">{{ valuation.market_cap|default:"N/A" }}</div>
+                        </div>
+                        {% if valuation.growth_3_year %}
+                        <div>
+                            <div class="text-xs text-gray-600 mb-1">3Y Growth</div>
+                            <div class="text-base font-bold text-gray-900">{{ valuation.growth_3_year|default:"N/A" }}%</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Analyst Ratings - Compact -->
+                {% if analyst_rating %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-bold text-gray-900">Analyst Ratings</h2>
                         {% if user.is_authenticated %}
                         <button onclick="updateRatingFromNews('{{ stock.symbol }}')" 
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
-                                title="Update rating based on recent positive news">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition"
+                                title="Update from news">
+                            <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
-                            Update from News
                         </button>
                         {% endif %}
                     </div>
                     
-                    {% if analyst_rating %}
-                    <div class="text-center mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                        <div class="text-4xl font-bold text-gray-900 mb-2">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
-                        <div class="text-sm text-gray-600 font-medium">Consensus Rating</div>
+                    <div class="text-center mb-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <div class="text-2xl font-bold text-gray-900">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
+                        <div class="text-xs text-gray-600 font-medium">Consensus</div>
                     </div>
                     
                     {% with total=analyst_rating.buy_count|add:analyst_rating.hold_count|add:analyst_rating.sell_count %}
-                    <div class="space-y-4">
+                    <div class="space-y-2">
                         <div>
-                            <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center justify-between mb-1 text-xs">
                                 <span class="text-green-600 font-semibold">Buy</span>
-                                <span class="text-lg font-bold text-green-600">{{ analyst_rating.buy_count|default:0 }}</span>
+                                <span class="font-bold text-green-600">{{ analyst_rating.buy_count|default:0 }}</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
                                 {% if total > 0 %}
-                                <div class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.buy_count total 100 %}%"></div>
-                                {% else %}
-                                <div class="bg-green-500 h-3 rounded-full" style="width: 0%"></div>
+                                <div class="bg-green-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.buy_count total 100 %}%"></div>
                                 {% endif %}
                             </div>
                         </div>
-                        
                         <div>
-                            <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center justify-between mb-1 text-xs">
                                 <span class="text-yellow-600 font-semibold">Hold</span>
-                                <span class="text-lg font-bold text-yellow-600">{{ analyst_rating.hold_count|default:0 }}</span>
+                                <span class="font-bold text-yellow-600">{{ analyst_rating.hold_count|default:0 }}</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
                                 {% if total > 0 %}
-                                <div class="bg-yellow-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.hold_count total 100 %}%"></div>
-                                {% else %}
-                                <div class="bg-yellow-500 h-3 rounded-full" style="width: 0%"></div>
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.hold_count total 100 %}%"></div>
                                 {% endif %}
                             </div>
                         </div>
-                        
                         <div>
-                            <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center justify-between mb-1 text-xs">
                                 <span class="text-red-600 font-semibold">Sell</span>
-                                <span class="text-lg font-bold text-red-600">{{ analyst_rating.sell_count|default:0 }}</span>
+                                <span class="font-bold text-red-600">{{ analyst_rating.sell_count|default:0 }}</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
                                 {% if total > 0 %}
-                                <div class="bg-red-500 h-3 rounded-full transition-all duration-500" style="width: {% widthratio analyst_rating.sell_count total 100 %}%"></div>
-                                {% else %}
-                                <div class="bg-red-500 h-3 rounded-full" style="width: 0%"></div>
+                                <div class="bg-red-500 h-2 rounded-full" style="width: {% widthratio analyst_rating.sell_count total 100 %}%"></div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% endwith %}
-                    {% else %}
-                    <div class="text-center py-8">
-                        <div class="text-4xl mb-3">🔍</div>
-                        <p class="text-gray-500">No analyst ratings available.</p>
-                    </div>
-                    {% endif %}
                 </div>
-
-                <!-- Stock Details -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Stock Details</h2>
-                    
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <span class="text-gray-600">Symbol</span>
-                            <span class="font-semibold text-gray-900">{{ stock.symbol }}</span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <span class="text-gray-600">Code</span>
-                            <span class="font-semibold text-gray-900">{{ stock.code }}</span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <span class="text-gray-600">ETF</span>
-                            <span class="font-semibold {% if stock.is_etf %}text-green-600{% else %}text-gray-900{% endif %}">
-                                {{ stock.is_etf|yesno:"Yes,No" }}
-                            </span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <span class="text-gray-600">TSX 60</span>
-                            <span class="font-semibold {% if stock.tsx60_member %}text-green-600{% else %}text-gray-900{% endif %}">
-                                {{ stock.tsx60_member|yesno:"Yes,No" }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
+                {% endif %}
+            </div>
+            
+            <!-- Right Column: Sidebar (1/3 width) -->
+            <div class="space-y-4">
                 <!-- Portfolio Holdings -->
                 {% if user.is_authenticated and in_portfolio %}
-                <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Holdings</h3>
-                    <div class="space-y-2 text-sm mb-4">
+                <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-4">
+                    <h3 class="text-base font-semibold text-gray-900 mb-3">Your Holdings</h3>
+                    <div class="space-y-2 text-sm mb-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shares:</span>
                             <span class="font-bold text-gray-900">{{ portfolio_item.shares_owned }}</span>
@@ -445,336 +388,149 @@
                             <span class="font-bold text-gray-900">${{ portfolio_item.average_cost|floatformat:2 }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Total Value:</span>
+                            <span class="text-gray-600">Value:</span>
                             <span class="font-bold text-green-600">
                                 {% if portfolio_total_value %}${{ portfolio_total_value|floatformat:2|intcomma }}{% else %}N/A{% endif %}
                             </span>
                         </div>
                     </div>
-                    <a href="{% url 'portfolio' %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition font-medium">
+                    <a href="{% url 'portfolio' %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-sm font-medium">
                         View Portfolio
                     </a>
                 </div>
                 {% endif %}
 
-                <!-- Dividend Analysis -->
-                {% if dividend and dividend.amount > 0 %}
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Dividend Analysis</h2>
-                    
-                    <div class="space-y-4">
-                        {% if dividend_growth_rate is not None %}
-                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                            <div class="text-sm text-gray-600 mb-2">Growth Rate (2Y)</div>
-                            <div class="text-2xl font-bold {% if dividend_growth_rate >= 0 %}text-green-700{% else %}text-red-600{% endif %}">
-                                {% if dividend_growth_rate >= 0 %}+{% endif %}{{ dividend_growth_rate|floatformat:1 }}%
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">Year-over-year change</div>
+                <!-- Stock Details - Compact -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 class="text-base font-bold text-gray-900 mb-3">Stock Details</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Symbol:</span>
+                            <span class="font-semibold text-gray-900">{{ stock.symbol }}</span>
                         </div>
-                        {% endif %}
-                        
-                        {% if dividend_consistency_score > 0 %}
-                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                            <div class="text-sm text-gray-600 mb-2">Consistency Score</div>
-                            <div class="text-2xl font-bold text-blue-700">{{ dividend_consistency_score|floatformat:0 }}/100</div>
-                            <div class="text-xs text-gray-500 mt-1">Payment regularity</div>
-                        </div>
-                        {% endif %}
-                        
-                        {% if annual_dividend_income > 0 %}
-                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                            <div class="text-sm text-gray-600 mb-2">Estimated Annual Income</div>
-                            <div class="text-xl font-bold text-purple-700">${{ annual_dividend_income|floatformat:2 }}</div>
-                            <div class="text-xs text-gray-500 mt-1">Per share</div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Portfolio Dividend Income -->
-                {% if user.is_authenticated and in_portfolio and portfolio_item and dividend_income_calculation %}
-                <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Your Dividend Income</h2>
-                    
-                    <div class="bg-white rounded-lg p-4 border border-green-200 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Shares Owned:</span>
-                            <span class="font-bold text-gray-900">{{ portfolio_item.shares_owned }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Per Payment:</span>
-                            <span class="font-bold text-green-700">${{ dividend_income_calculation.per_payment|floatformat:2 }}</span>
-                        </div>
-                        {% if dividend.frequency %}
-                        <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                            <span class="text-gray-700 font-semibold">Annual Income:</span>
-                            <span class="font-bold text-green-700 text-lg">${{ dividend_income_calculation.annual|floatformat:2 }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Earnings Information -->
-                {% if upcoming_earnings or recent_earnings %}
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Earnings</h2>
-                        <a href="{% url 'stock_earnings' symbol=stock.symbol %}" 
-                           class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            View All →
-                        </a>
-                    </div>
-                    
-                    <!-- Next Earnings -->
-                    {% if next_earnings %}
-                    <div class="bg-blue-50 rounded-lg border border-blue-200 p-4 mb-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="text-sm font-medium text-gray-700">Next Earnings</div>
-                            {% if days_until_earnings is not None %}
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full {% if days_until_earnings == 0 %}bg-yellow-100 text-yellow-800{% elif days_until_earnings <= 7 %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {% if days_until_earnings == 0 %}Today{% elif days_until_earnings == 1 %}Tomorrow{% else %}{{ days_until_earnings }} days{% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">ETF:</span>
+                            <span class="font-semibold {% if stock.is_etf %}text-green-600{% else %}text-gray-900{% endif %}">
+                                {{ stock.is_etf|yesno:"Yes,No" }}
                             </span>
-                            {% endif %}
                         </div>
-                        <div class="text-lg font-bold text-gray-900 mb-1">
-                            {{ next_earnings.earnings_date|date:"F d, Y" }}
-                        </div>
-                        {% if next_earnings.time %}
-                        <div class="text-sm text-gray-600">
-                            {% if next_earnings.time == 'bmo' %}Before Market Open
-                            {% elif next_earnings.time == 'amc' %}After Market Close
-                            {% elif next_earnings.time == 'dmh' %}During Market Hours
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        {% if next_earnings.eps_estimate %}
-                        <div class="mt-2 text-sm text-gray-600">
-                            <span class="font-medium">EPS Estimate:</span> ${{ next_earnings.eps_estimate|floatformat:2 }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Upcoming Earnings List -->
-                    {% if upcoming_earnings %}
-                    <div class="mb-6">
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Upcoming Earnings</h3>
-                        <div class="space-y-2">
-                            {% for earning in upcoming_earnings %}
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">{{ earning.earnings_date|date:"M d, Y" }}</div>
-                                    {% if earning.time %}
-                                    <div class="text-xs text-gray-600 mt-1">
-                                        {% if earning.time == 'bmo' %}Before Market Open
-                                        {% elif earning.time == 'amc' %}After Market Close
-                                        {% elif earning.time == 'dmh' %}During Market Hours
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% if earning.eps_estimate %}
-                                <div class="text-sm font-semibold text-gray-700">
-                                    EPS Est: ${{ earning.eps_estimate|floatformat:2 }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">TSX 60:</span>
+                            <span class="font-semibold {% if stock.tsx60_member %}text-green-600{% else %}text-gray-900{% endif %}">
+                                {{ stock.tsx60_member|yesno:"Yes,No" }}
+                            </span>
                         </div>
                     </div>
-                    {% endif %}
-                    
-                    <!-- Recent Earnings History -->
-                    {% if recent_earnings %}
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Recent Earnings History</h3>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Date</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">EPS</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Revenue</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Surprise</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    {% for item in recent_earnings %}
-                                    <tr>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900">
-                                            {{ item.earning.earnings_date|date:"M d, Y" }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-700">
-                                            {% if item.earning.eps_actual %}
-                                                ${{ item.earning.eps_actual|floatformat:2 }}
-                                                {% if item.earning.eps_estimate %}
-                                                    <span class="text-xs text-gray-500">(est: ${{ item.earning.eps_estimate|floatformat:2 }})</span>
-                                                {% endif %}
-                                            {% elif item.earning.eps_estimate %}
-                                                Est: ${{ item.earning.eps_estimate|floatformat:2 }}
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-700">
-                                            {% if item.earning.revenue_actual %}
-                                                ${{ item.earning.revenue_actual|intcomma }}
-                                                {% if item.earning.revenue_estimate %}
-                                                    <span class="text-xs text-gray-500">(est: ${{ item.earning.revenue_estimate|intcomma }})</span>
-                                                {% endif %}
-                                            {% elif item.earning.revenue_estimate %}
-                                                Est: ${{ item.earning.revenue_estimate|intcomma }}
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm">
-                                            {% if item.eps_surprise is not None %}
-                                                {% if item.eps_surprise > 0 %}
-                                                    <span class="text-green-600 font-semibold">+{{ item.eps_surprise|floatformat:1 }}%</span>
-                                                {% elif item.eps_surprise < 0 %}
-                                                    <span class="text-red-600 font-semibold">{{ item.eps_surprise|floatformat:1 }}%</span>
-                                                {% else %}
-                                                    <span class="text-gray-600">0%</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="text-gray-400">N/A</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
-                {% endif %}
 
-                <!-- Stock Tags -->
+                <!-- Quick Actions -->
                 {% if user.is_authenticated %}
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-900">Tags</h2>
-                        <a href="{% url 'manage_tags' %}" 
-                           class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            Manage Tags →
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 class="text-base font-bold text-gray-900 mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg transform hover:scale-105">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>{% if in_portfolio %}Update{% else %}Add to{% endif %} Portfolio</span>
+                        </button>
+                        <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 hover:from-purple-700 hover:via-pink-700 hover:to-red-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group">
+                            <span class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                            </svg>
+                            <span class="relative z-10">Share Stock</span>
+                        </button>
+                        <a href="{% url 'stock_comparison' %}?symbol1={{ stock.symbol }}&symbol2="
+                           class="flex items-center justify-center px-3 py-2 bg-white border border-indigo-500 text-indigo-700 hover:bg-indigo-50 rounded-lg transition text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Compare
                         </a>
+                        {% if dividend %}
+                        <a href="{% url 'manage_dividend_alerts' stock.symbol %}" 
+                           class="flex items-center justify-center px-3 py-2 bg-white border border-orange-500 text-orange-700 hover:bg-orange-50 rounded-lg transition text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            Dividend Alert
+                        </a>
+                        {% endif %}
                     </div>
-                    
-                    <!-- Current Tags -->
-                    <div class="mb-4">
-                        <div class="flex flex-wrap gap-2 mb-3" id="stockTagsContainer">
-                            {% for tag in user_tags %}
-                            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium text-white" 
-                                  style="background-color: {{ tag.color }};">
-                                {{ tag.name }}
-                                <button onclick="removeTag({{ tag.id }}, '{{ stock.symbol }}')" 
-                                        class="ml-2 hover:bg-white/20 rounded-full p-0.5 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
-                            </span>
-                            {% empty %}
-                            <p class="text-gray-500 text-sm">No tags assigned</p>
-                            {% endfor %}
-                        </div>
+                </div>
+                {% endif %}
+
+                <!-- Stock Tags - Compact -->
+                {% if user.is_authenticated %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-gray-900">Tags</h3>
+                        <a href="{% url 'manage_tags' %}" class="text-xs text-blue-600 hover:text-blue-700">Manage →</a>
                     </div>
-                    
-                    <!-- Add Tag -->
+                    <div class="flex flex-wrap gap-1.5 mb-2" id="stockTagsContainer">
+                        {% for tag in user_tags %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white" 
+                              style="background-color: {{ tag.color }};">
+                            {{ tag.name }}
+                            <button onclick="removeTag({{ tag.id }}, '{{ stock.symbol }}')" 
+                                    class="ml-1.5 hover:bg-white/20 rounded-full p-0.5 transition">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </span>
+                        {% empty %}
+                        <p class="text-xs text-gray-500">No tags</p>
+                        {% endfor %}
+                    </div>
                     {% if available_tags %}
-                    <div class="border-t border-gray-200 pt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Add Tag</label>
-                        <div class="flex flex-wrap gap-2">
+                    <div class="pt-2 border-t border-gray-200">
+                        <div class="flex flex-wrap gap-1">
                             {% for tag in available_tags %}
                             {% if tag not in user_tags %}
                             <button onclick="addTag({{ tag.id }}, '{{ stock.symbol }}')" 
-                                    class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border-2 hover:shadow-md transition"
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border-2 hover:shadow-sm transition"
                                     style="border-color: {{ tag.color }}; color: {{ tag.color }};">
                                 + {{ tag.name }}
                             </button>
                             {% endif %}
                             {% endfor %}
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">
-                            <a href="{% url 'manage_tags' %}" class="text-blue-600 hover:text-blue-700">Create new tag</a>
-                        </p>
-                    </div>
-                    {% else %}
-                    <div class="border-t border-gray-200 pt-4">
-                        <p class="text-sm text-gray-600 mb-2">No tags available. Create your first tag to organize stocks.</p>
-                        <a href="{% url 'manage_tags' %}" 
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
-                            Create Tag
-                        </a>
                     </div>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                <!-- Stock Notes -->
+                <!-- Stock Notes - Compact -->
                 {% if user.is_authenticated %}
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">My Notes</h2>
-                        <a href="{% url 'create_stock_note' stock.symbol %}" 
-                           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition text-sm">
-                            + Add
-                        </a>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-gray-900">My Notes</h3>
+                        <a href="{% url 'create_stock_note' stock.symbol %}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">+ Add</a>
                     </div>
-                    
                     {% if user_notes %}
-                    <div class="space-y-4">
-                        {% for note in user_notes %}
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">
-                                        {{ note.get_note_type_display }}
-                                    </span>
-                                    {% if note.is_private %}
-                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-semibold">
-                                        🔒 Private
-                                    </span>
-                                    {% endif %}
-                                    <span class="text-xs text-gray-500">{{ note.created_at|date:"M d, Y" }}</span>
-                                </div>
-                                <a href="{% url 'edit_stock_note' note.id %}" 
-                                   class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
-                                    Edit
-                                </a>
-                            </div>
+                    <div class="space-y-2">
+                        {% for note in user_notes|slice:":3" %}
+                        <div class="bg-gray-50 rounded p-2 border border-gray-200">
                             {% if note.title %}
-                            <h4 class="font-bold text-gray-900 mb-2">{{ note.title }}</h4>
+                            <h4 class="font-semibold text-gray-900 text-xs mb-1">{{ note.title }}</h4>
                             {% endif %}
-                            <p class="text-gray-700 text-sm mb-3 whitespace-pre-wrap line-clamp-3">{{ note.content }}</p>
-                            {% if note.get_tags_list %}
-                            <div class="flex flex-wrap gap-1">
-                                {% for tag in note.get_tags_list %}
-                                <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">
-                                    #{{ tag }}
-                                </span>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
+                            <p class="text-xs text-gray-700 line-clamp-2">{{ note.content }}</p>
+                            <div class="text-xs text-gray-500 mt-1">{{ note.created_at|date:"M d" }}</div>
                         </div>
                         {% endfor %}
                     </div>
-                    <div class="mt-4 text-center">
-                        <a href="{% url 'stock_notes_by_symbol' stock.symbol %}" 
-                           class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                            View All Notes →
-                        </a>
-                    </div>
+                    {% if user_notes|length > 3 %}
+                    <a href="{% url 'stock_notes_by_symbol' stock.symbol %}" class="block text-center text-xs text-blue-600 hover:text-blue-700 mt-2">View All →</a>
+                    {% endif %}
                     {% else %}
-                    <div class="text-center py-8">
-                        <div class="text-4xl mb-3">📝</div>
-                        <p class="text-gray-600 mb-4">No notes yet. Start tracking your research!</p>
+                    <div class="text-center py-4">
+                        <p class="text-xs text-gray-500 mb-2">No notes yet</p>
                         <a href="{% url 'create_stock_note' stock.symbol %}" 
-                           class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                           class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition">
                             Create First Note
                         </a>
                     </div>
@@ -791,11 +547,8 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mx-4 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-gray-900">{% if in_portfolio %}Update{% else %}Add{% endif %} <span id="modalStockSymbol"></span> to Portfolio</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition">
-                &times;
-            </button>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl transition">&times;</button>
         </div>
-        
         <form id="portfolioForm" method="post" action="">
             {% csrf_token %}
             <div class="space-y-4">
@@ -806,7 +559,6 @@
                            placeholder="Number of shares" min="1" step="1"
                            value="{% if portfolio_item %}{{ portfolio_item.shares_owned }}{% endif %}">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Average Cost ($)</label>
                     <input type="number" name="average_cost" step="0.01" required 
@@ -814,7 +566,6 @@
                            placeholder="Cost per share" min="0.01"
                            value="{% if portfolio_item %}{{ portfolio_item.average_cost }}{% endif %}">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
                     <textarea name="notes" 
@@ -822,7 +573,6 @@
                               placeholder="Any notes about this investment" rows="3">{% if portfolio_item %}{{ portfolio_item.notes }}{% endif %}</textarea>
                 </div>
             </div>
-            
             <div class="mt-6 flex space-x-3">
                 <button type="button" onclick="closeModal()"
                         class="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition font-medium">
@@ -851,7 +601,6 @@ function closeModal() {
     document.body.style.overflow = 'auto';
 }
 
-// Close modal when clicking outside
 document.addEventListener('click', function(event) {
     const modal = document.getElementById('portfolioModal');
     if (modal && event.target === modal) {
@@ -859,21 +608,17 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Close with Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeModal();
     }
 });
 
-// Handle form submission
 document.getElementById('portfolioForm').addEventListener('submit', function(e) {
     e.preventDefault();
-
     const sharesInput = this.querySelector('input[name="shares_owned"]');
     const costInput = this.querySelector('input[name="average_cost"]');
     
-    // Validation
     if (!sharesInput.value || Number(sharesInput.value) < 1) {
         if (typeof Toast !== 'undefined') {
             Toast.error('Shares Owned must be at least 1.');
@@ -936,12 +681,9 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
 function toggleWatchlist(stockId) {
     const watchlistBtn = document.getElementById('watchlistBtn');
     const watchlistIcon = document.getElementById('watchlistIcon');
-    const watchlistText = document.getElementById('watchlistText');
     
-    // Disable button during request
     watchlistBtn.disabled = true;
     watchlistBtn.style.opacity = '0.6';
-    watchlistBtn.style.cursor = 'not-allowed';
     
     fetch(`/watchlist/toggle/${stockId}/`, {
         method: 'POST',
@@ -961,52 +703,37 @@ function toggleWatchlist(stockId) {
     })
     .then(data => {
         if (data.status === 'added') {
-            watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-            watchlistText.textContent = 'In Watchlist';
-            watchlistBtn.classList.remove('border-gray-300', 'text-gray-700', 'bg-white');
-            watchlistBtn.classList.add('border-green-600', 'text-green-700', 'bg-green-50');
-            
+            watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+            const watchlistText = document.getElementById('watchlistText');
+            if (watchlistText) watchlistText.textContent = 'In Watchlist';
+            watchlistBtn.classList.remove('bg-white', 'border-2', 'border-green-500', 'text-green-700', 'hover:bg-green-50');
+            watchlistBtn.classList.add('bg-gradient-to-r', 'from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700', 'text-white', 'shadow-md', 'hover:shadow-lg');
             if (typeof Toast !== 'undefined') {
                 Toast.success(data.message || 'Added to watchlist!');
-            } else {
-                alert(data.message || 'Added to watchlist!');
             }
         } else if (data.status === 'removed') {
-            watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            watchlistText.textContent = 'Add to Watchlist';
-            watchlistBtn.classList.remove('border-green-600', 'text-green-700', 'bg-green-50');
-            watchlistBtn.classList.add('border-gray-300', 'text-gray-700', 'bg-white');
-            
+            watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+            const watchlistText = document.getElementById('watchlistText');
+            if (watchlistText) watchlistText.textContent = 'Watchlist';
+            watchlistBtn.classList.remove('bg-gradient-to-r', 'from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700', 'text-white', 'shadow-md', 'hover:shadow-lg');
+            watchlistBtn.classList.add('bg-white', 'border-2', 'border-green-500', 'text-green-700', 'hover:bg-green-50', 'shadow-sm', 'hover:shadow-md');
             if (typeof Toast !== 'undefined') {
                 Toast.success(data.message || 'Removed from watchlist!');
-            } else {
-                alert(data.message || 'Removed from watchlist!');
-            }
-        } else if (data.status === 'error') {
-            if (typeof Toast !== 'undefined') {
-                Toast.error(data.message || 'Error updating watchlist.');
-            } else {
-                alert(data.message || 'Error updating watchlist.');
             }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        const errorMsg = error.message || 'Error updating watchlist. Please try again.';
         if (typeof Toast !== 'undefined') {
-            Toast.error(errorMsg);
-        } else {
-            alert(errorMsg);
+            Toast.error('Error updating watchlist. Please try again.');
         }
     })
     .finally(() => {
         watchlistBtn.disabled = false;
         watchlistBtn.style.opacity = '1';
-        watchlistBtn.style.cursor = 'pointer';
     });
 }
 
-// Helper function to get CSRF token
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -1022,53 +749,9 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Share modal function
-function openShareModal(symbol, companyName, price, yieldPercent) {
-    const baseUrl = window.location.origin;
-    const shareUrl = `${baseUrl}/stocks/${symbol}/`;
-    const shareTitle = `${symbol} - ${companyName}`;
-    
-    let shareText = `Check out ${symbol} (${companyName})`;
-    if (price) {
-        shareText += ` - $${parseFloat(price).toFixed(2)}`;
-    }
-    if (yieldPercent) {
-        shareText += ` | ${parseFloat(yieldPercent).toFixed(2)}% dividend yield`;
-    }
-    shareText += ` on StockFolio`;
-    
-    // Update modal content
-    const shareInfo = document.getElementById('shareStockInfo');
-    const shareInput = document.getElementById('shareLinkInput');
-    if (shareInfo) shareInfo.textContent = shareText;
-    if (shareInput) shareInput.value = shareUrl;
-    
-    // Store share data globally
-    window.shareData = {
-        url: shareUrl,
-        title: shareTitle,
-        text: shareText
-    };
-    
-    // Show modal
-    const modal = document.getElementById('shareModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeShareModal() {
-    const modal = document.getElementById('shareModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-}
-
-// Tag management functions
+// Tag Functions
 function addTag(tagId, symbol) {
-    fetch(`/tags/${tagId}/toggle/${symbol}/`, {
+    fetch(`/tags/toggle/${tagId}/${symbol}/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -1078,20 +761,20 @@ function addTag(tagId, symbol) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'added') {
+        if (data.status === 'success') {
             location.reload();
-        } else {
-            alert(data.message || 'Error adding tag');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error adding tag');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error adding tag.');
+        }
     });
 }
 
 function removeTag(tagId, symbol) {
-    fetch(`/tags/${tagId}/toggle/${symbol}/`, {
+    fetch(`/tags/toggle/${tagId}/${symbol}/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -1101,32 +784,23 @@ function removeTag(tagId, symbol) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'removed') {
+        if (data.status === 'success') {
             location.reload();
-        } else {
-            alert(data.message || 'Error removing tag');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error removing tag');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error removing tag.');
+        }
     });
 }
 
-// Update analyst rating from news
+// Rating Update Function
 function updateRatingFromNews(symbol) {
-    if (!confirm('Update analyst rating based on recent positive news? This will analyze news from the last 7 days.')) {
-        return;
-    }
-    
-    const button = event.target.closest('button');
-    const originalText = button.innerHTML;
-    button.disabled = true;
-    button.innerHTML = '<svg class="animate-spin w-4 h-4 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 4.373 0 8h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Updating...';
-    
-    const formData = new FormData();
-    formData.append('days', '7');
-    formData.append('min_news', '2');
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
     
     fetch(`/stock/${symbol}/update-rating-from-news/`, {
         method: 'POST',
@@ -1134,27 +808,30 @@ function updateRatingFromNews(symbol) {
             'X-CSRFToken': getCookie('csrftoken'),
             'X-Requested-With': 'XMLHttpRequest',
         },
-        body: formData,
         credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
-        button.disabled = false;
-        button.innerHTML = originalText;
-        
         if (data.status === 'success') {
-            alert(data.message);
-            // Reload page to show updated rating
-            location.reload();
+            if (typeof Toast !== 'undefined') {
+                Toast.success(data.message || 'Rating updated successfully!');
+            }
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert(data.message || 'Error updating rating');
+            if (typeof Toast !== 'undefined') {
+                Toast.error(data.message || 'Error updating rating.');
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        button.disabled = false;
-        button.innerHTML = originalText;
-        alert('Error updating rating from news');
+        if (typeof Toast !== 'undefined') {
+            Toast.error('Error updating rating. Please try again.');
+        }
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
     });
 }
 </script>
