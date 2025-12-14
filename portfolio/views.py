@@ -1447,6 +1447,7 @@ def stock_detail(request, symbol):
             Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='latest_dividends'),
             Prefetch('valuations', queryset=ValuationMetric.objects.order_by('-metric_date'), to_attr='latest_valuations'),
             Prefetch('analyst_ratings', queryset=AnalystRating.objects.order_by('-rating_date'), to_attr='latest_ratings'),
+            Prefetch('earnings', queryset=Earnings.objects.order_by('-earnings_date'), to_attr='all_earnings'),
         ),
         symbol=symbol.upper()
     )
@@ -1593,6 +1594,40 @@ def stock_detail(request, symbol):
                         payments_per_year = (recent_count * 365) / days_span
                         annual_dividend_income = float(dividend.amount) * payments_per_year
     
+    # Get earnings data - upcoming and recent
+    upcoming_earnings = Earnings.objects.filter(
+        stock=stock,
+        earnings_date__gte=today
+    ).order_by('earnings_date')[:3]  # Next 3 upcoming earnings
+    
+    recent_earnings_list = Earnings.objects.filter(
+        stock=stock,
+        earnings_date__lt=today
+    ).order_by('-earnings_date')[:8]  # Last 8 quarters
+    
+    # Calculate surprise percentages for recent earnings
+    recent_earnings = []
+    for earning in recent_earnings_list:
+        eps_surprise = None
+        if earning.eps_actual and earning.eps_estimate and earning.eps_estimate != 0:
+            eps_surprise = ((float(earning.eps_actual) - float(earning.eps_estimate)) / abs(float(earning.eps_estimate))) * 100
+        
+        revenue_surprise = None
+        if earning.revenue_actual and earning.revenue_estimate and earning.revenue_estimate != 0:
+            revenue_surprise = ((float(earning.revenue_actual) - float(earning.revenue_estimate)) / abs(float(earning.revenue_estimate))) * 100
+        
+        recent_earnings.append({
+            'earning': earning,
+            'eps_surprise': eps_surprise,
+            'revenue_surprise': revenue_surprise,
+        })
+    
+    # Calculate days until next earnings
+    next_earnings = upcoming_earnings.first() if upcoming_earnings.exists() else None
+    days_until_earnings = None
+    if next_earnings:
+        days_until_earnings = (next_earnings.earnings_date - today).days
+    
     context = {
         'stock': stock,
         'latest_price': latest_price,
@@ -1612,6 +1647,10 @@ def stock_detail(request, symbol):
         'dividend_consistency_score': dividend_consistency_score,
         'annual_dividend_income': annual_dividend_income,
         'today': today,
+        'upcoming_earnings': upcoming_earnings,
+        'recent_earnings': recent_earnings,
+        'next_earnings': next_earnings,
+        'days_until_earnings': days_until_earnings,
     }
     
     return render(request, 'stock_detail.html', context)
