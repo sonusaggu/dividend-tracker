@@ -12,7 +12,8 @@ from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db import DatabaseError
 from django.db.utils import ProgrammingError, OperationalError
 from django.conf import settings
-from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import cache_control, cache_page
+from django.core.cache import cache
 from datetime import datetime, timedelta, date
 from django.core.management import call_command
 import subprocess
@@ -732,6 +733,7 @@ def resend_verification_email(request):
         messages.error(request, 'An error occurred. Please try again.')
         return redirect('dashboard') 
 
+@cache_control(max_age=600)  # Cache for 10 minutes
 def home_view(request):
     """Home page with upcoming dividends - Fully optimized"""
     if request.user.is_authenticated:
@@ -799,16 +801,21 @@ def home_view(request):
     }
     return render(request, 'home.html', context)
 
+@cache_control(max_age=300)  # Cache for 5 minutes
 def all_stocks_view(request):
     """Optimized: View all stocks with pagination, search, sector filtering, and sorting"""
 
-    # --- 1️⃣ Fetch unique sectors once
-    sectors = list(
-        Stock.objects.exclude(sector='')
-        .values_list('sector', flat=True)
-        .distinct()
-        .order_by('sector')
-    )
+    # --- 1️⃣ Fetch unique sectors once (cache this expensive query)
+    cache_key_sectors = 'all_stocks_sectors'
+    sectors = cache.get(cache_key_sectors)
+    if sectors is None:
+        sectors = list(
+            Stock.objects.exclude(sector='')
+            .values_list('sector', flat=True)
+            .distinct()
+            .order_by('sector')
+        )
+        cache.set(cache_key_sectors, sectors, 3600)  # Cache for 1 hour
 
     # --- 2️⃣ Validate query parameters
     search_query = request.GET.get('search', '').strip()
@@ -1434,6 +1441,7 @@ def stock_search_autocomplete(request):
     return JsonResponse({'results': results})
 
 
+@cache_control(max_age=180)  # Cache for 3 minutes (stock data changes frequently)
 def stock_detail(request, symbol):
     """Detailed view for a single stock - Optimized with single query"""
     # Validate symbol format
@@ -1535,32 +1543,40 @@ def stock_detail(request, symbol):
         watchlist_group = None
     
     # Calculate dividend growth and consistency metrics
+    # Optimize: Only fetch recent dividends needed for calculations (last 2 years max)
     today = timezone.now().date()
-    all_dividends = Dividend.objects.filter(stock=stock, ex_dividend_date__isnull=False).order_by('ex_dividend_date')
+    two_years_ago = today - timedelta(days=730)
+    recent_dividends = Dividend.objects.filter(
+        stock=stock, 
+        ex_dividend_date__isnull=False,
+        ex_dividend_date__gte=two_years_ago
+    ).order_by('ex_dividend_date')
     
     dividend_growth_rate = None
     dividend_consistency_score = 0
     annual_dividend_income = 0
     
-    if all_dividends.exists() and dividend and dividend.amount:
+    # Convert to list once to avoid multiple queries
+    recent_dividends_list = list(recent_dividends) if recent_dividends.exists() else []
+    
+    if recent_dividends_list and dividend and dividend.amount:
         # Calculate dividend growth rate (last 2 years)
-        two_years_ago = today - timedelta(days=730)
-        recent_dividends = all_dividends.filter(ex_dividend_date__gte=two_years_ago)
-        
-        if recent_dividends.count() >= 4:  # Need at least 4 dividends to calculate growth
-            first_year_dividends = recent_dividends[:recent_dividends.count()//2]
-            second_year_dividends = recent_dividends[recent_dividends.count()//2:]
+        # recent_dividends already filtered above
+        if len(recent_dividends_list) >= 4:  # Need at least 4 dividends to calculate growth
+            mid_point = len(recent_dividends_list) // 2
+            first_year_dividends = recent_dividends_list[:mid_point]
+            second_year_dividends = recent_dividends_list[mid_point:]
             
-            if first_year_dividends.exists() and second_year_dividends.exists():
-                first_year_avg = sum(float(d.amount) for d in first_year_dividends) / first_year_dividends.count()
-                second_year_avg = sum(float(d.amount) for d in second_year_dividends) / second_year_dividends.count()
+            if first_year_dividends and second_year_dividends:
+                first_year_avg = sum(float(d.amount) for d in first_year_dividends) / len(first_year_dividends)
+                second_year_avg = sum(float(d.amount) for d in second_year_dividends) / len(second_year_dividends)
                 
                 if first_year_avg > 0:
                     dividend_growth_rate = ((second_year_avg - first_year_avg) / first_year_avg) * 100
         
         # Calculate consistency score (how regular are the payments)
-        if recent_dividends.count() >= 2:
-            dates = [d.ex_dividend_date for d in recent_dividends if d.ex_dividend_date]
+        if len(recent_dividends_list) >= 2:
+            dates = [d.ex_dividend_date for d in recent_dividends_list if d.ex_dividend_date]
             if len(dates) >= 2:
                 # Check if dividends are roughly evenly spaced
                 intervals = []
@@ -1587,25 +1603,37 @@ def stock_detail(request, symbol):
                 annual_dividend_income = float(dividend.amount)
             else:
                 # Estimate based on recent frequency
-                recent_count = recent_dividends.count()
-                if recent_count > 0:
-                    days_span = (recent_dividends.last().ex_dividend_date - recent_dividends.first().ex_dividend_date).days
+                if recent_dividends_list:
+                    days_span = (recent_dividends_list[-1].ex_dividend_date - recent_dividends_list[0].ex_dividend_date).days
                     if days_span > 0:
-                        payments_per_year = (recent_count * 365) / days_span
+                        payments_per_year = (len(recent_dividends_list) * 365) / days_span
                         annual_dividend_income = float(dividend.amount) * payments_per_year
     
-    # Get earnings data - upcoming and recent
-    upcoming_earnings = Earnings.objects.filter(
-        stock=stock,
-        earnings_date__gte=today
-    ).order_by('earnings_date')[:3]  # Next 3 upcoming earnings
+    # Get earnings data - upcoming and recent (cache key based on stock and date)
+    cache_key_upcoming = f'earnings_upcoming_{stock.id}_{today}'
+    cache_key_recent = f'earnings_recent_{stock.id}_{today}'
     
-    recent_earnings_list = Earnings.objects.filter(
-        stock=stock,
-        earnings_date__lt=today
-    ).order_by('-earnings_date')[:8]  # Last 8 quarters
+    upcoming_earnings = cache.get(cache_key_upcoming)
+    if upcoming_earnings is None:
+        upcoming_earnings = Earnings.objects.filter(
+            stock=stock,
+            earnings_date__gte=today
+        ).order_by('earnings_date')[:3]  # Next 3 upcoming earnings
+        cache.set(cache_key_upcoming, list(upcoming_earnings), 3600)  # Cache for 1 hour
+    
+    recent_earnings_list = cache.get(cache_key_recent)
+    if recent_earnings_list is None:
+        recent_earnings_list = Earnings.objects.filter(
+            stock=stock,
+            earnings_date__lt=today
+        ).order_by('-earnings_date')[:8]  # Last 8 quarters
+        cache.set(cache_key_recent, list(recent_earnings_list), 3600)  # Cache for 1 hour
     
     # Calculate surprise percentages for recent earnings
+    # Convert to list if it's a queryset
+    if hasattr(recent_earnings_list, '__iter__') and not isinstance(recent_earnings_list, list):
+        recent_earnings_list = list(recent_earnings_list)
+    
     recent_earnings = []
     for earning in recent_earnings_list:
         eps_surprise = None
@@ -1623,7 +1651,11 @@ def stock_detail(request, symbol):
         })
     
     # Calculate days until next earnings
-    next_earnings = upcoming_earnings.first() if upcoming_earnings.exists() else None
+    # Handle both queryset and list
+    if isinstance(upcoming_earnings, list):
+        next_earnings = upcoming_earnings[0] if upcoming_earnings else None
+    else:
+        next_earnings = upcoming_earnings.first() if upcoming_earnings.exists() else None
     days_until_earnings = None
     if next_earnings:
         days_until_earnings = (next_earnings.earnings_date - today).days
@@ -2224,6 +2256,7 @@ def add_to_portfolio(request, symbol):
         }, status=500)
 
 @login_required
+@cache_control(max_age=120, private=True)  # Cache for 2 minutes (user-specific)
 def watchlist_view(request):
     """View user's watchlist - Optimized with prefetch_related and annotations"""
     try:
@@ -2381,6 +2414,7 @@ def watchlist_view(request):
         return redirect('dashboard')
 
 @login_required
+@cache_control(max_age=120, private=True)  # Cache for 2 minutes (user-specific)
 def portfolio_view(request):
     """View user's portfolio - Optimized with annotations to avoid N+1 queries"""
     try:
@@ -3761,6 +3795,7 @@ def drip_calculator(request):
         })
 
 @login_required
+@cache_control(max_age=120, private=True)  # Cache for 2 minutes (user-specific data)
 def dashboard(request):
     """User dashboard with portfolio overview - Optimized with annotations"""
     try:

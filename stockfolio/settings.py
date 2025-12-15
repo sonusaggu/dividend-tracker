@@ -85,7 +85,7 @@ if database_url:
     # Use DATABASE_URL if available (Render production)
     DATABASES = {
         'default': dj_database_url.config(
-            conn_max_age=0,
+            conn_max_age=600,  # Keep connections alive for 10 minutes (reduces connection overhead)
             ssl_require=not DEBUG
         )
     }
@@ -99,7 +99,7 @@ else:
             'PASSWORD': config('DB_PASSWORD', default='stockfolio_pass'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
-             'CONN_MAX_AGE': 0,  # Reduced connection lifetime
+            'CONN_MAX_AGE': 600,  # Keep connections alive for 10 minutes (reduces connection overhead)
             'OPTIONS': {
                 'connect_timeout': 10,
                 'keepalives': 1,
