@@ -741,7 +741,9 @@ def home_view(request):
     
     try:
         today = timezone.now().date()
-        dividends_with_data = StockService.get_upcoming_dividends(days=30, limit=12)
+        # Limit to 10 dividends for non-authenticated users (preview)
+        limit = 10  # Always show 10 for home page preview
+        dividends_with_data = StockService.get_upcoming_dividends(days=30, limit=limit)
         
         # Prepare data efficiently
         upcoming_dividends = []
@@ -924,9 +926,17 @@ def all_stocks_view(request):
     }
     stocks = stocks.order_by(*sort_map.get(sort_by, ['symbol']))
 
-    # --- 8️⃣ Pagination (handles bad pages gracefully)
-    paginator = Paginator(stocks, 24)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
+    # --- 8️⃣ Restrict to 10 stocks for non-authenticated users
+    if not request.user.is_authenticated:
+        stocks = stocks[:10]  # Limit to 10 stocks for non-registered users
+        # Convert queryset to list and create paginator
+        stocks_list = list(stocks)
+        paginator = Paginator(stocks_list, 10)
+        page_obj = paginator.get_page(1)  # Always show page 1 for non-authenticated
+    else:
+        # --- 8️⃣ Pagination (handles bad pages gracefully)
+        paginator = Paginator(stocks, 24)
+        page_obj = paginator.get_page(request.GET.get('page', 1))
 
     # --- 9️⃣ Prepare context list — already annotated, no extra DB calls
     today = timezone.now().date()
