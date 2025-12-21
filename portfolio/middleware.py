@@ -142,6 +142,14 @@ class WebsiteMetricsMiddleware(MiddlewareMixin):
             if 'text/html' not in content_type and response.status_code != 200:
                 return response
             
+            # Skip tracking for static files and admin (already excluded but double-check)
+            if request.path.startswith('/static/') or request.path.startswith('/admin/'):
+                return response
+            
+            # Skip tracking for API endpoints to reduce overhead
+            if request.path.startswith('/api/') or request.path.endswith('.json'):
+                return response
+            
             # Get user information
             user = None if isinstance(request.user, AnonymousUser) else request.user
             # Get session key safely - may not exist for all requests

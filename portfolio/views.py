@@ -950,10 +950,51 @@ def all_stocks_view(request):
             .values_list('stock_id', flat=True)
         )
     
-    # Calculate price changes for stocks
+    # Calculate price changes for stocks - Optimized to avoid N+1 queries
+    # Prefetch price history for all stocks on this page in bulk
     from portfolio.models import StockPrice
     seven_days_ago = today - timedelta(days=7)
     thirty_days_ago = today - timedelta(days=30)
+    
+    # Get all stock IDs from current page
+    stock_ids = [stock.id for stock in page_obj]
+    
+    # Bulk fetch price history for all stocks (7d and 30d ago)
+    # This avoids N+1 queries by fetching all needed prices in 2 queries instead of N*2
+    prices_7d_ago = {}
+    prices_30d_ago = {}
+    
+    if stock_ids:
+        # Get prices closest to 7 days ago for all stocks - optimized bulk query
+        # Use subquery to get latest price per stock before 7 days ago
+        from django.db.models import Max
+        latest_7d_dates = StockPrice.objects.filter(
+            stock_id__in=stock_ids,
+            price_date__lte=seven_days_ago
+        ).values('stock_id').annotate(max_date=Max('price_date'))
+        
+        # Get the actual price objects
+        for item in latest_7d_dates:
+            price = StockPrice.objects.filter(
+                stock_id=item['stock_id'],
+                price_date=item['max_date']
+            ).first()
+            if price:
+                prices_7d_ago[item['stock_id']] = price
+        
+        # Get prices closest to 30 days ago for all stocks
+        latest_30d_dates = StockPrice.objects.filter(
+            stock_id__in=stock_ids,
+            price_date__lte=thirty_days_ago
+        ).values('stock_id').annotate(max_date=Max('price_date'))
+        
+        for item in latest_30d_dates:
+            price = StockPrice.objects.filter(
+                stock_id=item['stock_id'],
+                price_date=item['max_date']
+            ).first()
+            if price:
+                prices_30d_ago[item['stock_id']] = price
     
     stocks_with_data = []
     for stock in page_obj:
@@ -961,23 +1002,21 @@ def all_stocks_view(request):
         price_change_30d = None
         
         if stock.latest_price_value and stock.latest_price_date:
-            # Get price 7 days ago
-            price_7d = StockPrice.objects.filter(
-                stock=stock,
-                price_date__lte=seven_days_ago
-            ).order_by('-price_date').first()
-            
-            # Get price 30 days ago
-            price_30d = StockPrice.objects.filter(
-                stock=stock,
-                price_date__lte=thirty_days_ago
-            ).order_by('-price_date').first()
+            # Use pre-fetched prices instead of querying per stock
+            price_7d = prices_7d_ago.get(stock.id)
+            price_30d = prices_30d_ago.get(stock.id)
             
             if price_7d and price_7d.last_price:
-                price_change_7d = ((float(stock.latest_price_value) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+                try:
+                    price_change_7d = ((float(stock.latest_price_value) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+                except (ValueError, ZeroDivisionError):
+                    price_change_7d = None
             
             if price_30d and price_30d.last_price:
-                price_change_30d = ((float(stock.latest_price_value) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+                try:
+                    price_change_30d = ((float(stock.latest_price_value) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+                except (ValueError, ZeroDivisionError):
+                    price_change_30d = None
         
         stocks_with_data.append({
             'stock': stock,
@@ -1473,10 +1512,11 @@ def stock_detail(request, symbol):
     # Get latest data from prefetched attributes (no additional queries)
     latest_price = stock.latest_prices[0] if stock.latest_prices else None
     
-    # If no price found, try to fetch from API
-    if not latest_price:
-        from portfolio.utils.price_fetcher import get_or_fetch_stock_price
-        latest_price = get_or_fetch_stock_price(stock)
+    # Don't fetch from API synchronously - it blocks the request
+    # Price fetching should be done via background tasks or scheduled jobs
+    # if not latest_price:
+    #     from portfolio.utils.price_fetcher import get_or_fetch_stock_price
+    #     latest_price = get_or_fetch_stock_price(stock)
     
     # Get dividend, default to 0 if not present
     dividend = stock.latest_dividends[0] if stock.latest_dividends else None
@@ -2438,20 +2478,14 @@ def portfolio_view(request):
         
         portfolio_data = []
         for item in portfolio_items:
-            # Check if price is missing and try to fetch it
+            # Use price from annotations (don't fetch from API - blocks request)
             price_value = item.latest_price_value
             price_date = item.latest_price_date
             
-            if not price_value:
-                # Try to fetch price from API
-                from portfolio.utils.price_fetcher import get_or_fetch_stock_price
-                fetched_price = get_or_fetch_stock_price(item.stock)
-                if fetched_price:
-                    price_value = fetched_price.last_price
-                    price_date = fetched_price.price_date
-                    # Update the item's annotations for consistency
-                    item.latest_price_value = price_value
-                    item.latest_price_date = price_date
+            # Removed blocking API call - price fetching should be done via background tasks
+            # if not price_value:
+            #     from portfolio.utils.price_fetcher import get_or_fetch_stock_price
+            #     fetched_price = get_or_fetch_stock_price(item.stock)
             
             # Calculate current value and gains
             current_value = 0

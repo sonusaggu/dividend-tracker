@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'portfolio.middleware.SecurityHeadersMiddleware',  # Add security headers
     'portfolio.middleware.DatabaseErrorHandlerMiddleware',  # Handle database errors gracefully
-    'portfolio.middleware.WebsiteMetricsMiddleware',  # Track website metrics
+    # 'portfolio.middleware.WebsiteMetricsMiddleware',  # Disabled for performance - can be re-enabled if needed
 ]
 
 # Main URL config
