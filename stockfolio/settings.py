@@ -137,6 +137,22 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if DEBUG else []
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For production deployment
 
+# WhiteNoise configuration for serving static files in production
+# When DEBUG=False, WhiteNoise will serve static files including admin static files
+# IMPORTANT: Run 'python manage.py collectstatic --noinput' after setting DEBUG=False
+if not DEBUG:
+    # Use WhiteNoise for static file serving in production
+    # CompressedManifestStaticFilesStorage provides compression and cache busting
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    # In production, serve from collected static files (not finders)
+    # This is more efficient and ensures all files are available
+    WHITENOISE_USE_FINDERS = False
+    # Don't auto-refresh in production (better performance)
+    WHITENOISE_AUTOREFRESH = False
+else:
+    # In development, use default storage
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
 # Default primary key type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

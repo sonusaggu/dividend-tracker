@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Stock Not Found - {{ symbol }} | StockFolio{% endblock %}
+{% block meta_title %}Stock Not Found - {{ symbol }}{% endblock %}
+{% block meta_description %}The stock symbol {{ symbol }} was not found in our database.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+    <div class="max-w-2xl w-full">
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8 sm:p-12 text-center">
+            <!-- Icon -->
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Stock Not Found
+            </h1>
+            
+            <p class="text-lg text-gray-600 mb-2">
+                The stock symbol <span class="font-bold text-gray-900">{{ symbol }}</span> was not found in our database.
+            </p>
+            
+            {% if error_message %}
+            <p class="text-sm text-gray-500 mb-6">
+                {{ error_message }}
+            </p>
+            {% endif %}
+            
+            <!-- Suggestions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+                <h3 class="font-semibold text-blue-900 mb-2">💡 Suggestions:</h3>
+                <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Check if the stock symbol is spelled correctly</li>
+                    <li>Make sure you're using the correct stock exchange (TSX for Canadian stocks)</li>
+                    <li>Try searching for the stock using our <a href="{% url 'all_stocks' %}" class="underline font-semibold">stock search</a></li>
+                    <li>The stock may not be in our database yet</li>
+                </ul>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="{% url 'all_stocks' %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Browse All Stocks
+                </a>
+                <a href="{% url 'home' %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Go to Home
+                </a>
+            </div>
+            
+            <!-- Popular Stocks -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Popular Stocks:</h3>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <a href="{% url 'stock_detail' 'RY' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        RY
+                    </a>
+                    <a href="{% url 'stock_detail' 'TD' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        TD
+                    </a>
+                    <a href="{% url 'stock_detail' 'BNS' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        BNS
+                    </a>
+                    <a href="{% url 'stock_detail' 'ENB' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        ENB
+                    </a>
+                    <a href="{% url 'stock_detail' 'TRP' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        TRP
+                    </a>
+                    <a href="{% url 'stock_detail' 'CM' %}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                        CM
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
