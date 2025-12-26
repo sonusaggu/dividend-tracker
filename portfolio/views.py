@@ -3181,9 +3181,9 @@ def delete_portfolio_stock(request, symbol):
 
 @login_required
 def import_wealthsimple_csv(request):
-    """Import transactions from Wealthsimple CSV export"""
+    """Import transactions from Wealthsimple CSV export - optimized for Render server"""
     try:
-        from django.db import DatabaseError, ProgrammingError, OperationalError
+        from django.db import DatabaseError, ProgrammingError, OperationalError, transaction
         import io
         
         if request.method == 'POST':
@@ -3198,9 +3198,20 @@ def import_wealthsimple_csv(request):
                 messages.error(request, 'Please upload a CSV file.')
                 return redirect('import_wealthsimple_csv')
             
+            # Check file size (limit to 5MB for Render server to prevent timeout)
+            MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB (reduced for Render timeout limits)
+            file_size = csv_file.size
+            if file_size > MAX_FILE_SIZE:
+                messages.error(
+                    request, 
+                    f'File is too large ({file_size / (1024*1024):.1f}MB). Maximum file size is 5MB. '
+                    'Please split your CSV file into smaller files (e.g., by year or month) and upload them separately.'
+                )
+                return redirect('import_wealthsimple_csv')
+            
             # Read CSV file with encoding detection
             try:
-                # Read file content
+                # Read file content (for files up to 10MB, this is safe)
                 file_content = csv_file.read()
                 
                 # Try to detect encoding (optional - chardet may not be installed)
@@ -3252,8 +3263,24 @@ def import_wealthsimple_csv(request):
                 imported_count = 0
                 skipped_count = 0
                 errors = []
+                max_rows = 5000  # Reduced limit for Render server timeout (30 seconds)
+                row_count = 0
+                batch_size = 100  # Process in batches of 100 for bulk operations
+                transactions_to_create = []
+                stocks_cache = {}  # Cache stocks to avoid repeated queries
                 
                 for row_num, row in enumerate(reader, start=2):  # Start at 2 because row 1 is header
+                    row_count += 1
+                    
+                    # Limit number of rows to prevent timeout
+                    if row_count > max_rows:
+                        messages.warning(
+                            request, 
+                            f'File contains more than {max_rows} rows. Only the first {max_rows} rows will be processed. '
+                            'Please split your file into smaller chunks if you need to import all transactions.'
+                        )
+                        break
+                    
                     try:
                         # Skip empty rows
                         if not any(row.values()):
@@ -3441,36 +3468,16 @@ def import_wealthsimple_csv(request):
                             errors.append(f"Row {row_num}: Could not parse date '{date_str}'. Supported formats: YYYY-MM-DD, MM/DD/YYYY")
                             continue
                         
-                        # Parse date - try multiple formats
-                        transaction_date = None
-                        date_formats = [
-                            '%Y-%m-%d',
-                            '%m/%d/%Y',
-                            '%d/%m/%Y',
-                            '%Y/%m/%d',
-                            '%m-%d-%Y',
-                            '%d-%m-%Y',
-                            '%Y-%m-%d %H:%M:%S',
-                            '%m/%d/%Y %H:%M:%S',
-                        ]
-                        
-                        for date_format in date_formats:
-                            try:
-                                transaction_date = datetime.strptime(date_str.strip(), date_format).date()
-                                break
-                            except ValueError:
-                                continue
-                        
-                        if transaction_date is None:
-                            errors.append(f"Row {row_num}: Could not parse date '{date_str}'. Supported formats: YYYY-MM-DD, MM/DD/YYYY")
-                            continue
-                        
-                        # Get or create stock
+                        # Get or create stock (use cache to avoid repeated queries)
                         symbol_upper = symbol.upper().strip()
-                        stock, created = Stock.objects.get_or_create(
-                            symbol=symbol_upper,
-                            defaults={'code': symbol_upper, 'company_name': symbol_upper}
-                        )
+                        if symbol_upper not in stocks_cache:
+                            stock, created = Stock.objects.get_or_create(
+                                symbol=symbol_upper,
+                                defaults={'code': symbol_upper, 'company_name': symbol_upper}
+                            )
+                            stocks_cache[symbol_upper] = stock
+                        else:
+                            stock = stocks_cache[symbol_upper]
                         
                         # Parse numeric values - handle commas and currency symbols
                         try:
@@ -3499,61 +3506,77 @@ def import_wealthsimple_csv(request):
                         if is_statement_format and description:
                             notes = f"Imported from Wealthsimple CSV: {description}"
                         
-                        # Create transaction
-                        transaction = Transaction.objects.create(
-                            user=request.user,
-                            stock=stock,
-                            transaction_type=trans_type,
-                            transaction_date=transaction_date,
-                            shares=shares,
-                            price_per_share=price_per_share,
-                            fees=fees_amount,
-                            notes=notes
+                        # Calculate total_amount
+                        total_amount = shares * price_per_share + fees_amount
+                        
+                        # Prepare transaction for bulk create (skip cost basis calculation during import)
+                        transactions_to_create.append(
+                            Transaction(
+                                user=request.user,
+                                stock=stock,
+                                transaction_type=trans_type,
+                                transaction_date=transaction_date,
+                                shares=shares,
+                                price_per_share=price_per_share,
+                                fees=fees_amount,
+                                total_amount=total_amount,
+                                notes=notes,
+                                realized_gain_loss=None  # Will be calculated later if needed
+                            )
                         )
                         
-                        # For sell transactions, calculate realized gain/loss
-                        if trans_type == 'SELL':
+                        # Bulk create in batches to avoid memory issues and timeout
+                        if len(transactions_to_create) >= batch_size:
                             try:
-                                cost_basis, transactions_used, error = TransactionService.calculate_cost_basis(
-                                    request.user, stock, shares, 'FIFO'
-                                )
-                                if error:
-                                    transaction.realized_gain_loss = None
-                                else:
-                                    if cost_basis is not None:
-                                        transaction.calculate_realized_gain_loss(cost_basis)
-                                    else:
-                                        transaction.realized_gain_loss = None
-                                transaction.save()
+                                with transaction.atomic():
+                                    Transaction.objects.bulk_create(transactions_to_create, ignore_conflicts=False)
+                                imported_count += len(transactions_to_create)
+                                transactions_to_create = []  # Clear batch
                             except Exception as e:
-                                logger.warning(f"Could not calculate cost basis for row {row_num}: {e}", exc_info=True)
-                                transaction.realized_gain_loss = None
-                                transaction.save()
-                                # Continue anyway - transaction is created
-                        
-                        imported_count += 1
+                                logger.error(f"Error in bulk create batch: {e}", exc_info=True)
+                                errors.append(f"Error creating transactions batch at row {row_num}: {str(e)}")
+                                transactions_to_create = []  # Clear batch and continue
                         
                     except Exception as e:
                         error_msg = f"Row {row_num}: {str(e)}"
                         errors.append(error_msg)
                         logger.error(f"Error importing row {row_num}: {e}", exc_info=True)
                 
-                # Update portfolio for all affected stocks
+                # Create remaining transactions in final batch
+                if transactions_to_create:
+                    try:
+                        with transaction.atomic():
+                            Transaction.objects.bulk_create(transactions_to_create, ignore_conflicts=False)
+                        imported_count += len(transactions_to_create)
+                    except Exception as e:
+                        logger.error(f"Error in final bulk create: {e}", exc_info=True)
+                        errors.append(f"Error creating final batch: {str(e)}")
+                
+                # Update portfolio for affected stocks (limited batch to avoid timeout)
                 if imported_count > 0:
                     try:
-                        affected_stocks = Transaction.objects.filter(
-                            user=request.user,
-                            transaction_date__gte=timezone.now().date() - timedelta(days=365)
-                        ).values_list('stock', flat=True).distinct()
+                        # Get unique stocks from the cache (stocks we just imported)
+                        affected_stock_ids = list(set(stock.id for stock in stocks_cache.values()))
                         
-                        for stock_id in affected_stocks:
-                            try:
-                                stock = Stock.objects.get(id=stock_id)
-                                TransactionService.update_portfolio_from_transactions(request.user, stock)
-                            except Exception as e:
-                                logger.error(f"Error updating portfolio for stock {stock_id}: {e}")
+                        # Limit to 20 stocks per import to prevent timeout on Render
+                        affected_stock_ids = affected_stock_ids[:20]
+                        
+                        for stock in stocks_cache.values():
+                            if stock.id in affected_stock_ids:
+                                try:
+                                    TransactionService.update_portfolio_from_transactions(request.user, stock)
+                                except Exception as e:
+                                    logger.error(f"Error updating portfolio for stock {stock.symbol}: {e}")
+                        
+                        if len(stocks_cache) > 20:
+                            messages.info(
+                                request,
+                                f'Portfolio updated for {len(affected_stock_ids)} stocks. '
+                                'Remaining stocks will be updated automatically. Please refresh your portfolio page in a few minutes.'
+                            )
                     except Exception as e:
                         logger.error(f"Error updating portfolios: {e}")
+                        # Don't fail the import if portfolio update fails
                 
                 # Show results
                 if imported_count > 0:

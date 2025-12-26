@@ -187,6 +187,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend (fallback)
 ]
 
+# File upload settings - optimized for Render server (30 second timeout)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB (reduced for Render timeout limits)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB (reduced for Render timeout limits)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000  # Reduced field limit for Render server
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
