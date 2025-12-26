@@ -181,6 +181,12 @@ LOGIN_URL = '/login/'  # URL to redirect to when login is required
 LOGIN_REDIRECT_URL = 'dashboard'  # After login, go to dashboard
 LOGOUT_REDIRECT_URL = 'home'      # After logout, go to home page
 
+# Custom authentication backends - allow login with email or username
+AUTHENTICATION_BACKENDS = [
+    'portfolio.backends.EmailOrUsernameBackend',  # Custom backend for email/username login
+    'django.contrib.auth.backends.ModelBackend',  # Default backend (fallback)
+]
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True

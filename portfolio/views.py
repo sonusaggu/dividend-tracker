@@ -64,10 +64,27 @@ def favicon_view(request):
     # Try to serve the SVG favicon from static files
     try:
         from django.contrib.staticfiles import finders
+        from django.contrib.staticfiles.storage import staticfiles_storage
+        
+        # First try to find via staticfiles finder (works in development)
         favicon_path = finders.find('images/favicon.svg')
         if favicon_path:
             with open(favicon_path, 'rb') as f:
-                return HttpResponse(f.read(), content_type='image/svg+xml')
+                response = HttpResponse(f.read(), content_type='image/svg+xml')
+                response['Cache-Control'] = 'public, max-age=86400'
+                return response
+        
+        # If not found, try staticfiles storage (works in production)
+        try:
+            if staticfiles_storage.exists('images/favicon.svg'):
+                favicon_file = staticfiles_storage.open('images/favicon.svg')
+                response = HttpResponse(favicon_file.read(), content_type='image/svg+xml')
+                response['Cache-Control'] = 'public, max-age=86400'
+                favicon_file.close()
+                return response
+        except Exception:
+            pass
+        
     except Exception as e:
         logger.debug(f"Could not serve favicon: {e}")
     
@@ -100,11 +117,12 @@ def login_view(request):
         password = request.POST.get('password', '')
         
         if not username or not password:
-            messages.error(request, 'Username and password are required.')
+            messages.error(request, 'Username/Email and password are required.')
             # Preserve next parameter in GET
             context = {'next': request.POST.get('next') or request.GET.get('next')}
             return render(request, 'login.html', context)
         
+        # Authenticate with email or username (custom backend handles both)
         user = authenticate(request, username=username, password=password)
         if user is not None:
             # Check if email is verified - REQUIRED for login
