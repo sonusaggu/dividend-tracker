@@ -834,6 +834,47 @@ function updateRatingFromNews(symbol) {
         btn.style.opacity = '1';
     });
 }
+
+// Share Modal Functions
+function openShareModal(symbol, companyName, price, yieldPercent) {
+    // Build share URL
+    const shareUrl = window.location.origin + '/stocks/' + symbol + '/';
+    
+    // Build share text
+    let shareText = `Check out ${symbol} (${companyName})`;
+    if (price !== null && price !== undefined) {
+        shareText += ` - Current Price: $${parseFloat(price).toFixed(2)}`;
+    }
+    if (yieldPercent !== null && yieldPercent !== undefined) {
+        shareText += ` - Dividend Yield: ${parseFloat(yieldPercent).toFixed(2)}%`;
+    }
+    shareText += ' on StockFolio';
+    
+    // Set share data for modal functions
+    window.shareData = {
+        url: shareUrl,
+        title: `${symbol} - ${companyName} Stock Analysis`,
+        text: shareText
+    };
+    
+    // Update modal content
+    const shareStockInfo = document.getElementById('shareStockInfo');
+    if (shareStockInfo) {
+        shareStockInfo.textContent = shareText;
+    }
+    
+    const shareLinkInput = document.getElementById('shareLinkInput');
+    if (shareLinkInput) {
+        shareLinkInput.value = shareUrl;
+    }
+    
+    // Show modal
+    const modal = document.getElementById('shareModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
 </script>
 
 {% include 'components/share_modal.html' %}
