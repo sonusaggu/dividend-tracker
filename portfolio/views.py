@@ -1100,17 +1100,48 @@ def all_stocks_view(request):
         cache.set(cache_key_frequencies, frequencies, 3600)  # Cache for 1 hour
     
     # --- 🔟 Stats - CACHED for performance
+    # Use approximate counts from database statistics to avoid slow COUNT(*) queries
     cache_key_stats = 'all_stocks_stats'
     stats = cache.get(cache_key_stats)
     if stats is None:
-        stats = {
-            'total_stocks_count': Stock.objects.filter(show_in_listing=True).count(),
-            'dividend_stocks_count': Stock.objects.filter(
-                show_in_listing=True
-            ).filter(
-                Exists(Dividend.objects.filter(stock=OuterRef('pk')))
-            ).count(),
-        }
+        from django.db import connection
+        
+        # Try to use PostgreSQL's approximate count (much faster)
+        try:
+            with connection.cursor() as cursor:
+                # Get approximate count from pg_class (PostgreSQL specific, very fast)
+                cursor.execute("""
+                    SELECT reltuples::BIGINT 
+                    FROM pg_class 
+                    WHERE relname = 'portfolio_stock'
+                """)
+                total_stocks_approx = cursor.fetchone()[0] or 0
+                
+                # For dividend stocks, use a more efficient query with EXISTS
+                # This is still faster than COUNT(*) on large tables
+                from django.db.models import Exists, OuterRef
+                dividend_stocks_count = Stock.objects.filter(
+                    show_in_listing=True
+                ).filter(
+                    Exists(Dividend.objects.filter(stock=OuterRef('pk')))
+                ).count()
+                
+                # Use approximate for total, exact for dividend (since it's filtered)
+                stats = {
+                    'total_stocks_count': max(total_stocks_approx, dividend_stocks_count),  # At least as many as dividend stocks
+                    'dividend_stocks_count': dividend_stocks_count,
+                }
+        except Exception:
+            # Fallback to regular count if PostgreSQL-specific query fails
+            from django.db.models import Exists, OuterRef
+            stats = {
+                'total_stocks_count': Stock.objects.filter(show_in_listing=True).count(),
+                'dividend_stocks_count': Stock.objects.filter(
+                    show_in_listing=True
+                ).filter(
+                    Exists(Dividend.objects.filter(stock=OuterRef('pk')))
+                ).count(),
+            }
         cache.set(cache_key_stats, stats, 1800)  # Cache for 30 minutes
     
     context = {
@@ -1267,7 +1298,19 @@ def health_check(request):
     
     # Check Key Models/Tables
     try:
-        stock_count = Stock.objects.count()
+        # Use approximate count for faster health check
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT reltuples::BIGINT 
+                    FROM pg_class 
+                    WHERE relname = 'portfolio_stock'
+                """)
+                stock_count = cursor.fetchone()[0] or 0
+        except Exception:
+            stock_count = Stock.objects.count()
+        
         health_status['checks']['stocks_table'] = {
             'status': 'healthy',
             'message': f'Stocks table accessible',
@@ -1281,9 +1324,21 @@ def health_check(request):
         overall_healthy = False
         http_status = 503
     
-    # Check StockPrice table
+    # Check StockPrice table - Use approximate count to avoid slow COUNT(*)
     try:
-        price_count = StockPrice.objects.count()
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT reltuples::BIGINT 
+                    FROM pg_class 
+                    WHERE relname = 'portfolio_stockprice'
+                """)
+                price_count = cursor.fetchone()[0] or 0
+        except Exception:
+            # Fallback to regular count if PostgreSQL query fails
+            price_count = StockPrice.objects.count()
+        
         latest_price = StockPrice.objects.order_by('-price_date').first()
         health_status['checks']['stock_prices_table'] = {
             'status': 'healthy',
@@ -1299,9 +1354,21 @@ def health_check(request):
         overall_healthy = False
         http_status = 503
     
-    # Check Dividends table
+    # Check Dividends table - Use approximate count to avoid slow COUNT(*)
     try:
-        dividend_count = Dividend.objects.count()
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT reltuples::BIGINT 
+                    FROM pg_class 
+                    WHERE relname = 'portfolio_dividend'
+                """)
+                dividend_count = cursor.fetchone()[0] or 0
+        except Exception:
+            # Fallback to regular count if PostgreSQL query fails
+            dividend_count = Dividend.objects.count()
+        
         health_status['checks']['dividends_table'] = {
             'status': 'healthy',
             'message': 'Dividends table accessible',
@@ -1353,7 +1420,15 @@ def health_check(request):
     try:
         from datetime import timedelta
         yesterday = timezone.now() - timedelta(days=1)
-        recent_prices = StockPrice.objects.filter(price_date__gte=yesterday.date()).count()
+        # Use exists() check instead of count() for faster query
+        recent_prices = 1 if StockPrice.objects.filter(price_date__gte=yesterday.date()).exists() else 0
+        # Get actual count only if needed (cached)
+        cache_key_recent_prices = 'recent_prices_count_24h'
+        recent_prices_count = cache.get(cache_key_recent_prices)
+        if recent_prices_count is None:
+            recent_prices_count = StockPrice.objects.filter(price_date__gte=yesterday.date()).count()
+            cache.set(cache_key_recent_prices, recent_prices_count, 300)  # Cache for 5 minutes
+        recent_prices = recent_prices_count
         health_status['checks']['recent_activity'] = {
             'status': 'healthy' if recent_prices > 0 else 'warning',
             'message': f'Recent price updates: {recent_prices} in last 24 hours',
@@ -4825,13 +4900,30 @@ def scrape_status(request):
     latest_status = ScrapeStatus.get_latest()
     running_status = ScrapeStatus.get_running()
     
-    # Get recent stock price updates (today)
-    recent_updates = StockPrice.objects.filter(
-        price_date=timezone.now().date()
-    ).count()
+    # Get recent stock price updates (today) - CACHED
+    today = timezone.now().date()
+    cache_key_recent_updates = f'recent_price_updates_{today}'
+    recent_updates = cache.get(cache_key_recent_updates)
+    if recent_updates is None:
+        recent_updates = StockPrice.objects.filter(price_date=today).count()
+        cache.set(cache_key_recent_updates, recent_updates, 300)  # Cache for 5 minutes
     
-    # Get total stocks
-    total_stocks = Stock.objects.count()
+    # Get total stocks - Use approximate count or cached value
+    cache_key_total_stocks = 'total_stocks_count'
+    total_stocks = cache.get(cache_key_total_stocks)
+    if total_stocks is None:
+        from django.db import connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT reltuples::BIGINT 
+                    FROM pg_class 
+                    WHERE relname = 'portfolio_stock'
+                """)
+                total_stocks = cursor.fetchone()[0] or 0
+        except Exception:
+            total_stocks = Stock.objects.count()
+        cache.set(cache_key_total_stocks, total_stocks, 1800)  # Cache for 30 minutes
     
     # Build status data
     if latest_status:
