@@ -821,7 +821,7 @@ def home_view(request):
     }
     return render(request, 'home.html', context)
 
-@cache_control(max_age=300)  # Cache for 5 minutes
+@cache_control(max_age=60)  # Cache for 1 minute (reduced for better performance)
 def all_stocks_view(request):
     """Optimized: View all stocks with pagination, search, sector filtering, and sorting"""
 
@@ -867,6 +867,12 @@ def all_stocks_view(request):
 
     # --- 3️⃣ Base queryset with annotations
     stocks = StockService.get_stocks_with_annotations()
+    
+    # Filter to only show stocks with dividend data (where we have dividend information)
+    stocks = stocks.filter(has_dividend=True)
+    
+    # Only evaluate queryset once - defer expensive operations until pagination
+    stocks = stocks.only('id', 'symbol', 'code', 'company_name', 'sector', 'industry', 'is_etf', 'tsx60_member')
 
     # --- 4️⃣ Apply filters
     if search_query:
@@ -959,14 +965,18 @@ def all_stocks_view(request):
     # --- 9️⃣ Prepare context list — already annotated, no extra DB calls
     today = timezone.now().date()
     
-    # Get user's watchlist if authenticated
+    # Get user's watchlist if authenticated - CACHED for performance
     user_watchlist_ids = set()
     if request.user.is_authenticated:
         from portfolio.models import Watchlist
-        user_watchlist_ids = set(
-            Watchlist.objects.filter(user=request.user)
-            .values_list('stock_id', flat=True)
-        )
+        cache_key_watchlist = f'user_watchlist_{request.user.id}'
+        user_watchlist_ids = cache.get(cache_key_watchlist)
+        if user_watchlist_ids is None:
+            user_watchlist_ids = set(
+                Watchlist.objects.filter(user=request.user)
+                .values_list('stock_id', flat=True)
+            )
+            cache.set(cache_key_watchlist, user_watchlist_ids, 300)  # Cache for 5 minutes
     
     # Calculate price changes for stocks - Optimized to avoid N+1 queries
     # Prefetch price history for all stocks on this page in bulk
@@ -977,42 +987,59 @@ def all_stocks_view(request):
     # Get all stock IDs from current page
     stock_ids = [stock.id for stock in page_obj]
     
-    # Bulk fetch price history for all stocks (7d and 30d ago)
-    # This avoids N+1 queries by fetching all needed prices in 2 queries instead of N*2
+    # Bulk fetch price history for all stocks (7d and 30d ago) - OPTIMIZED
+    # Use a single query with window functions or bulk prefetch
     prices_7d_ago = {}
     prices_30d_ago = {}
     
     if stock_ids:
-        # Get prices closest to 7 days ago for all stocks - optimized bulk query
-        # Use subquery to get latest price per stock before 7 days ago
-        from django.db.models import Max
-        latest_7d_dates = StockPrice.objects.filter(
+        # OPTIMIZED: Single query to get all 7d prices using bulk operations
+        from django.db.models import Max, OuterRef, Subquery
+        
+        # Get latest price per stock before 7 days ago - single query
+        latest_7d_prices = StockPrice.objects.filter(
             stock_id__in=stock_ids,
             price_date__lte=seven_days_ago
-        ).values('stock_id').annotate(max_date=Max('price_date'))
+        ).values('stock_id').annotate(
+            max_date=Max('price_date')
+        ).values('stock_id', 'max_date')
         
-        # Get the actual price objects
-        for item in latest_7d_dates:
-            price = StockPrice.objects.filter(
-                stock_id=item['stock_id'],
-                price_date=item['max_date']
-            ).first()
-            if price:
-                prices_7d_ago[item['stock_id']] = price
+        # Build a dict of (stock_id, max_date) tuples for efficient lookup
+        date_map_7d = {item['stock_id']: item['max_date'] for item in latest_7d_prices}
         
-        # Get prices closest to 30 days ago for all stocks
-        latest_30d_dates = StockPrice.objects.filter(
+        # Single bulk query to get all prices at once - use Q objects for exact matching
+        if date_map_7d:
+            from django.db.models import Q
+            # Build Q objects for exact (stock_id, price_date) matches
+            q_objects = Q()
+            for stock_id, max_date in date_map_7d.items():
+                q_objects |= Q(stock_id=stock_id, price_date=max_date)
+            
+            price_objects_7d = StockPrice.objects.filter(q_objects)
+            # Match prices to stocks efficiently
+            for price in price_objects_7d:
+                prices_7d_ago[price.stock_id] = price
+        
+        # OPTIMIZED: Single query to get all 30d prices
+        latest_30d_prices = StockPrice.objects.filter(
             stock_id__in=stock_ids,
             price_date__lte=thirty_days_ago
-        ).values('stock_id').annotate(max_date=Max('price_date'))
+        ).values('stock_id').annotate(
+            max_date=Max('price_date')
+        ).values('stock_id', 'max_date')
         
-        for item in latest_30d_dates:
-            price = StockPrice.objects.filter(
-                stock_id=item['stock_id'],
-                price_date=item['max_date']
-            ).first()
-            if price:
-                prices_30d_ago[item['stock_id']] = price
+        date_map_30d = {item['stock_id']: item['max_date'] for item in latest_30d_prices}
+        
+        if date_map_30d:
+            from django.db.models import Q
+            # Build Q objects for exact (stock_id, price_date) matches
+            q_objects = Q()
+            for stock_id, max_date in date_map_30d.items():
+                q_objects |= Q(stock_id=stock_id, price_date=max_date)
+            
+            price_objects_30d = StockPrice.objects.filter(q_objects)
+            for price in price_objects_30d:
+                prices_30d_ago[price.stock_id] = price
     
     stocks_with_data = []
     for stock in page_obj:
@@ -1060,15 +1087,32 @@ def all_stocks_view(request):
             'in_watchlist': stock.id in user_watchlist_ids,
         })
 
-    # Get unique dividend frequencies for filter dropdown
-    frequencies = list(
-        Dividend.objects.exclude(frequency='')
-        .values_list('frequency', flat=True)
-        .distinct()
-        .order_by('frequency')
-    )
+    # Get unique dividend frequencies for filter dropdown - CACHED
+    cache_key_frequencies = 'all_stocks_frequencies'
+    frequencies = cache.get(cache_key_frequencies)
+    if frequencies is None:
+        frequencies = list(
+            Dividend.objects.exclude(frequency='')
+            .values_list('frequency', flat=True)
+            .distinct()
+            .order_by('frequency')
+        )
+        cache.set(cache_key_frequencies, frequencies, 3600)  # Cache for 1 hour
     
-    # --- 🔟 Stats (could be cached if large)
+    # --- 🔟 Stats - CACHED for performance
+    cache_key_stats = 'all_stocks_stats'
+    stats = cache.get(cache_key_stats)
+    if stats is None:
+        stats = {
+            'total_stocks_count': Stock.objects.filter(show_in_listing=True).count(),
+            'dividend_stocks_count': Stock.objects.filter(
+                show_in_listing=True
+            ).filter(
+                Exists(Dividend.objects.filter(stock=OuterRef('pk')))
+            ).count(),
+        }
+        cache.set(cache_key_stats, stats, 1800)  # Cache for 30 minutes
+    
     context = {
         'stocks_with_dividends': stocks_with_data,
         'page_obj': page_obj,
@@ -1077,8 +1121,8 @@ def all_stocks_view(request):
         'sort_by': sort_by,
         'sectors': sectors,
         'frequencies': frequencies,
-        'total_stocks_count': Stock.objects.count(),
-        'dividend_stocks_count': Dividend.objects.values('stock').distinct().count(),
+        'total_stocks_count': stats['total_stocks_count'],
+        'dividend_stocks_count': stats['dividend_stocks_count'],
         'sectors_count': len(sectors),
         # Advanced filter values
         'min_yield': min_yield,
@@ -1482,26 +1526,36 @@ def stock_quick_view(request, symbol):
 
 
 def stock_search_autocomplete(request):
-    """API endpoint for stock search autocomplete"""
+    """API endpoint for stock search autocomplete - Only shows stocks with dividend data"""
+    from django.db.models import Exists, OuterRef
+    
     query = request.GET.get('q', '').strip()
     
     if len(query) < 2:
         return JsonResponse({'results': []})
     
     # Search stocks by symbol, code, or company name
+    # Only include stocks that have dividend data
     stocks = Stock.objects.filter(
         Q(symbol__icontains=query)
         | Q(company_name__icontains=query)
         | Q(code__icontains=query)
+    ).filter(
+        # Only show stocks with dividend data
+        Exists(Dividend.objects.filter(stock=OuterRef('pk')))
     ).order_by('symbol')[:10]  # Limit to 10 results
     
     results = []
     for stock in stocks:
+        # Get latest dividend info for display
+        latest_dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
+        
         results.append({
             'symbol': stock.symbol,
             'code': stock.code,
             'company_name': stock.company_name,
             'sector': stock.sector or '',
+            'dividend_yield': float(latest_dividend.yield_percent) if latest_dividend and latest_dividend.yield_percent else None,
             'url': f'/stocks/{stock.symbol}/'
         })
     
