@@ -622,9 +622,28 @@
     <script>
         // Beautiful Toast Notification System
         const Toast = {
+            // Track shown messages to prevent duplicates
+            _shownMessages: new Set(),
+            
             show: function(message, type = 'info', duration = 5000) {
                 const container = document.getElementById('toastContainer');
                 if (!container) return;
+                
+                // Create a unique key for this message to prevent duplicates
+                const messageKey = `${type}-${message}`;
+                
+                // Check if this exact message was already shown recently (within last 2 seconds)
+                if (this._shownMessages.has(messageKey)) {
+                    return; // Don't show duplicate
+                }
+                
+                // Add to shown messages
+                this._shownMessages.add(messageKey);
+                
+                // Remove from set after 2 seconds to allow same message later
+                setTimeout(() => {
+                    this._shownMessages.delete(messageKey);
+                }, 2000);
                 
                 const toastId = 'toast-' + Date.now();
                 const icons = {
@@ -735,18 +754,50 @@
         };
         
         // Initialize Django messages as toasts
+        // Use a flag to prevent duplicate processing
+        let messagesProcessed = false;
         document.addEventListener('DOMContentLoaded', function() {
+            // Prevent duplicate processing
+            if (messagesProcessed) return;
+            messagesProcessed = true;
+            
             // Convert Django messages to toasts
             const messageElements = document.querySelectorAll('.toast-message');
             messageElements.forEach(function(element) {
+                // Check if element was already processed (has data-processed attribute)
+                if (element.dataset.processed === 'true') return;
+                
                 const type = element.dataset.type || 'info';
                 const message = element.dataset.message || '';
                 if (message) {
                     Toast.show(message, type);
                 }
+                // Mark as processed before removing
+                element.dataset.processed = 'true';
                 element.remove();
             });
         });
+        
+        // Also handle case where DOMContentLoaded already fired (script loaded late)
+        if (document.readyState === 'loading') {
+            // DOMContentLoaded hasn't fired yet, wait for it
+        } else {
+            // DOMContentLoaded already fired, process immediately
+            if (!messagesProcessed) {
+                messagesProcessed = true;
+                const messageElements = document.querySelectorAll('.toast-message');
+                messageElements.forEach(function(element) {
+                    if (element.dataset.processed === 'true') return;
+                    const type = element.dataset.type || 'info';
+                    const message = element.dataset.message || '';
+                    if (message) {
+                        Toast.show(message, type);
+                    }
+                    element.dataset.processed = 'true';
+                    element.remove();
+                });
+            }
+        }
         
         // Common utility functions
         const Utils = {
