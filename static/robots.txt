@@ -9,7 +9,7 @@ Disallow: /trigger-newsletter/
 Disallow: /scrape-status/
 Disallow: /fetch-news/
 
-# Sitemap
+# Sitemap (served at /sitemap.xml; production: https://dividend.forum/sitemap.xml)
 Sitemap: https://dividend.forum/sitemap.xml
 
 # Crawl-delay for aggressive bots

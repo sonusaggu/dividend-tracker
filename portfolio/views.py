@@ -36,8 +36,9 @@ logger = logging.getLogger(__name__)
 
 @cache_control(max_age=86400)  # Cache for 1 day
 def robots_txt(request):
-    """Serve robots.txt file"""
-    robots_content = """User-agent: *
+    """Serve robots.txt file. Sitemap URL uses current request host."""
+    sitemap_url = request.build_absolute_uri('/sitemap.xml')
+    robots_content = f"""User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /login/
@@ -49,7 +50,7 @@ Disallow: /scrape-status/
 Disallow: /fetch-news/
 
 # Sitemap
-Sitemap: https://dividend.forum/sitemap.xml
+Sitemap: {sitemap_url}
 
 # Crawl-delay for aggressive bots
 User-agent: *

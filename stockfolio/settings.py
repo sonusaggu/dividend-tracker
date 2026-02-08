@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='')
+SECRET_KEY = config('SECRET_KEY', default='SECRET_KEY=ss7g$%z8rkh=3fc8cx0bux(wi(exgq1@35-+*hlf^o2s(2as1w')
 DIVIDEND_ALERT_SECRET = config('DIVIDEND_ALERT_SECRET', default=SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sites',              # Required for sitemaps (domain)
+    'django.contrib.sitemaps',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'whitenoise.runserver_nostatic',
@@ -36,6 +38,9 @@ INSTALLED_APPS = [
     # Your custom apps
     'portfolio',
 ]
+
+# Sitemaps: used by django.contrib.sitemaps (set your domain in Admin > Sites)
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -132,9 +137,9 @@ TIME_ZONE = 'America/Toronto'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Static files (put files in stockfolio/static/ and access at /static/...)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static'] if DEBUG else []
+STATICFILES_DIRS = [BASE_DIR / 'static']  # Always include so collectstatic picks it up
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # For production deployment
 
 # WhiteNoise configuration for serving static files in production

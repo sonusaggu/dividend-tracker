@@ -1,12 +1,20 @@
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 
-# Import custom error handlers
 from portfolio import error_handlers
+from portfolio.sitemaps import StaticViewSitemap, StockSitemap
+
+sitemaps = {
+    'static': StaticViewSitemap,
+    'stocks': StockSitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('portfolio.urls')),  # This will use your home view
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
+         name='django.contrib.sitemaps.views.sitemap'),
+    path('', include('portfolio.urls')),
 ]
 
 # Set custom error handlers
