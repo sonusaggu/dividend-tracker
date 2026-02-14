@@ -90,7 +90,7 @@
                         <!-- Symbol -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
-                                <a href="{% url 'stock_detail' earning.stock.symbol %}" 
+                                <a href="{% url 'stock_detail' earning.stock.symbol earning.stock.get_seo_slug %}" 
                                    class="text-sm font-bold text-blue-600 hover:text-blue-800">
                                     {{ earning.stock.symbol }}
                                 </a>

@@ -208,7 +208,7 @@
                                 {% for data in stocks_data %}
                                 <th class="text-center py-4 px-4 font-semibold text-gray-700">
                                     <div class="flex flex-col items-center">
-                                        <a href="{% url 'stock_detail' symbol=data.stock.symbol %}" 
+                                        <a href="{% url 'stock_detail' data.stock.symbol data.stock.get_seo_slug %}" 
                                            class="text-xl font-bold text-blue-600 hover:text-blue-800 hover:underline">
                                             {{ data.stock.symbol }}
                                         </a>

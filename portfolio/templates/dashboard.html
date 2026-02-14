@@ -198,7 +198,7 @@
           </h3>
           <div class="space-y-2">
             {% for performer in top_performers %}
-            <a href="{% url 'stock_detail' performer.stock.symbol %}" 
+            <a href="{% url 'stock_detail' performer.stock.symbol performer.stock.get_seo_slug %}" 
                class="block p-3 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition group">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -232,7 +232,7 @@
           </h3>
           <div class="space-y-2">
             {% for performer in worst_performers %}
-            <a href="{% url 'stock_detail' performer.stock.symbol %}" 
+            <a href="{% url 'stock_detail' performer.stock.symbol performer.stock.get_seo_slug %}" 
                class="block p-3 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition group">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -335,7 +335,7 @@
                       <span class="text-white font-bold text-xs">{{ item.stock.symbol|slice:":1" }}</span>
                     </div>
                     <div class="min-w-0 flex-1" style="min-width: 100px;">
-                      <a href="{% url 'stock_detail' item.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
+                      <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
                         {{ item.stock.symbol }}
                       </a>
                       <div class="text-xs text-gray-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
@@ -371,7 +371,7 @@
                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                       </svg>
                     </button>
-                    <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                    <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" 
                        class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
                       View
                     </a>
@@ -438,7 +438,7 @@
                     <span class="text-white font-bold text-sm">{{ dividend.stock.symbol|slice:":1" }}</span>
                   </div>
                   <div class="min-w-0 flex-1" style="min-width: 100px;">
-                    <a href="{% url 'stock_detail' dividend.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
+                    <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
                       {{ dividend.stock.symbol }}
                     </a>
                     <div class="text-xs text-gray-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ dividend.stock.company_name }}</div>
@@ -457,7 +457,7 @@
                 </span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-center">
-                <a href="{% url 'stock_detail' dividend.stock.symbol %}" 
+                <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" 
                    class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
                   View
                 </a>
@@ -552,7 +552,7 @@
             <tr class="hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ transaction.transaction_date|date:"M d, Y" }}</td>
               <td class="px-4 py-3">
-                <a href="{% url 'stock_detail' transaction.stock.symbol %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition">
+                <a href="{% url 'stock_detail' transaction.stock.symbol transaction.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition">
                   {{ transaction.stock.symbol }}
                 </a>
               </td>

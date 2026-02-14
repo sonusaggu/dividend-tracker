@@ -203,7 +203,7 @@
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{% url 'stock_detail' bank.symbol %}" 
+                                    <a href="{% url 'stock_detail' bank.symbol bank.get_seo_slug %}" 
                                        class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition group relative"
                                        title="View Details">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

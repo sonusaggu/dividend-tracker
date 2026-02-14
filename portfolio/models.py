@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -23,6 +24,15 @@ class Stock(models.Model):
 
     def __str__(self):
         return f"{self.symbol} - {self.company_name}"
+
+    def get_seo_slug(self):
+        """SEO-friendly URL slug from company name (lowercase, hyphens, no special chars). Never returns empty."""
+        if not self.company_name:
+            return (self.symbol or 'symbol').lower()
+        # Normalize: lowercase, keep alphanumeric/spaces/hyphens, collapse spaces and hyphens
+        s = re.sub(r'[^a-z0-9\s-]', '', self.company_name.lower())
+        s = re.sub(r'[\s-]+', '-', s).strip('-')
+        return (s or (self.symbol or 'symbol')).lower()
 
 class StockPrice(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='prices', db_index=True)

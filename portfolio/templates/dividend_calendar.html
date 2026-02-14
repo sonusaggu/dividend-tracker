@@ -278,7 +278,7 @@
                     <!-- Dividends List -->
                     <div class="space-y-2 max-h-[110px] overflow-y-auto custom-scrollbar">
                         {% for dividend in day_data.dividends|slice:":3" %}
-                        <a href="{% url 'stock_detail' dividend.stock.symbol %}" 
+                        <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" 
                            class="block p-2 rounded-lg border hover:shadow-sm transition group/card {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-50 border-red-200 hover:bg-red-100{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-orange-50 border-orange-200 hover:bg-orange-100{% else %}bg-green-50 border-green-200 hover:bg-green-100{% endif %}"
                            title="{{ dividend.stock.symbol }} - ${{ dividend.amount|floatformat:2 }} - {{ dividend.stock.company_name }}">
                             <div class="flex items-center justify-between mb-1">

@@ -62,7 +62,7 @@
                 <!-- Post Content -->
                 {% if post.stock %}
                 <div class="mb-3">
-                    <a href="{% url 'stock_detail' post.stock.symbol %}" class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700">
+                    <a href="{% url 'stock_detail' post.stock.symbol post.stock.get_seo_slug %}" class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>

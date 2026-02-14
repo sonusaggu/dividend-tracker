@@ -401,7 +401,7 @@
                             <!-- Action -->
                             <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
                                 <a 
-                                    href="{% url 'stock_detail' stock.symbol %}" 
+                                    href="{% url 'stock_detail' stock.symbol stock.seo_slug %}" 
                                     class="inline-flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition shadow-sm whitespace-nowrap"
                                 >
                                     View

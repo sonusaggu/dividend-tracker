@@ -9,7 +9,7 @@
         <!-- Header -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
             <div class="flex items-center space-x-4 mb-4">
-                <a href="{% url 'stock_detail' stock.symbol %}" 
+                <a href="{% url 'stock_detail' stock.symbol stock.get_seo_slug %}" 
                    class="text-2xl font-bold text-blue-600 hover:text-blue-800 transition">
                     {{ stock.symbol }}
                 </a>
@@ -76,7 +76,7 @@
                             class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg min-h-[44px] flex items-center justify-center">
                         💾 Save Note
                     </button>
-                    <a href="{% url 'stock_detail' stock.symbol %}" 
+                    <a href="{% url 'stock_detail' stock.symbol stock.get_seo_slug %}" 
                        class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition min-h-[44px] flex items-center justify-center">
                         Cancel
                     </a>

@@ -98,7 +98,7 @@
                 </div>
                 <div class="space-y-3">
                     {% for news in recent_news|slice:":3" %}
-                    <a href="{% url 'stock_detail' news.stock.symbol %}" class="block bg-white rounded-lg p-3 border border-blue-100 hover:border-blue-300 hover:shadow-sm transition">
+                    <a href="{% url 'stock_detail' news.stock.symbol news.stock.get_seo_slug %}" class="block bg-white rounded-lg p-3 border border-blue-100 hover:border-blue-300 hover:shadow-sm transition">
                         <div class="font-semibold text-sm text-gray-900 line-clamp-2 mb-1">{{ news.title|truncatewords:8 }}</div>
                         <div class="flex items-center justify-between text-xs text-gray-500">
                             <span>{{ news.stock.symbol }}</span>
@@ -316,7 +316,7 @@
                             <td class="px-2 md:px-3 py-4" style="width: 15%;">
                                 <div class="flex items-center justify-center gap-1 flex-wrap">
                                     <!-- View Button -->
-                                    <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                                    <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" 
                                        class="inline-flex items-center justify-center px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-xs"
                                        title="View">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

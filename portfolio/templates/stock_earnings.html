@@ -14,7 +14,7 @@
                 <p class="text-gray-600">{{ stock.company_name }}</p>
             </div>
             <div class="flex space-x-3">
-                <a href="{% url 'stock_detail' stock.symbol %}" 
+                <a href="{% url 'stock_detail' stock.symbol stock.get_seo_slug %}" 
                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                     View Stock Details
                 </a>

@@ -38,7 +38,7 @@ class StaticViewSitemap(Sitemap):
 
 
 class StockSitemap(Sitemap):
-    """Stock detail pages: /stocks/<symbol>/"""
+    """Stock detail pages: /stocks/<symbol>/<slug>/ (SEO-friendly)"""
     changefreq = 'daily'
     priority = 0.7
 
@@ -46,7 +46,7 @@ class StockSitemap(Sitemap):
         return Stock.objects.filter(show_in_listing=True).order_by('symbol')
 
     def location(self, obj):
-        return reverse('stock_detail', kwargs={'symbol': obj.symbol})
+        return reverse('stock_detail', kwargs={'symbol': obj.symbol, 'slug': obj.get_seo_slug()})
 
     def lastmod(self, obj):
         return obj.updated_at

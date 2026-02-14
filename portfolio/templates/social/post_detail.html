@@ -40,7 +40,7 @@
             <!-- Stock Link -->
             {% if post.stock %}
             <div class="mb-3">
-                <a href="{% url 'stock_detail' post.stock.symbol %}" class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-700">
+                <a href="{% url 'stock_detail' post.stock.symbol post.stock.get_seo_slug %}" class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-700">
                     📈 {{ post.stock.symbol }} - {{ post.stock.company_name }}
                 </a>
             </div>

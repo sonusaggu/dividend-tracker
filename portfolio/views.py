@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -778,6 +779,7 @@ def home_view(request):
             upcoming_dividends.append({
                 'symbol': dividend.stock.symbol,
                 'company_name': dividend.stock.company_name,
+                'seo_slug': dividend.stock.get_seo_slug(),
                 'last_price': dividend.latest_price or 'N/A',
                 'dividend_amount': dividend.amount,
                 'dividend_yield': yield_value,
@@ -1547,7 +1549,7 @@ def stock_quick_view(request, symbol):
             'analyst_rating': None,
             'in_watchlist': in_watchlist,
             'in_portfolio': in_portfolio,
-            'detail_url': f'/stocks/{stock.symbol}/',
+            'detail_url': reverse('stock_detail', kwargs={'symbol': stock.symbol, 'slug': stock.get_seo_slug()}),
         }
         
         # Safely add dividend data
@@ -1632,15 +1634,15 @@ def stock_search_autocomplete(request):
             'company_name': stock.company_name,
             'sector': stock.sector or '',
             'dividend_yield': float(latest_dividend.yield_percent) if latest_dividend and latest_dividend.yield_percent else None,
-            'url': f'/stocks/{stock.symbol}/'
+            'url': reverse('stock_detail', kwargs={'symbol': stock.symbol, 'slug': stock.get_seo_slug()})
         })
     
     return JsonResponse({'results': results})
 
 
 @cache_control(max_age=180)  # Cache for 3 minutes (stock data changes frequently)
-def stock_detail(request, symbol):
-    """Detailed view for a single stock - Optimized with single query"""
+def stock_detail(request, symbol, slug=None):
+    """Detailed view for a single stock - Optimized with single query. Supports SEO URL: /stocks/SYMBOL/company-name/"""
     # Validate symbol format
     if not symbol or not isinstance(symbol, str) or len(symbol) > 10:
         return HttpResponseBadRequest("Invalid stock symbol")
@@ -1656,6 +1658,10 @@ def stock_detail(request, symbol):
         ),
         symbol=symbol.upper()
     )
+    
+    # If slug was provided but wrong, redirect to correct SEO URL
+    if slug is not None and slug != stock.get_seo_slug():
+        return redirect('stock_detail', symbol=stock.symbol, slug=stock.get_seo_slug())
     
     # Get latest data from prefetched attributes (no additional queries)
     latest_price = stock.latest_prices[0] if stock.latest_prices else None
@@ -1881,6 +1887,7 @@ def stock_detail(request, symbol):
         'recent_earnings': recent_earnings,
         'next_earnings': next_earnings,
         'days_until_earnings': days_until_earnings,
+        'canonical_url': request.build_absolute_uri(reverse('stock_detail', kwargs={'symbol': stock.symbol, 'slug': stock.get_seo_slug()})),
     }
     
     return render(request, 'stock_detail.html', context)

@@ -121,7 +121,7 @@
             <td class="px-2 md:px-3 py-4" style="width: 15%;">
                 <div class="flex items-center justify-center gap-1 flex-wrap">
                     <!-- View Button -->
-                    <a href="{% url 'stock_detail' item.stock.symbol %}" 
+                    <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" 
                        class="inline-flex items-center justify-center px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-xs"
                        title="View">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -80,7 +80,7 @@
                 <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
                     <div class="flex-1">
                         <div class="flex items-center space-x-3 mb-2">
-                            <a href="{% url 'stock_detail' note.stock.symbol %}" 
+                            <a href="{% url 'stock_detail' note.stock.symbol note.stock.get_seo_slug %}" 
                                class="text-2xl font-bold text-blue-600 hover:text-blue-800 transition">
                                 {{ note.stock.symbol }}
                             </a>

@@ -63,7 +63,7 @@
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-2 flex-wrap">
-                                    <a href="{% url 'stock_detail' news.stock.symbol %}" 
+                                    <a href="{% url 'stock_detail' news.stock.symbol news.stock.get_seo_slug %}" 
                                        class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition">
                                         {{ news.stock.symbol }}
                                     </a>
