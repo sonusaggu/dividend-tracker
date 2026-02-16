@@ -41,9 +41,33 @@ def robots_txt(request):
     sitemap_url = request.build_absolute_uri('/sitemap.xml')
     robots_content = f"""User-agent: *
 Allow: /
+Allow: /dashboard/
+Allow: /stocks/
+Allow: /watchlist/
+Allow: /portfolio/
+Allow: /dividend-calendar/
+Allow: /earnings-calendar/
+Allow: /news/
+Allow: /tools/
+Allow: /big6-banks/
+Allow: /contact/
+Allow: /donate/
+Allow: /privacy-policy/
+Allow: /terms-of-service/
+Allow: /demo/
+Allow: /password-reset/
+Allow: /verify-email/
+Allow: /newsletter/
+Allow: /posts/
+Allow: /profile/
+Allow: /notes/
+Allow: /transactions/
+Allow: /my-alerts/
+Allow: /drip-calculator/
+Allow: /api/
+Allow: /login/
+Allow: /register/
 Disallow: /admin/
-Disallow: /login/
-Disallow: /register/
 Disallow: /trigger-daily-scrape/
 Disallow: /trigger-dividend-alerts/
 Disallow: /trigger-newsletter/
@@ -1659,9 +1683,11 @@ def stock_detail(request, symbol, slug=None):
         symbol=symbol.upper()
     )
     
-    # If slug was provided but wrong, redirect to correct SEO URL
-    if slug is not None and slug != stock.get_seo_slug():
-        return redirect('stock_detail', symbol=stock.symbol, slug=stock.get_seo_slug())
+    # Always use the SEO URL: 301 redirect short URL (/stocks/SYMBOL/) to canonical (/stocks/SYMBOL/slug/)
+    # This avoids "alternate page" in Search Console and ensures one indexed URL per stock.
+    seo_slug = stock.get_seo_slug()
+    if slug is None or slug != seo_slug:
+        return redirect('stock_detail', symbol=stock.symbol, slug=seo_slug, permanent=True)
     
     # Get latest data from prefetched attributes (no additional queries)
     latest_price = stock.latest_prices[0] if stock.latest_prices else None
