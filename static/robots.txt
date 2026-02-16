@@ -1,23 +1,41 @@
 User-agent: *
 Allow: /
+Allow: /dashboard/
+Allow: /stocks/
+Allow: /watchlist/
+Allow: /portfolio/
+Allow: /dividend-calendar/
+Allow: /earnings-calendar/
+Allow: /news/
+Allow: /tools/
+Allow: /big6-banks/
+Allow: /contact/
+Allow: /donate/
+Allow: /privacy-policy/
+Allow: /terms-of-service/
+Allow: /demo/
+Allow: /password-reset/
+Allow: /verify-email/
+Allow: /newsletter/
+Allow: /posts/
+Allow: /profile/
+Allow: /notes/
+Allow: /transactions/
+Allow: /my-alerts/
+Allow: /drip-calculator/
+Allow: /api/
+Allow: /login/
+Allow: /register/
 Disallow: /admin/
-Disallow: /login/
-Disallow: /register/
 Disallow: /trigger-daily-scrape/
 Disallow: /trigger-dividend-alerts/
 Disallow: /trigger-newsletter/
 Disallow: /scrape-status/
 Disallow: /fetch-news/
 
-# Sitemap (served at /sitemap.xml; production: https://dividend.forum/sitemap.xml)
+# Sitemap (Django also serves this dynamically at /sitemap.xml)
 Sitemap: https://dividend.forum/sitemap.xml
 
-# Crawl-delay for aggressive bots
+# Crawl-delay for aggressive bots (Google ignores this)
 User-agent: *
 Crawl-delay: 1
-
-
-
-
-
-
