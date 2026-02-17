@@ -35,38 +35,12 @@ from .utils.canadian_tax_calculator import CanadianTaxCalculator
 logger = logging.getLogger(__name__)
 
 
-@cache_control(max_age=86400)  # Cache for 1 day
+@cache_control(max_age=3600)  # 1 hour - so crawlers get updates quickly
 def robots_txt(request):
-    """Serve robots.txt file. Sitemap URL uses current request host."""
+    """Serve robots.txt. Only Disallow what we block; everything else is allowed."""
     sitemap_url = request.build_absolute_uri('/sitemap.xml')
+    # Minimal format: only list Disallow. All other paths (/, /login/, /register/, etc.) are allowed.
     robots_content = f"""User-agent: *
-Allow: /
-Allow: /dashboard/
-Allow: /stocks/
-Allow: /watchlist/
-Allow: /portfolio/
-Allow: /dividend-calendar/
-Allow: /earnings-calendar/
-Allow: /news/
-Allow: /tools/
-Allow: /big6-banks/
-Allow: /contact/
-Allow: /donate/
-Allow: /privacy-policy/
-Allow: /terms-of-service/
-Allow: /demo/
-Allow: /password-reset/
-Allow: /verify-email/
-Allow: /newsletter/
-Allow: /posts/
-Allow: /profile/
-Allow: /notes/
-Allow: /transactions/
-Allow: /my-alerts/
-Allow: /drip-calculator/
-Allow: /api/
-Allow: /login/
-Allow: /register/
 Disallow: /admin/
 Disallow: /trigger-daily-scrape/
 Disallow: /trigger-dividend-alerts/
@@ -74,14 +48,9 @@ Disallow: /trigger-newsletter/
 Disallow: /scrape-status/
 Disallow: /fetch-news/
 
-# Sitemap
 Sitemap: {sitemap_url}
-
-# Crawl-delay for aggressive bots
-User-agent: *
-Crawl-delay: 1
 """
-    return HttpResponse(robots_content, content_type='text/plain')
+    return HttpResponse(robots_content, content_type='text/plain; charset=utf-8')
 
 
 @cache_control(max_age=86400)  # Cache for 1 day
