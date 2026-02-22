@@ -25,10 +25,12 @@ class PortfolioService:
     
     @staticmethod
     def calculate_annual_dividend(dividend_amount, shares_owned, frequency):
-        """Calculate annual dividend income"""
-        if not dividend_amount or not shares_owned or not frequency:
+        """Calculate annual dividend income: (per-share amount) × shares × payments per year."""
+        if not dividend_amount or not shares_owned:
             return 0
-        multiplier = PortfolioService.FREQUENCY_MULTIPLIER.get(frequency, 0)
+        if not frequency or frequency == 'Unknown':
+            frequency = 'Quarterly'  # Default when unknown (most common)
+        multiplier = PortfolioService.FREQUENCY_MULTIPLIER.get(frequency, 4)
         return float(dividend_amount * shares_owned * multiplier)
     
     @staticmethod

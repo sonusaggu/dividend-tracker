@@ -445,6 +445,23 @@
         </div>
         {% endif %}
 
+        <!-- Gain/Loss Trend (90 days) -->
+        {% if value_history %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Portfolio Value vs Cost (90 days)</h2>
+                <p class="text-sm text-gray-600 mt-1">How your portfolio value has changed compared to what you invested</p>
+            </div>
+            <div class="p-6">
+                <div class="chart-wrapper w-full" style="height: 280px;">
+                    <canvas id="gainLossTrendChart"></canvas>
+                </div>
+                {{ value_history|json_script:"value-history-data" }}
+                <input type="hidden" id="portfolio-cost-basis" value="{{ total_investment }}">
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Upcoming Dividends -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="p-6 border-b border-gray-200">
@@ -969,6 +986,64 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
+
+{% if value_history %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const el = document.getElementById('value-history-data');
+    const canvas = document.getElementById('gainLossTrendChart');
+    const costInput = document.getElementById('portfolio-cost-basis');
+    if (!el || !canvas) return;
+    try {
+        const data = JSON.parse(el.textContent);
+        const costBasis = costInput ? parseFloat(costInput.value) || 0 : 0;
+        if (!data || data.length === 0) return;
+        const labels = data.map(function(d) { return d.date; });
+        const values = data.map(function(d) { return d.value; });
+        const costLine = values.map(function() { return costBasis; });
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Portfolio Value',
+                        data: values,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Cost Basis',
+                        data: costLine,
+                        borderColor: '#6B7280',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { display: true, ticks: { maxTicksLimit: 6 } },
+                    y: { display: true, beginAtZero: false }
+                }
+            }
+        });
+    } catch (e) { console.warn('Gain/loss trend chart:', e); }
+})();
+</script>
+{% endif %}
 
 <!-- Delete Portfolio Stock Confirmation Modal -->
 <div id="deletePortfolioStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">

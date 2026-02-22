@@ -55,6 +55,20 @@
                         <div class="text-xs text-gray-600">
                             {% if latest_price.price_date %}{{ latest_price.price_date|date:"M d" }}{% else %}Current{% endif %}
                         </div>
+                        {% if price_change_7d is not None or price_change_30d is not None %}
+                        <div class="flex flex-wrap gap-2 mt-1.5 justify-end">
+                            {% if price_change_7d is not None %}
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded {% if price_change_7d >= 0 %}text-green-700 bg-green-100{% else %}text-red-700 bg-red-100{% endif %}">
+                                {% if price_change_7d >= 0 %}+{% endif %}{{ price_change_7d|floatformat:2 }}% 7d
+                            </span>
+                            {% endif %}
+                            {% if price_change_30d is not None %}
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded {% if price_change_30d >= 0 %}text-green-700 bg-green-100{% else %}text-red-700 bg-red-100{% endif %}">
+                                {% if price_change_30d >= 0 %}+{% endif %}{{ price_change_30d|floatformat:2 }}% 30d
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                     
@@ -146,12 +160,35 @@
                 <div class="text-lg sm:text-xl font-bold text-gray-900">{{ analyst_rating.analyst_rating|default:"N/A" }}</div>
             </div>
             {% endif %}
+            {% if latest_price and latest_price.fiftytwo_week_high and latest_price.fiftytwo_week_low and latest_price.last_price and price_52w_percent is not None %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:col-span-2">
+                <div class="text-xs font-medium text-gray-600 mb-1.5">52-Week Range</div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-green-600">${{ latest_price.fiftytwo_week_low|floatformat:2 }}</span>
+                    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-green-500 to-blue-500 rounded-full transition-all" style="width: {{ price_52w_percent }}%;"></div>
+                    </div>
+                    <span class="text-xs font-medium text-blue-600">${{ latest_price.fiftytwo_week_high|floatformat:2 }}</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Current: ${{ latest_price.last_price|floatformat:2 }} ({{ price_52w_percent|floatformat:0 }}% of range)</div>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Two Column Layout for Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <!-- Left Column: Main Info (2/3 width) -->
             <div class="lg:col-span-2 space-y-4">
+                <!-- Price History Chart (90 days) -->
+                {% if price_history_data %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">Price History (90 days)</h2>
+                    <div class="chart-wrapper w-full" style="height: 220px;">
+                        <canvas id="priceHistoryChart"></canvas>
+                    </div>
+                    {{ price_history_data|json_script:"price-history-data" }}
+                </div>
+                {% endif %}
                 <!-- Dividend Information - Compact -->
                 {% if dividend %}
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -203,7 +240,7 @@
                         {% endif %}
                         {% if annual_dividend_income > 0 %}
                         <div class="text-center">
-                            <div class="text-xs text-gray-600 mb-1">Annual Income</div>
+                            <div class="text-xs text-gray-600 mb-1">Annual (per share)</div>
                             <div class="text-sm font-bold text-purple-600">${{ annual_dividend_income|floatformat:2 }}</div>
                         </div>
                         {% endif %}
@@ -881,6 +918,54 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
     }
 }
 </script>
+
+{% if price_history_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const el = document.getElementById('price-history-data');
+    const canvas = document.getElementById('priceHistoryChart');
+    if (!el || !canvas) return;
+    try {
+        const data = JSON.parse(el.textContent);
+        if (!data || data.length === 0) return;
+        const labels = data.map(function(d) { return d.date; });
+        const values = data.map(function(d) { return d.price; });
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Price',
+                    data: values,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        display: true,
+                        ticks: { maxTicksLimit: 6, maxRotation: 0 }
+                    },
+                    y: {
+                        display: true,
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    } catch (e) { console.warn('Price history chart:', e); }
+})();
+</script>
+{% endif %}
 
 {% include 'components/share_modal.html' %}
 

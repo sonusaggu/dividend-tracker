@@ -1661,6 +1661,52 @@ def stock_detail(request, symbol, slug=None):
     # Get latest data from prefetched attributes (no additional queries)
     latest_price = stock.latest_prices[0] if stock.latest_prices else None
     
+    # Price change (7d / 30d) and 52-week range from StockPrice table
+    price_change_7d = None
+    price_change_30d = None
+    today = timezone.now().date()
+    if latest_price and latest_price.last_price:
+        try:
+            seven_days_ago = today - timedelta(days=7)
+            thirty_days_ago = today - timedelta(days=30)
+            price_7d = StockPrice.objects.filter(
+                stock=stock, price_date__lte=seven_days_ago
+            ).order_by('-price_date').first()
+            price_30d = StockPrice.objects.filter(
+                stock=stock, price_date__lte=thirty_days_ago
+            ).order_by('-price_date').first()
+            if price_7d and price_7d.last_price and float(price_7d.last_price) != 0:
+                price_change_7d = ((float(latest_price.last_price) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
+            if price_30d and price_30d.last_price and float(price_30d.last_price) != 0:
+                price_change_30d = ((float(latest_price.last_price) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+        except (ValueError, TypeError, AttributeError):
+            pass
+    
+    # 52-week range position (0–100%) for UI bar
+    price_52w_percent = None
+    if latest_price and latest_price.fiftytwo_week_high and latest_price.fiftytwo_week_low and latest_price.last_price:
+        try:
+            low = float(latest_price.fiftytwo_week_low)
+            high = float(latest_price.fiftytwo_week_high)
+            current = float(latest_price.last_price)
+            if high > low:
+                price_52w_percent = min(100, max(0, ((current - low) / (high - low)) * 100))
+        except (ValueError, TypeError, ZeroDivisionError):
+            pass
+    
+    # Price history (last 90 days) for chart
+    price_history_data = []
+    try:
+        start_date = today - timedelta(days=90)
+        history_qs = StockPrice.objects.filter(
+            stock=stock, price_date__gte=start_date
+        ).order_by('price_date').values_list('price_date', 'last_price')
+        price_history_data = [
+            {'date': d.isoformat(), 'price': float(p)} for d, p in history_qs
+        ]
+    except (ValueError, TypeError, AttributeError):
+        pass
+    
     # Don't fetch from API synchronously - it blocks the request
     # Price fetching should be done via background tasks or scheduled jobs
     # if not latest_price:
@@ -1790,23 +1836,26 @@ def stock_detail(request, symbol, slug=None):
                     # Normalize to 0-100 score
                     dividend_consistency_score = max(0, min(100, 100 - (variance / 10)))
         
-        # Calculate annual dividend income (based on current dividend)
-        if dividend.frequency:
-            if 'Monthly' in dividend.frequency:
+        # Calculate annual dividend income per share (based on current dividend)
+        freq = (dividend.frequency or '').strip()
+        if dividend.amount is not None:
+            if freq and 'Monthly' in freq:
                 annual_dividend_income = float(dividend.amount) * 12
-            elif 'Quarterly' in dividend.frequency:
+            elif freq and 'Quarterly' in freq:
                 annual_dividend_income = float(dividend.amount) * 4
-            elif 'Semi-Annual' in dividend.frequency:
+            elif freq and 'Semi-Annual' in freq:
                 annual_dividend_income = float(dividend.amount) * 2
-            elif 'Annual' in dividend.frequency:
+            elif freq and 'Annual' in freq:
                 annual_dividend_income = float(dividend.amount)
-            else:
-                # Estimate based on recent frequency
-                if recent_dividends_list:
-                    days_span = (recent_dividends_list[-1].ex_dividend_date - recent_dividends_list[0].ex_dividend_date).days
-                    if days_span > 0:
-                        payments_per_year = (len(recent_dividends_list) * 365) / days_span
-                        annual_dividend_income = float(dividend.amount) * payments_per_year
+            elif freq and freq != 'Unknown' and recent_dividends_list:
+                # Estimate based on recent payment frequency
+                days_span = (recent_dividends_list[-1].ex_dividend_date - recent_dividends_list[0].ex_dividend_date).days
+                if days_span > 0:
+                    payments_per_year = (len(recent_dividends_list) * 365) / days_span
+                    annual_dividend_income = float(dividend.amount) * payments_per_year
+            elif not freq or freq == 'Unknown':
+                # Default to quarterly when unknown (common for many stocks)
+                annual_dividend_income = float(dividend.amount) * 4
     
     # Get earnings data - upcoming and recent (cache key based on stock and date)
     cache_key_upcoming = f'earnings_upcoming_{stock.id}_{today}'
@@ -1883,6 +1932,10 @@ def stock_detail(request, symbol, slug=None):
         'next_earnings': next_earnings,
         'days_until_earnings': days_until_earnings,
         'canonical_url': request.build_absolute_uri(reverse('stock_detail', kwargs={'symbol': stock.symbol, 'slug': stock.get_seo_slug()})),
+        'price_change_7d': price_change_7d,
+        'price_change_30d': price_change_30d,
+        'price_52w_percent': price_52w_percent,
+        'price_history_data': price_history_data,
     }
     
     return render(request, 'stock_detail.html', context)
@@ -2791,6 +2844,44 @@ def portfolio_view(request):
         # Sort by value descending
         sector_chart_data.sort(key=lambda x: x['value'], reverse=True)
         
+        # Gain/loss trend: portfolio value over last 90 days vs cost basis (from StockPrice table)
+        value_history = []
+        try:
+            if not portfolio_data:
+                raise ValueError('no holdings')
+            from collections import defaultdict
+            _today = timezone.now().date()
+            start_date = _today - timedelta(days=90)
+            stock_ids = [d['item'].stock_id for d in portfolio_data]
+            prices_qs = StockPrice.objects.filter(
+                stock_id__in=stock_ids, price_date__gte=start_date
+            ).order_by('stock', 'price_date').values_list('stock_id', 'price_date', 'last_price')
+            prices_by_stock = defaultdict(list)
+            for sid, d, p in prices_qs:
+                prices_by_stock[sid].append((d, float(p)))
+            for i in range(91):
+                d = start_date + timedelta(days=i)
+                if d > _today:
+                    break
+                total_val = 0
+                for data in portfolio_data:
+                    stock_id = data['item'].stock_id
+                    shares = data['item'].shares_owned
+                    if not shares:
+                        continue
+                    plist = prices_by_stock.get(stock_id, [])
+                    price_at_d = None
+                    for pd, pr in plist:
+                        if pd <= d:
+                            price_at_d = pr
+                        else:
+                            break
+                    if price_at_d is not None:
+                        total_val += float(shares) * price_at_d
+                value_history.append({'date': d.isoformat(), 'value': round(total_val, 2)})
+        except Exception as e:
+            logger.warning(f'Gain/loss trend data: {e}')
+        
         # Calculate dividend income projection
         dividend_projection = PortfolioService.calculate_dividend_projection(portfolio_items, months=12)
         
@@ -2814,6 +2905,7 @@ def portfolio_view(request):
             'sector_chart_data': sector_chart_data,  # For pie chart
             'dividend_projection': dividend_projection,  # For projection chart
             'total_projected_income': total_projected_income,  # Total projected income
+            'value_history': value_history,  # For gain/loss trend chart
         })
     
     except Exception as e:
