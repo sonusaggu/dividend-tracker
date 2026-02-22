@@ -5,8 +5,8 @@
 {% block title %}{{ stock.symbol }} - {{ stock.company_name }} | Stock Analysis & Dividend Info - StockFolio{% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
 {% block meta_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock Analysis{% endblock %}
-{% block meta_description %}{{ stock.symbol }} ({{ stock.company_name }}) - View dividend yield {{ stock.dividends.first.yield_percent|floatformat:2 }}%, ex-dividend dates, stock price, P/E ratio, analyst ratings, and more.{% endblock %}
-{% block meta_keywords %}{{ stock.symbol }}, {{ stock.company_name }}, dividend stock, {{ stock.sector }}, TSX stock, stock analysis{% endblock %}
+{% block meta_description %}{{ stock.symbol }} ({{ stock.company_name }}) - View dividend yield {{ stock.dividends.first.yield_percent|floatformat:2 }}%, ex-dividend dates, stock price, P/E ratio, analyst ratings, earnings calendar, and dividend history. Free TSX stock analysis.{% endblock %}
+{% block meta_keywords %}{{ stock.symbol }}, {{ stock.company_name }}, dividend stock, dividend yield, ex-dividend date, {{ stock.sector }}, TSX stock, Canadian stock, stock analysis, P/E ratio, earnings, analyst rating, dividend history, stock price, {{ stock.industry|default:"investing" }}{% endblock %}
 {% block og_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock Analysis{% endblock %}
 {% block og_description %}{{ stock.symbol }} ({{ stock.company_name }}) - Dividend yield {{ stock.dividends.first.yield_percent|floatformat:2 }}%, ex-dividend dates, and comprehensive stock analysis.{% endblock %}
 {% block twitter_title %}{{ stock.symbol }} - {{ stock.company_name }} Stock{% endblock %}
