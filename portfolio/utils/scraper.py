@@ -1,7 +1,7 @@
 import requests
 import logging
 from datetime import datetime, date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.db import transaction, connection
 from django.utils import timezone
 from django.db.models import Q
@@ -94,14 +94,15 @@ class TSXScraper:
 
     def _parse_decimal(self, value):
         """Safely parse decimal values"""
-        if not value or value == "N/A":
+        if value is None or value == "N/A":
             return None
+        if isinstance(value, str):
+            value = value.replace('%', '').replace(',', '').strip()
+            if not value or value in ('-', '--', '—', 'n/a', 'N/A'):
+                return None
         try:
-            # Remove percentage signs and commas
-            if isinstance(value, str):
-                value = value.replace('%', '').replace(',', '').strip()
             return Decimal(value)
-        except (ValueError, TypeError, AttributeError):
+        except (ValueError, TypeError, AttributeError, InvalidOperation):
             logger.debug(f"Failed to parse decimal: {value}")
             return None
 
