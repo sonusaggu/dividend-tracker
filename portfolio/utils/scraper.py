@@ -219,8 +219,8 @@ class TSXScraper:
                 return False, "No symbol provided"
 
             with transaction.atomic():
-                # Get or create stock
-                stock, created = Stock.objects.update_or_create(
+                # Get or create stock (view_count=0 only on create to satisfy NOT NULL)
+                stock, created = Stock.objects.get_or_create(
                     symbol=symbol,
                     defaults={
                         'code': transformed_data['code'],
@@ -228,9 +228,19 @@ class TSXScraper:
                         'is_etf': transformed_data['is_etf'],
                         'tsx60_member': transformed_data['tsx60_member'],
                         'industry': transformed_data['industry'],
-                        'sector': transformed_data['sector']
+                        'sector': transformed_data['sector'],
+                        'view_count': 0,
                     }
                 )
+                if not created:
+                    Stock.objects.filter(pk=stock.pk).update(
+                        code=transformed_data['code'],
+                        company_name=transformed_data['company_name'],
+                        is_etf=transformed_data['is_etf'],
+                        tsx60_member=transformed_data['tsx60_member'],
+                        industry=transformed_data['industry'],
+                        sector=transformed_data['sector'],
+                    )
 
                 today = date.today()
 
@@ -465,7 +475,8 @@ class TSXScraper:
                             is_etf=transformed['is_etf'],
                             tsx60_member=transformed['tsx60_member'],
                             industry=transformed['industry'],
-                            sector=transformed['sector']
+                            sector=transformed['sector'],
+                            view_count=0,
                         ))
                 
                 # Bulk create new stocks
