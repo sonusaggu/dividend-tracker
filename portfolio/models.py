@@ -13,6 +13,7 @@ class Stock(models.Model):
     industry = models.CharField(max_length=100, blank=True, db_index=True)
     sector = models.CharField(max_length=100, blank=True, db_index=True)
     show_in_listing = models.BooleanField(default=True, db_index=True, help_text="If False, stock won't appear in all stocks page")
+    view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 

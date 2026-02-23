@@ -9,6 +9,7 @@ from portfolio.models import Stock, StockPrice, Dividend, ValuationMetric, Analy
 
 logger = logging.getLogger(__name__)
 
+
 class TSXScraper:
     def __init__(self):
         self.session = requests.Session()
@@ -219,7 +220,7 @@ class TSXScraper:
                 return False, "No symbol provided"
 
             with transaction.atomic():
-                # Get or create stock (view_count=0 only on create to satisfy NOT NULL)
+                # Get or create stock (view_count matches DB column)
                 stock, created = Stock.objects.get_or_create(
                     symbol=symbol,
                     defaults={
@@ -467,7 +468,7 @@ class TSXScraper:
                         stock.sector = transformed['sector']
                         stocks_to_update.append(stock)
                     else:
-                        # Create new stock
+                        # Create new stock (view_count matches DB column)
                         stocks_to_create.append(Stock(
                             symbol=symbol,
                             code=transformed['code'],
