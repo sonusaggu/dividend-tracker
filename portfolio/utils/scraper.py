@@ -107,6 +107,21 @@ class TSXScraper:
             logger.debug(f"Failed to parse decimal: {value}")
             return None
 
+    def _parse_decimal_capped(self, value, max_digits, decimal_places):
+        """Parse decimal and clamp to fit DecimalField(max_digits, decimal_places) to avoid overflow."""
+        d = self._parse_decimal(value)
+        if d is None:
+            return None
+        # Max value for DecimalField(max_digits, decimal_places) is 10^(max_digits - decimal_places) - 10^(-decimal_places)
+        max_int_places = max_digits - decimal_places
+        cap_hi = Decimal(10) ** max_int_places - Decimal(10) ** (-decimal_places)
+        cap_lo = -cap_hi
+        if d > cap_hi:
+            return cap_hi
+        if d < cap_lo:
+            return cap_lo
+        return d
+
     def _parse_float(self, value):
         """Safely parse float values"""
         if not value or value == "N/A":
@@ -130,6 +145,13 @@ class TSXScraper:
         except (ValueError, TypeError, AttributeError):
             logger.debug(f"Failed to parse int: {value}")
             return None
+
+    def _parse_int_capped(self, value, max_val=2147483647, min_val=-2147483648):
+        """Parse int and clamp to fit IntegerField to avoid overflow."""
+        n = self._parse_int(value)
+        if n is None:
+            return None
+        return max(min_val, min(max_val, n))
 
     def _parse_market_cap(self, market_cap_str):
         """Parse market cap string like '1.3B' into a numeric value"""
@@ -166,11 +188,11 @@ class TSXScraper:
                     parts = analyst_aggregate.split(' - ')
                     for part in parts:
                         if 'Buy:' in part:
-                            buy_count = self._parse_int(part.replace('Buy:', '').strip())
+                            buy_count = self._parse_int_capped(part.replace('Buy:', '').strip())
                         elif 'Hold:' in part:
-                            hold_count = self._parse_int(part.replace('Hold:', '').strip())
+                            hold_count = self._parse_int_capped(part.replace('Hold:', '').strip())
                         elif 'Sell:' in part:
-                            sell_count = self._parse_int(part.replace('Sell:', '').strip())
+                            sell_count = self._parse_int_capped(part.replace('Sell:', '').strip())
                 except (ValueError, TypeError, AttributeError) as e:
                     logger.debug(f"Failed to parse analyst aggregate: {analyst_aggregate}, error: {e}")
                     pass
@@ -179,25 +201,25 @@ class TSXScraper:
                 'symbol': raw_data.get('symbol') or raw_data.get('code', ''),
                 'code': raw_data.get('code') or raw_data.get('symbol', ''),
                 'company_name': raw_data.get('company') or raw_data.get('name', ''),
-                'last_price': self._parse_decimal(raw_data.get('last_price')),
+                'last_price': self._parse_decimal_capped(raw_data.get('last_price'), 10, 2),
                 'volume': self._parse_int(raw_data.get('volume')),
-                'fiftytwo_week_high': self._parse_decimal(raw_data.get('fiftytwoh')),
-                'fiftytwo_week_low': self._parse_decimal(raw_data.get('fiftytwol')),
-                'dividend_amount': self._parse_decimal(raw_data.get('dividend')),
-                'dividend_yield': self._parse_decimal(raw_data.get('yield')),
+                'fiftytwo_week_high': self._parse_decimal_capped(raw_data.get('fiftytwoh'), 10, 2),
+                'fiftytwo_week_low': self._parse_decimal_capped(raw_data.get('fiftytwol'), 10, 2),
+                'dividend_amount': self._parse_decimal_capped(raw_data.get('dividend'), 10, 4),
+                'dividend_yield': self._parse_decimal_capped(raw_data.get('yield'), 5, 3),
                 'dividend_frequency': raw_data.get('payout_frequency', ''),
                 'dividend_date': raw_data.get('dividend_date'),
                 'dividend_payable_date': raw_data.get('dividend_payable_date'),
-                'pe_ratio': self._parse_decimal(raw_data.get('pe_ratio')),
-                'eps': self._parse_decimal(raw_data.get('eps')),
-                'market_cap': raw_data.get('market_cap', ''),
+                'pe_ratio': self._parse_decimal_capped(raw_data.get('pe_ratio'), 10, 2),
+                'eps': self._parse_decimal_capped(raw_data.get('eps'), 10, 2),
+                'market_cap': (raw_data.get('market_cap') or '')[:20],
                 'analyst_aggregate': analyst_aggregate,
                 'analyst_rating': raw_data.get('analyst_rating', ''),
                 'analyst_buy': buy_count,
                 'analyst_hold': hold_count,
                 'analyst_sell': sell_count,
-                'growth_3_year': self._parse_decimal(raw_data.get('growth_3')),
-                'growth_5_year': self._parse_decimal(raw_data.get('growth_5')),
+                'growth_3_year': self._parse_decimal_capped(raw_data.get('growth_3'), 5, 2),
+                'growth_5_year': self._parse_decimal_capped(raw_data.get('growth_5'), 5, 2),
                 'is_etf': bool(raw_data.get('etf', 0)),
                 'market_index': raw_data.get('market_index'),
                 'tsx60_member': bool(raw_data.get('tsx60', 0)),
