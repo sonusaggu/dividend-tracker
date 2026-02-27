@@ -1059,6 +1059,11 @@ def all_stocks_view(request):
                 except (ValueError, ZeroDivisionError):
                     price_change_30d = None
         
+        # How many days old is the price (so we can show "As of Xd ago")
+        price_days_old = None
+        if stock.latest_price_date:
+            price_days_old = (today - stock.latest_price_date).days
+
         stocks_with_data.append({
             'stock': stock,
             'latest_dividend': (
@@ -1077,6 +1082,7 @@ def all_stocks_view(request):
                     'date': stock.latest_price_date,
                 } if stock.latest_price_value else None
             ),
+            'price_days_old': price_days_old,
             'price_change_7d': price_change_7d,
             'price_change_30d': price_change_30d,
             'has_dividend': stock.has_dividend,

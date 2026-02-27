@@ -13,7 +13,7 @@
         <!-- Simple Header -->
         <div class="mb-6 sm:mb-8">
             <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">All Stocks</h1>
-            <p class="text-sm sm:text-base text-gray-600">Browse and search dividend-paying stocks on TSX</p>
+            <p class="text-sm sm:text-base text-gray-600">Browse and search dividend-paying stocks on TSX. Prices show the latest data from the daily scrape; run the scraper regularly for up-to-date prices.</p>
         </div>
 
         <!-- Registration Prompt for Non-Authenticated Users -->
@@ -431,6 +431,7 @@
                             <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right hidden sm:table-cell">
                                 {% if item.latest_price %}
                                 <div class="text-sm sm:text-base font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">As of {{ item.latest_price.date|date:"M d" }}{% if item.price_days_old and item.price_days_old > 0 %} ({{ item.price_days_old }}d ago){% endif %}</div>
                                 {% if item.price_change_7d is not None %}
                                 <div class="flex items-center justify-end gap-1 mt-0.5">
                                     <span class="text-xs font-medium {% if item.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
@@ -597,6 +598,7 @@
                         <div class="text-xs text-gray-600 mb-1">Price</div>
                         {% if item.latest_price %}
                         <div class="text-lg font-bold text-gray-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                        <div class="text-xs text-gray-500 mt-0.5">As of {{ item.latest_price.date|date:"M d" }}{% if item.price_days_old and item.price_days_old > 0 %} ({{ item.price_days_old }}d ago){% endif %}</div>
                         {% if item.price_change_7d is not None %}
                         <div class="flex items-center gap-1 mt-0.5">
                             <span class="text-xs font-medium {% if item.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
