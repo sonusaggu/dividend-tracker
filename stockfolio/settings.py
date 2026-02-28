@@ -44,6 +44,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must be right after SecurityMiddleware so /static/ is served with correct MIME types (not HTML 404)
     'portfolio.middleware.BlockSuspiciousUserAgentsMiddleware',  # Block security scanners
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -51,7 +52,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'portfolio.middleware.SecurityHeadersMiddleware',  # Add security headers
     'portfolio.middleware.DatabaseErrorHandlerMiddleware',  # Handle database errors gracefully
     # 'portfolio.middleware.WebsiteMetricsMiddleware',  # Disabled for performance - can be re-enabled if needed
@@ -146,13 +146,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # For production deployment
 # When DEBUG=False, WhiteNoise will serve static files including admin static files
 # IMPORTANT: Run 'python manage.py collectstatic --noinput' after setting DEBUG=False
 if not DEBUG:
-    # Use WhiteNoise for static file serving in production
-    # CompressedManifestStaticFilesStorage provides compression and cache busting
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    # In production, serve from collected static files (not finders)
-    # This is more efficient and ensures all files are available
+    # Use WhiteNoise with non-manifest storage so admin assets (theme.js, nav_sidebar.js, etc.)
+    # are served at their literal paths and return correct MIME types (not HTML 404)
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
     WHITENOISE_USE_FINDERS = False
-    # Don't auto-refresh in production (better performance)
     WHITENOISE_AUTOREFRESH = False
 else:
     # In development, use default storage
