@@ -1914,6 +1914,14 @@ def stock_detail(request, symbol, slug=None):
     if next_earnings:
         days_until_earnings = (next_earnings.earnings_date - today).days
     
+    # Smart Insights (free, from DB only)
+    try:
+        from .ai_insights import get_stock_insights_for_view
+        stock_ai_insights, stock_news_summary = get_stock_insights_for_view(stock)
+    except Exception:
+        stock_ai_insights = []
+        stock_news_summary = None
+
     context = {
         'stock': stock,
         'latest_price': latest_price,
@@ -1942,8 +1950,10 @@ def stock_detail(request, symbol, slug=None):
         'price_change_30d': price_change_30d,
         'price_52w_percent': price_52w_percent,
         'price_history_data': price_history_data,
+        'stock_ai_insights': stock_ai_insights,
+        'stock_news_summary': stock_news_summary,
     }
-    
+
     return render(request, 'stock_detail.html', context)
 
 
@@ -4418,6 +4428,13 @@ def dashboard(request):
         except Exception as e:
             logger.debug(f"Could not get recent transactions: {e}")
         
+        # Smart Insights (free, from DB only — no external APIs)
+        try:
+            from .ai_insights import get_portfolio_insights
+            ai_insights = get_portfolio_insights(request.user)
+        except Exception:
+            ai_insights = []
+
         context = {
             'portfolio_items': portfolio_items,
             'affiliate_links': affiliate_links,
@@ -4446,8 +4463,9 @@ def dashboard(request):
             'sector_allocation': sector_allocation_percent,
             'sector_allocation_sorted': sector_allocation_sorted,
             'recent_transactions': recent_transactions,
+            'ai_insights': ai_insights,
         }
-        
+
         return render(request, 'dashboard.html', context)
     
     except Exception as e:
@@ -4457,6 +4475,7 @@ def dashboard(request):
             'portfolio_items': [],
             'total_value': 0,
             'annual_dividends': 0,
+            'ai_insights': [],
             'total_holdings': 0,
             'upcoming_dividends': [],
             'watchlist_stocks': [],
