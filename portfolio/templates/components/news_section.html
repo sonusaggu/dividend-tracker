@@ -26,8 +26,9 @@
             <div class="flex items-start gap-4">
                 {% if news.image_url %}
                 <div class="flex-shrink-0 w-24 h-24">
-                    <img src="{{ news.image_url }}" alt="{{ news.title }}" 
+                    <img src="{{ news.image_url }}" alt="{{ news.title }}"
                          class="w-full h-full object-cover rounded-xl shadow-md"
+                         loading="lazy"
                          onerror="this.style.display='none'">
                 </div>
                 {% endif %}

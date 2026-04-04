@@ -45,9 +45,10 @@
             <!-- Featured Stock Content -->
             <div class="flex items-start space-x-4">
                 {% if content.image_url %}
-                <img src="{{ content.image_url }}" 
-                     alt="{{ content.title }}" 
+                <img src="{{ content.image_url }}"
+                     alt="{{ content.title }}"
                      class="w-20 h-20 object-cover rounded-xl shadow-md"
+                     loading="lazy"
                      onerror="this.style.display='none'">
                 {% endif %}
                 <div class="flex-1">
@@ -78,9 +79,10 @@
             <!-- Educational/Promotional Content -->
             <div class="flex items-start space-x-4">
                 {% if content.image_url %}
-                <img src="{{ content.image_url }}" 
-                     alt="{{ content.title }}" 
+                <img src="{{ content.image_url }}"
+                     alt="{{ content.title }}"
                      class="w-24 h-24 object-cover rounded-xl shadow-md flex-shrink-0"
+                     loading="lazy"
                      onerror="this.style.display='none'">
                 {% endif %}
                 <div class="flex-1">

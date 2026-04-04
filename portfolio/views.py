@@ -1671,23 +1671,55 @@ def stock_detail(request, symbol, slug=None):
     price_change_7d = None
     price_change_30d = None
     today = timezone.now().date()
+
+    # Cache price-change lookups and price history per symbol for 15 minutes.
+    # These queries are identical for every visitor on the same stock page and
+    # don't depend on the logged-in user, so a shared cache key is safe.
+    _price_cache_key = f'stock_price_meta_{stock.symbol}'
+    _price_meta = cache.get(_price_cache_key)
+
+    if _price_meta is None:
+        _price_meta = {}
+        if latest_price and latest_price.last_price:
+            try:
+                seven_days_ago = today - timedelta(days=7)
+                thirty_days_ago = today - timedelta(days=30)
+                price_7d = StockPrice.objects.filter(
+                    stock=stock, price_date__lte=seven_days_ago
+                ).order_by('-price_date').values('last_price').first()
+                price_30d = StockPrice.objects.filter(
+                    stock=stock, price_date__lte=thirty_days_ago
+                ).order_by('-price_date').values('last_price').first()
+                _price_meta['price_7d'] = float(price_7d['last_price']) if price_7d else None
+                _price_meta['price_30d'] = float(price_30d['last_price']) if price_30d else None
+            except (ValueError, TypeError, AttributeError):
+                pass
+
+        try:
+            start_date = today - timedelta(days=90)
+            history_qs = StockPrice.objects.filter(
+                stock=stock, price_date__gte=start_date
+            ).order_by('price_date').values_list('price_date', 'last_price')
+            _price_meta['history'] = [
+                {'date': d.isoformat(), 'price': float(p)} for d, p in history_qs
+            ]
+        except (ValueError, TypeError, AttributeError):
+            _price_meta['history'] = []
+
+        cache.set(_price_cache_key, _price_meta, 15 * 60)  # 15-minute TTL
+
     if latest_price and latest_price.last_price:
         try:
-            seven_days_ago = today - timedelta(days=7)
-            thirty_days_ago = today - timedelta(days=30)
-            price_7d = StockPrice.objects.filter(
-                stock=stock, price_date__lte=seven_days_ago
-            ).order_by('-price_date').first()
-            price_30d = StockPrice.objects.filter(
-                stock=stock, price_date__lte=thirty_days_ago
-            ).order_by('-price_date').first()
-            if price_7d and price_7d.last_price and float(price_7d.last_price) != 0:
-                price_change_7d = ((float(latest_price.last_price) - float(price_7d.last_price)) / float(price_7d.last_price)) * 100
-            if price_30d and price_30d.last_price and float(price_30d.last_price) != 0:
-                price_change_30d = ((float(latest_price.last_price) - float(price_30d.last_price)) / float(price_30d.last_price)) * 100
+            current = float(latest_price.last_price)
+            p7 = _price_meta.get('price_7d')
+            p30 = _price_meta.get('price_30d')
+            if p7 and p7 != 0:
+                price_change_7d = ((current - p7) / p7) * 100
+            if p30 and p30 != 0:
+                price_change_30d = ((current - p30) / p30) * 100
         except (ValueError, TypeError, AttributeError):
             pass
-    
+
     # 52-week range position (0–100%) for UI bar
     price_52w_percent = None
     if latest_price and latest_price.fiftytwo_week_high and latest_price.fiftytwo_week_low and latest_price.last_price:
@@ -1699,19 +1731,8 @@ def stock_detail(request, symbol, slug=None):
                 price_52w_percent = min(100, max(0, ((current - low) / (high - low)) * 100))
         except (ValueError, TypeError, ZeroDivisionError):
             pass
-    
-    # Price history (last 90 days) for chart
-    price_history_data = []
-    try:
-        start_date = today - timedelta(days=90)
-        history_qs = StockPrice.objects.filter(
-            stock=stock, price_date__gte=start_date
-        ).order_by('price_date').values_list('price_date', 'last_price')
-        price_history_data = [
-            {'date': d.isoformat(), 'price': float(p)} for d, p in history_qs
-        ]
-    except (ValueError, TypeError, AttributeError):
-        pass
+
+    price_history_data = _price_meta.get('history', [])
     
     # Don't fetch from API synchronously - it blocks the request
     # Price fetching should be done via background tasks or scheduled jobs
@@ -1794,21 +1815,24 @@ def stock_detail(request, symbol, slug=None):
         watchlist_group = None
     
     # Calculate dividend growth and consistency metrics
-    # Optimize: Only fetch recent dividends needed for calculations (last 2 years max)
-    today = timezone.now().date()
-    two_years_ago = today - timedelta(days=730)
-    recent_dividends = Dividend.objects.filter(
-        stock=stock, 
-        ex_dividend_date__isnull=False,
-        ex_dividend_date__gte=two_years_ago
-    ).order_by('ex_dividend_date')
-    
+    # Fetch recent dividends (last 2 years) for growth/consistency calculations.
+    # Cache per symbol for 1 hour — dividend records change infrequently.
+    _div_cache_key = f'stock_recent_dividends_{stock.symbol}'
+    recent_dividends_list = cache.get(_div_cache_key)
+    if recent_dividends_list is None:
+        two_years_ago = today - timedelta(days=730)
+        recent_dividends_list = list(
+            Dividend.objects.filter(
+                stock=stock,
+                ex_dividend_date__isnull=False,
+                ex_dividend_date__gte=two_years_ago,
+            ).order_by('ex_dividend_date')
+        )
+        cache.set(_div_cache_key, recent_dividends_list, 60 * 60)  # 1-hour TTL
+
     dividend_growth_rate = None
     dividend_consistency_score = 0
     annual_dividend_income = 0
-    
-    # Convert to list once to avoid multiple queries
-    recent_dividends_list = list(recent_dividends) if recent_dividends.exists() else []
     
     if recent_dividends_list and dividend and dividend.amount:
         # Calculate dividend growth rate (last 2 years)
@@ -2537,19 +2561,38 @@ def watchlist_view(request):
         
         # Get watchlist groups
         watchlist_groups = WatchlistGroup.objects.filter(user=request.user).order_by('order', 'name')
-        
-        # Use service layer for optimized query
-        watchlist_items = PortfolioService.get_watchlist_with_annotations(request.user).select_related('group')
-        
+
+        today = timezone.now().date()
+        seven_days_ago = today - timedelta(days=7)
+        thirty_days_ago = today - timedelta(days=30)
+
+        # Use service layer for optimized query; annotate 7d/30d prices in the same DB round-trip
+        # to avoid 2 extra queries per watchlist item (N+1).
+        watchlist_items = (
+            PortfolioService.get_watchlist_with_annotations(request.user)
+            .select_related('group')
+            .annotate(
+                price_7d_ago_value=Subquery(
+                    StockPrice.objects.filter(
+                        stock=OuterRef('stock_id'),
+                        price_date__lte=seven_days_ago,
+                    ).order_by('-price_date').values('last_price')[:1]
+                ),
+                price_30d_ago_value=Subquery(
+                    StockPrice.objects.filter(
+                        stock=OuterRef('stock_id'),
+                        price_date__lte=thirty_days_ago,
+                    ).order_by('-price_date').values('last_price')[:1]
+                ),
+            )
+        )
+
         # Prepare data efficiently with price changes
         watchlist_data = []
         watchlist_by_group = {}  # Group watchlist items by group
         ungrouped_items = []  # Items without a group
         dividend_stocks_count = 0
         sectors = set()
-        today = timezone.now().date()
-        seven_days_ago = today - timedelta(days=7)
-        thirty_days_ago = today - timedelta(days=30)
         
         # Get upcoming dividends for watchlist stocks
         upcoming_dividends = Dividend.objects.filter(
@@ -2590,22 +2633,12 @@ def watchlist_view(request):
                     'price_date': item.latest_price_date
                 })()
                 
-                # Calculate price changes
-                price_7d_ago = StockPrice.objects.filter(
-                    stock=item.stock,
-                    price_date__lte=seven_days_ago
-                ).order_by('-price_date').first()
-                
-                price_30d_ago = StockPrice.objects.filter(
-                    stock=item.stock,
-                    price_date__lte=thirty_days_ago
-                ).order_by('-price_date').first()
-                
-                if price_7d_ago and price_7d_ago.last_price:
-                    price_change_7d = ((float(item.latest_price_value) - float(price_7d_ago.last_price)) / float(price_7d_ago.last_price)) * 100
-                
-                if price_30d_ago and price_30d_ago.last_price:
-                    price_change_30d = ((float(item.latest_price_value) - float(price_30d_ago.last_price)) / float(price_30d_ago.last_price)) * 100
+                # Calculate price changes from pre-fetched annotations (no extra DB queries)
+                if item.price_7d_ago_value:
+                    price_change_7d = ((float(item.latest_price_value) - float(item.price_7d_ago_value)) / float(item.price_7d_ago_value)) * 100
+
+                if item.price_30d_ago_value:
+                    price_change_30d = ((float(item.latest_price_value) - float(item.price_30d_ago_value)) / float(item.price_30d_ago_value)) * 100
             
             # Get latest dividend
             latest_dividend = None
@@ -2794,15 +2827,13 @@ def portfolio_view(request):
             realized_gains_data = TransactionService.get_realized_gains(request.user)
             total_realized_gain = realized_gains_data['total_realized_gain']
             
-            # Add unrealized gains to each portfolio item
+            # Compute unrealized gains inline from already-annotated data.
+            # get_unrealized_gains() would re-fetch UserPortfolio + StockPrice per stock
+            # (2 queries × N items). We already have shares_owned, average_cost, and
+            # latest_price_value from the annotations, so gain_loss / roi_percent are identical.
             for data in portfolio_data:
-                unrealized = TransactionService.get_unrealized_gains(request.user, data['item'].stock)
-                if unrealized:
-                    data['unrealized_gain'] = unrealized['unrealized_gain']
-                    data['unrealized_gain_percent'] = unrealized['unrealized_gain_percent']
-                else:
-                    data['unrealized_gain'] = data['gain_loss']  # Fallback to calculated gain_loss
-                    data['unrealized_gain_percent'] = data['roi_percent']
+                data['unrealized_gain'] = data['gain_loss']
+                data['unrealized_gain_percent'] = data['roi_percent']
         except (ProgrammingError, OperationalError, DatabaseError):
             # Transaction table might not exist yet
             total_realized_gain = 0

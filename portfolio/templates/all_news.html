@@ -59,8 +59,9 @@
                     <!-- News Image -->
                     {% if news.image_url %}
                     <div class="md:w-48 flex-shrink-0">
-                        <img src="{{ news.image_url }}" alt="{{ news.title }}" 
+                        <img src="{{ news.image_url }}" alt="{{ news.title }}"
                              class="w-full h-48 object-cover rounded-lg"
+                             loading="lazy"
                              onerror="this.style.display='none'">
                     </div>
                     {% endif %}

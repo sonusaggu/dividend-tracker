@@ -18,9 +18,10 @@
            class="block bg-white rounded-xl p-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105 border-2 border-gray-200 hover:border-blue-400 group">
             <div class="flex items-start space-x-3">
                 {% if affiliate.logo_url %}
-                <img src="{{ affiliate.logo_url }}" 
-                     alt="{{ affiliate.name }}" 
+                <img src="{{ affiliate.logo_url }}"
+                     alt="{{ affiliate.name }}"
                      class="w-12 h-12 object-contain rounded-lg"
+                     loading="lazy"
                      onerror="this.style.display='none'">
                 {% else %}
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
