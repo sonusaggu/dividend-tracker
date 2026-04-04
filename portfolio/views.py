@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, F, Case, When, Value, IntegerField, Subquery, OuterRef, Exists, Max, Min, Sum, Avg, Count, Prefetch
@@ -705,18 +706,41 @@ def verify_email_sent(request):
     return render(request, 'verify_email_sent.html')
 
 
-@login_required
 def resend_verification_email(request):
-    """Resend verification email to logged-in user"""
+    """Resend verification email.
+
+    Works for both authenticated users and unauthenticated users (e.g. someone
+    who registered but hasn't verified yet and can't log in).  When called from
+    the login page the username is passed as a GET param so we can look them up
+    without requiring a session.
+    """
     from portfolio.models import EmailVerification
     from portfolio.utils.email_verification import create_verification_token, send_verification_email
     from django.db import connection
-    
+
     try:
-        # Check if table exists (works for both PostgreSQL and SQLite)
+        # Resolve which user to resend for.
+        target_user = None
+        if request.user.is_authenticated:
+            target_user = request.user
+        else:
+            # Unauthenticated path: username/email passed from the login page.
+            identifier = request.GET.get('username') or request.POST.get('username', '').strip()
+            if identifier:
+                try:
+                    target_user = User.objects.get(
+                        Q(username__iexact=identifier) | Q(email__iexact=identifier)
+                    )
+                except User.DoesNotExist:
+                    pass
+
+        if target_user is None:
+            messages.error(request, 'Could not find your account. Please try registering again.')
+            return redirect('login')
+
+        # Check if table exists
         table_name = EmailVerification._meta.db_table
         table_exists = False
-        
         try:
             if connection.vendor == 'postgresql':
                 with connection.cursor() as cursor:
@@ -733,43 +757,39 @@ def resend_verification_email(request):
                     )
                     table_exists = cursor.fetchone() is not None
             else:
-                # For other databases, try to query the table
                 EmailVerification.objects.first()
                 table_exists = True
         except Exception:
             table_exists = False
-        
+
         if not table_exists:
             messages.error(request, 'Email verification is not yet available. Please run migrations.')
-            return redirect('dashboard')
-        
-        # Get or create verification record
-        verification, created = EmailVerification.objects.get_or_create(
-            user=request.user,
-            defaults={'is_verified': False}
-        )
-        
-        if verification.is_verified:
-            messages.info(request, 'Your email is already verified.')
-            return redirect('dashboard')
-        
-        # Generate new token
-        verification = create_verification_token(request.user)
-        
-        # Send email
-        email_sent = send_verification_email(request.user, verification.token)
-        
+            return redirect('login')
+
+        # Check if already verified
+        try:
+            existing = EmailVerification.objects.get(user=target_user)
+            if existing.is_verified:
+                messages.info(request, 'Your email is already verified. You can log in.')
+                return redirect('login')
+        except EmailVerification.DoesNotExist:
+            pass
+
+        # Generate new token and send
+        verification = create_verification_token(target_user)
+        email_sent = send_verification_email(target_user, verification.token)
+
         if email_sent:
-            messages.success(request, f'Verification email sent to {request.user.email}. Please check your inbox.')
+            messages.success(request, f'Verification email sent to {target_user.email}. Please check your inbox.')
         else:
-            messages.error(request, 'Failed to send verification email. Please try again later.')
-        
+            messages.error(request, 'Failed to send verification email. Please check your email address or contact support.')
+
         return redirect('verify_email_sent')
-        
+
     except Exception as e:
         logger.error(f"Error resending verification email: {e}")
         messages.error(request, 'An error occurred. Please try again.')
-        return redirect('dashboard') 
+        return redirect('login')
 
 @cache_control(max_age=600)  # Cache for 10 minutes
 def home_view(request):

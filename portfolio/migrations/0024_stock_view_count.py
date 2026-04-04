@@ -5,14 +5,31 @@ from django.db import migrations, connection
 
 
 def add_view_count_if_missing(apps, schema_editor):
+    vendor = connection.vendor
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT 1 FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = 'portfolio_stock' AND column_name = 'view_count';
-            """
-        )
-        if cursor.fetchone() is None:
+        column_exists = False
+        if vendor == 'postgresql':
+            cursor.execute(
+                """
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'portfolio_stock' AND column_name = 'view_count';
+                """
+            )
+            column_exists = cursor.fetchone() is not None
+        elif vendor == 'sqlite':
+            cursor.execute("PRAGMA table_info(portfolio_stock);")
+            column_exists = any(row[1] == 'view_count' for row in cursor.fetchall())
+        else:
+            # Other databases: try to add and catch error
+            try:
+                cursor.execute(
+                    "ALTER TABLE portfolio_stock ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0;"
+                )
+            except Exception:
+                pass
+            return
+
+        if not column_exists:
             cursor.execute(
                 "ALTER TABLE portfolio_stock ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0;"
             )

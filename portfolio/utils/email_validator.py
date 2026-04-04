@@ -109,24 +109,22 @@ def validate_email_format(email: str) -> Tuple[bool, str]:
 
 def validate_email_domain(email: str) -> Tuple[bool, str]:
     """
-    Validate email domain - check if it's allowed and not disposable
-    Returns (is_valid, error_message)
+    Validate email domain.
+
+    Strategy: blocklist-only.
+    - Reject known disposable/throwaway domains.
+    - Accept every other valid domain (corporate, .edu, ISPs, etc.).
+
+    The old allowlist approach blocked legitimate users with work/university/ISP
+    addresses and was the primary cause of failed registrations.
     """
     if '@' not in email:
         return False, 'Invalid email format.'
-    
-    domain = email.split('@')[-1].lower().strip()
-    
-    # Check if it's a disposable email first
+
+    # Only reject known disposable domains
     if is_disposable_email(email):
-        return False, 'Disposable email addresses are not allowed. Please use a permanent email address from a trusted provider.'
-    
-    # Check if domain is in allowed list
-    if domain not in ALLOWED_EMAIL_DOMAINS:
-        # Provide a helpful error message with examples
-        examples = ', '.join(ALLOWED_EMAIL_DOMAINS[:5])
-        return False, f'Please use a supported email provider. Examples: {examples}, and others. Disposable emails are not allowed.'
-    
+        return False, 'Disposable/temporary email addresses are not allowed. Please use your permanent email address.'
+
     return True, ''
 
 
