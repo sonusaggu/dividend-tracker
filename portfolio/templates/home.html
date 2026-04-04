@@ -11,6 +11,27 @@
 {% block twitter_title %}Find High-Yield Dividend Stocks - StockFolio{% endblock %}
 {% block twitter_description %}Discover the best dividend stocks on TSX. Track dividend yields, ex-dividend dates, and build a profitable dividend portfolio.{% endblock %}
 
+{% block extra_schema %}
+<!-- Organization schema — helps Google Knowledge Panel and sitelinks -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "StockFolio",
+  "url": "{{ request.scheme }}://{{ request.get_host }}/",
+  "description": "StockFolio is a free dividend stock tracker and portfolio manager for Canadian investors. Track TSX dividend stocks, manage your portfolio, and get dividend alerts.",
+  "foundingDate": "2024",
+  "areaServed": "CA",
+  "sameAs": [],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'contact_us' %}"
+  }
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <div class="relative bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white overflow-hidden">

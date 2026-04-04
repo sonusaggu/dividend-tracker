@@ -37,16 +37,41 @@ logger = logging.getLogger(__name__)
 
 @cache_control(max_age=3600)  # 1 hour - so crawlers get updates quickly
 def robots_txt(request):
-    """Serve robots.txt. Only Disallow what we block; everything else is allowed."""
+    """Serve robots.txt.
+
+    Allow all public pages. Disallow:
+    - Admin/internal endpoints
+    - Login-walled user pages (dashboard, portfolio, watchlist, etc.) — no crawl budget waste
+    - Auth flows (tax slips, verify email, password reset)
+    - Internal trigger/scrape endpoints
+    """
     sitemap_url = request.build_absolute_uri('/sitemap.xml')
-    # Minimal format: only list Disallow. All other paths (/, /login/, /register/, etc.) are allowed.
     robots_content = f"""User-agent: *
+# Admin & internal endpoints
 Disallow: /admin/
 Disallow: /trigger-daily-scrape/
 Disallow: /trigger-dividend-alerts/
 Disallow: /trigger-newsletter/
 Disallow: /scrape-status/
 Disallow: /fetch-news/
+
+# User-specific pages (require login — no crawl budget wasted here)
+Disallow: /dashboard/
+Disallow: /portfolio/
+Disallow: /watchlist/
+Disallow: /transactions/
+Disallow: /my-alerts/
+Disallow: /notes/
+Disallow: /tags/
+Disallow: /watchlist-groups/
+Disallow: /drip-calculator/
+Disallow: /profile/*/edit/
+
+# Auth / account flows
+Disallow: /tax-slips/
+Disallow: /verify-email/
+Disallow: /resend-verification/
+Disallow: /auth/
 
 Sitemap: {sitemap_url}
 """
