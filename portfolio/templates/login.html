@@ -1,212 +1,326 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Login - StockFolio{% endblock %}
+{% block title %}Sign In - StockFolio{% endblock %}
 {% block meta_description %}Login to your StockFolio account to track your dividend portfolio and manage your investments.{% endblock %}
 {% block meta_robots %}index, follow{% endblock %}
 
+{% block extra_css %}
+<style>
+    .auth-left {
+        background: linear-gradient(170deg, #0a0f1e 0%, #0d1526 40%, #0a1020 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .auth-glow {
+        position: absolute;
+        top: -80px; left: -80px;
+        width: 550px; height: 450px;
+        background: radial-gradient(ellipse, rgba(37,99,235,0.18) 0%, transparent 65%);
+        pointer-events: none;
+    }
+    .auth-glow-2 {
+        position: absolute;
+        bottom: -60px; right: -60px;
+        width: 350px; height: 300px;
+        background: radial-gradient(ellipse, rgba(16,185,129,0.08) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .auth-input {
+        border: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        transition: all 0.2s ease;
+    }
+    .auth-input:focus {
+        border-color: #3b82f6;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        outline: none;
+    }
+    .auth-btn {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+        transition: all 0.2s ease;
+    }
+    .auth-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+    }
+    .auth-btn:active { transform: translateY(0); }
+    .auth-btn:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-                Welcome Back
-            </h1>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Sign in to access your dividend portfolio and track your investments
-            </p>
+<div class="min-h-screen flex">
+
+    <!-- ── Left Panel: Brand ─────────────────────────────────── -->
+    <div class="hidden lg:flex lg:w-[46%] auth-left flex-col justify-between p-10 xl:p-14">
+        <div class="auth-glow"></div>
+        <div class="auth-glow-2"></div>
+
+        <!-- Logo -->
+        <div class="relative z-10">
+            <a href="{% url 'home' %}" class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style="background: linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow: 0 2px 10px rgba(37,99,235,0.4);">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-black text-white tracking-tight">StockFolio</span>
+            </a>
         </div>
 
-        <div class="max-w-md mx-auto">
-            <!-- Login Card -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <!-- Google OAuth Button -->
-                <div class="mb-6">
-                    <a href="{% url 'google_oauth_login' %}" class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
-                        <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86-3.71 1.48-4.58 3.29-2.91.18-5.45 1.05-7.28 2.66C4.39 20.52 7.78 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.18H2.18C1.43 8.48 1 9.98 1 11.5s.43 3.02 1.18 4.32l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.78 1 4.39 3.48 2.18 7.18l3.66 2.84c1.07-3.17 4.05-5.64 8.16-5.64z"/>
+        <!-- Value props -->
+        <div class="relative z-10 space-y-8">
+            <div>
+                <h2 class="text-3xl xl:text-4xl font-black text-white leading-tight mb-3">
+                    Track dividends.<br>
+                    <span class="gradient-text">Grow your wealth.</span>
+                </h2>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    The all-in-one platform for Canadian dividend investors — completely free.
+                </p>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(59,130,246,0.15);">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
-                        Continue with Google
-                    </a>
-                </div>
-
-                <!-- Divider -->
-                <div class="relative mb-6">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
                     </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-4 bg-white text-gray-500 font-medium">Or sign in with email</span>
+                    <div>
+                        <p class="text-white text-sm font-semibold">Track 500+ TSX Stocks</p>
+                        <p class="text-slate-400 text-xs">Real-time prices & dividend data</p>
                     </div>
                 </div>
-
-                <form method="post" class="space-y-6">
-                    {% csrf_token %}
-                    {% if request.GET.next %}
-                        <input type="hidden" name="next" value="{{ request.GET.next }}">
-                    {% endif %}
-                    
-                    {% if messages %}
-                        {% for message in messages %}
-                        <div class="{% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-500 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700{% else %}bg-blue-50 border-l-4 border-blue-500 text-blue-700{% endif %} px-4 py-3 rounded-lg text-sm flex items-center">
-                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>{{ message|safe }}</span>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if unverified_email %}
-                    <!-- Email Not Verified Warning -->
-                    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-4">
-                        <div class="flex items-start">
-                            <svg class="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
-                            <div class="flex-1">
-                                <h3 class="text-sm font-semibold text-red-800 mb-2">Email Verification Required</h3>
-                                <p class="text-sm text-red-700 mb-3">
-                                    Your email address <strong>{{ unverified_email }}</strong> has not been verified yet. 
-                                    Please check your inbox and click the verification link in the email we sent you.
-                                </p>
-                                <div class="flex flex-col sm:flex-row gap-2">
-                                    <a href="{% url 'resend_verification' %}?username={{ username|urlencode }}" class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                        </svg>
-                                        Resend Verification Email
-                                    </a>
-                                    <a href="{% url 'register' %}" class="inline-flex items-center justify-center px-4 py-2 border-2 border-red-600 text-red-600 hover:bg-red-50 text-sm font-semibold rounded-lg transition">
-                                        Create New Account
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.15);">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
                     </div>
-                    {% endif %}
-                    
-                    <!-- Username/Email Field -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Username or Email
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                name="username" 
-                                required 
-                                value="{% if username %}{{ username }}{% endif %}"
-                                class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
-                                placeholder="Enter your username or email"
-                                autocomplete="username"
-                            >
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">👤</span>
-                        </div>
+                        <p class="text-white text-sm font-semibold">Dividend Alerts</p>
+                        <p class="text-slate-400 text-xs">Never miss an ex-dividend date</p>
                     </div>
-
-                    <!-- Password Field -->
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(139,92,246,0.15);">
+                        <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="password" 
-                                name="password" 
-                                required 
-                                class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50 focus:bg-white"
-                                placeholder="Enter your password"
-                                autocomplete="current-password"
-                            >
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🔒</span>
-                        </div>
+                        <p class="text-white text-sm font-semibold">DRIP Calculator</p>
+                        <p class="text-slate-400 text-xs">Visualize dividend reinvestment growth</p>
                     </div>
-
-                    <!-- Remember Me & Forgot Password -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input 
-                                id="remember-me" 
-                                name="remember-me" 
-                                type="checkbox" 
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            >
-                            <label for="remember-me" class="ml-2 block text-sm text-gray-700 font-medium">
-                                Remember me
-                            </label>
-                        </div>
-
-                        <div class="text-sm space-y-1">
-                            <div>
-                                <a href="{% url 'password_reset' %}" class="text-blue-600 hover:text-blue-800 font-medium transition duration-200">
-                                    Forgot password?
-                                </a>
-                            </div>
-                            <div>
-                                <a href="{% url 'resend_verification' %}" class="text-blue-600 hover:text-blue-800 font-medium transition duration-200 text-xs">
-                                    Resend verification email
-                                </a>
-                            </div>
-                        </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(245,158,11,0.15);">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
                     </div>
-
-                    <!-- Submit Button -->
-                    <button 
-                        type="submit" 
-                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                    >
-                        Sign In
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="mt-8">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-4 bg-white text-gray-500 font-medium">
-                                New to StockFolio?
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Register Link -->
-                    <div class="mt-6">
-                        <a 
-                            href="{% url 'register' %}" 
-                            class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 inline-block text-center transform hover:scale-[1.02]"
-                        >
-                            Create New Account
-                        </a>
+                    <div>
+                        <p class="text-white text-sm font-semibold">AI-Powered Insights</p>
+                        <p class="text-slate-400 text-xs">Smart portfolio analytics</p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Trust Indicators -->
-            <div class="mt-8 text-center">
-                <div class="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-green-500">✓</span>
-                        <span>Free Forever</span>
+        <p class="relative z-10 text-xs" style="color:#1e293b;">© {% now "Y" %} StockFolio — Free for Canadian investors</p>
+    </div>
+
+    <!-- ── Right Panel: Form ──────────────────────────────────── -->
+    <div class="flex-1 flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-14 xl:px-20 bg-white overflow-y-auto">
+
+        <!-- Mobile logo -->
+        <div class="lg:hidden mb-8">
+            <a href="{% url 'home' %}" class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                     style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <span class="text-lg font-black text-slate-900 tracking-tight">StockFolio</span>
+            </a>
+        </div>
+
+        <div class="max-w-sm w-full mx-auto">
+            <div class="mb-8">
+                <h1 class="text-2xl font-black text-slate-900 mb-1 tracking-tight">Welcome back</h1>
+                <p class="text-slate-500 text-sm">Sign in to your account to continue</p>
+            </div>
+
+            <!-- Google OAuth -->
+            <a href="{% url 'google_oauth_login' %}"
+               class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 rounded-xl font-semibold text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 transition text-sm mb-6 shadow-sm">
+                <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </a>
+
+            <!-- Divider -->
+            <div class="relative mb-5">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                <div class="relative flex justify-center">
+                    <span class="px-3 bg-white text-xs text-slate-400 font-semibold uppercase tracking-wider">Or sign in with email</span>
+                </div>
+            </div>
+
+            <form method="post" class="space-y-4" id="login-form">
+                {% csrf_token %}
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-700{% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %} px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>{{ message|safe }}</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-green-500">✓</span>
-                        <span>Secure & Private</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-green-500">✓</span>
-                        <span>No Credit Card</span>
+                    {% endfor %}
+                {% endif %}
+
+                {% if unverified_email %}
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-sm font-bold text-red-800 mb-1">Email Verification Required</h3>
+                            <p class="text-xs text-red-700 mb-3"><strong>{{ unverified_email }}</strong> hasn't been verified. Check your inbox.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{% url 'resend_verification' %}?username={{ username|urlencode }}"
+                                   class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition">
+                                    Resend Verification
+                                </a>
+                                <a href="{% url 'register' %}"
+                                   class="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition">
+                                    New Account
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% endif %}
+
+                <!-- Username / Email -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Username or Email</label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <input type="text" name="username" required
+                               value="{% if username %}{{ username }}{% endif %}"
+                               class="auth-input w-full pl-10 pr-4 py-3 rounded-xl text-sm"
+                               placeholder="Enter your username or email"
+                               autocomplete="username">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Password</label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <input type="password" name="password" required
+                               class="auth-input w-full pl-10 pr-4 py-3 rounded-xl text-sm"
+                               placeholder="Enter your password"
+                               autocomplete="current-password">
+                    </div>
+                </div>
+
+                <!-- Remember + Forgot -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input id="remember-me" name="remember-me" type="checkbox"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded">
+                        <span class="text-sm text-slate-600">Remember me</span>
+                    </label>
+                    <div class="text-right space-y-0.5">
+                        <div><a href="{% url 'password_reset' %}" class="text-sm text-blue-600 hover:text-blue-700 font-semibold">Forgot password?</a></div>
+                        <div><a href="{% url 'resend_verification' %}" class="text-xs text-slate-400 hover:text-slate-600">Resend verification</a></div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="login-btn" class="auth-btn w-full text-white py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                    <span id="login-btn-text">Sign In</span>
+                    <svg id="login-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Switch to register -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                <div class="relative flex justify-center">
+                    <span class="px-3 bg-white text-xs text-slate-400">New to StockFolio?</span>
+                </div>
+            </div>
+            <a href="{% url 'register' %}"
+               class="w-full inline-flex justify-center items-center py-3 px-6 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-xl font-bold text-sm transition">
+                Create Free Account
+            </a>
+
+            <!-- Trust badges -->
+            <div class="flex flex-wrap justify-center gap-5 mt-7">
+                <span class="flex items-center gap-1.5 text-xs text-slate-400">
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>Free Forever
+                </span>
+                <span class="flex items-center gap-1.5 text-xs text-slate-400">
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>Secure & Private
+                </span>
+                <span class="flex items-center gap-1.5 text-xs text-slate-400">
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>No Credit Card
+                </span>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', function() {
+    const btn = document.getElementById('login-btn');
+    const text = document.getElementById('login-btn-text');
+    const spinner = document.getElementById('login-spinner');
+    btn.disabled = true;
+    text.textContent = 'Signing In...';
+    spinner.classList.remove('hidden');
+});
+</script>
 {% endblock %}

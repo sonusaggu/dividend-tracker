@@ -8,39 +8,38 @@
 {% block meta_keywords %}dividend calendar, upcoming dividends, dividend schedule, ex-dividend dates, dividend tracker{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-slate-50">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="card card-body mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Dividend Calendar</h1>
-                    <p class="text-gray-600">View all upcoming dividend payments at a glance</p>
+                    <p class="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">Calendar</p>
+                    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mb-1.5">Dividend Calendar</h1>
+                    <p class="text-slate-500">View all upcoming dividend payments at a glance</p>
                 </div>
-                    
+
                 <!-- Month Navigation -->
                 <div class="flex items-center gap-3 mt-6 md:mt-0 flex-wrap">
-                    <a href="?year={{ prev_year }}&month={{ prev_month }}&filter={{ filter_type }}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded-lg transition font-medium text-gray-700 hover:text-blue-600">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="?year={{ prev_year }}&month={{ prev_month }}&filter={{ filter_type }}"
+                       class="btn btn-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
                         Prev
                     </a>
-                    <div class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold text-base min-w-[180px] text-center">
+                    <div class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm min-w-[180px] text-center shadow-sm">
                         {{ month_name }} {{ year }}
                     </div>
-                    <a href="?year={{ next_year }}&month={{ next_month }}&filter={{ filter_type }}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded-lg transition font-medium text-gray-700 hover:text-blue-600">
+                    <a href="?year={{ next_year }}&month={{ next_month }}&filter={{ filter_type }}"
+                       class="btn btn-secondary">
                         Next
-                        <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </a>
-                    <a href="?year={{ today.year }}&month={{ today.month }}&filter={{ filter_type }}" 
-                       class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition font-medium">
-                        Today
-                    </a>
+                    <a href="?year={{ today.year }}&month={{ today.month }}&filter={{ filter_type }}"
+                       class="btn btn-primary">Today</a>
                 </div>
             </div>
             
@@ -51,22 +50,22 @@
                 
                 <!-- Main Filter Buttons -->
                 <div class="flex flex-wrap gap-3 mb-4">
-                    <button type="submit" name="filter" value="all" 
-                            class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    <button type="submit" name="filter" value="all"
+                            class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
                         <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                         All Stocks
                     </button>
-                    <button type="submit" name="filter" value="portfolio" 
-                            class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'portfolio' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    <button type="submit" name="filter" value="portfolio"
+                            class="btn btn-sm {% if filter_type == 'portfolio' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
                         <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         My Portfolio
                     </button>
-                    <button type="submit" name="filter" value="watchlist" 
-                            class="px-4 py-2 rounded-lg font-medium transition {% if filter_type == 'watchlist' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    <button type="submit" name="filter" value="watchlist"
+                            class="btn btn-sm {% if filter_type == 'watchlist' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
                         <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                         </svg>
@@ -76,31 +75,31 @@
                 
                 <!-- Advanced Filters (Collapsible) -->
                 <details class="group">
-                    <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 transition flex items-center gap-2 mb-3">
+                    <summary class="cursor-pointer text-sm font-medium text-slate-600 hover:text-blue-600 transition flex items-center gap-2 mb-3">
                         <svg class="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                         Advanced Filters
                     </summary>
-                    <div class="mt-3 pt-3 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="mt-3 pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- Search -->
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                            <input 
-                                type="text" 
-                                name="search" 
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
+                            <input
+                                type="text"
+                                name="search"
                                 value="{{ search_query }}"
                                 placeholder="Symbol or company name..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                         </div>
                         
                         <!-- Sector -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Sector</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Sector</label>
                             <select 
                                 name="sector" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                                 <option value="">All Sectors</option>
                                 {% for sector in sectors %}
@@ -111,7 +110,7 @@
                         
                         <!-- Yield Range -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Min Yield (%)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Min Yield (%)</label>
                             <input 
                                 type="number" 
                                 name="min_yield" 
@@ -120,11 +119,11 @@
                                 max="100"
                                 value="{{ min_yield }}"
                                 placeholder="0.0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Max Yield (%)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Max Yield (%)</label>
                             <input 
                                 type="number" 
                                 name="max_yield" 
@@ -133,13 +132,13 @@
                                 max="100"
                                 value="{{ max_yield }}"
                                 placeholder="100.0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                         </div>
                         
                         <!-- Amount Range -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Min Amount ($)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Min Amount ($)</label>
                             <input 
                                 type="number" 
                                 name="min_amount" 
@@ -147,11 +146,11 @@
                                 min="0"
                                 value="{{ min_amount }}"
                                 placeholder="0.00"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Max Amount ($)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Max Amount ($)</label>
                             <input 
                                 type="number" 
                                 name="max_amount" 
@@ -159,7 +158,7 @@
                                 min="0"
                                 value="{{ max_amount }}"
                                 placeholder="999.99"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
                             >
                         </div>
                     </div>
@@ -167,18 +166,16 @@
                 
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-2">
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm">
-                        Apply Filters
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
                     {% if search_query or sector_filter or min_yield or max_yield or min_amount or max_amount %}
                     <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}" 
-                       class="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition text-sm">
+                       class="btn btn-secondary btn-sm">
                         Clear Filters
                     </a>
                     {% endif %}
                     {% if total_dividends > 0 %}
                     <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if min_yield %}&min_yield={{ min_yield }}{% endif %}{% if max_yield %}&max_yield={{ max_yield }}{% endif %}{% if min_amount %}&min_amount={{ min_amount }}{% endif %}{% if max_amount %}&max_amount={{ max_amount }}{% endif %}&export=1" 
-                       class="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition text-sm inline-flex items-center gap-2">
+                       class="btn btn-secondary btn-sm inline-flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -190,81 +187,81 @@
             
             <!-- Statistics -->
             <div class="grid grid-cols-1 md:grid-cols-{% if portfolio_income %}4{% else %}3{% endif %} gap-4">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="stat-card">
                     <div class="flex items-center justify-between mb-2">
-                        <div class="text-sm font-medium text-gray-600">Total Dividends</div>
-                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Dividends</div>
+                        <div class="stat-icon bg-blue-100">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">{{ total_dividends }}</div>
-                    <div class="text-sm text-gray-500">This month</div>
+                    <div class="text-3xl font-black text-slate-900 mb-1">{{ total_dividends }}</div>
+                    <div class="text-sm text-slate-500">This month</div>
                 </div>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="stat-card">
                     <div class="flex items-center justify-between mb-2">
-                        <div class="text-sm font-medium text-gray-600">Total Amount</div>
-                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Amount</div>
+                        <div class="stat-icon bg-emerald-100">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">${{ total_amount|floatformat:2|intcomma }}</div>
-                    <div class="text-sm text-gray-500">Cumulative</div>
+                    <div class="text-3xl font-black text-emerald-600 mb-1">${{ total_amount|floatformat:2|intcomma }}</div>
+                    <div class="text-sm text-slate-500">Cumulative</div>
                 </div>
                 {% if portfolio_income is not None %}
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-sm border-2 border-green-200 p-6">
+                <div class="stat-card border-emerald-200 bg-emerald-50/30">
                     <div class="flex items-center justify-between mb-2">
-                        <div class="text-sm font-medium text-green-700">Your Income</div>
-                        <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Your Income</div>
+                        <div class="stat-icon bg-emerald-200">
+                            <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-green-700 mb-1">${{ portfolio_income|floatformat:2|intcomma }}</div>
-                    <div class="text-sm text-green-600">Based on your holdings</div>
+                    <div class="text-3xl font-black text-emerald-700 mb-1">${{ portfolio_income|floatformat:2|intcomma }}</div>
+                    <div class="text-sm text-emerald-600">Based on your holdings</div>
                 </div>
                 {% endif %}
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="stat-card">
                     <div class="flex items-center justify-between mb-2">
-                        <div class="text-sm font-medium text-gray-600">Unique Stocks</div>
-                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unique Stocks</div>
+                        <div class="stat-icon bg-violet-100">
+                            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">{{ unique_stocks_count }}</div>
-                    <div class="text-sm text-gray-500">Paying dividends</div>
+                    <div class="text-3xl font-black text-slate-900 mb-1">{{ unique_stocks_count }}</div>
+                    <div class="text-sm text-slate-500">Paying dividends</div>
                 </div>
             </div>
         </div>
 
         <!-- Calendar -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+        <div class="card overflow-hidden">
             <!-- Calendar Header (Days of Week) -->
-            <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Mon</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Tue</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Wed</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Thu</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Fri</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700 border-r border-gray-200">Sat</div>
-                <div class="p-4 text-center font-semibold text-sm text-gray-700">Sun</div>
+            <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-100">
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Mon</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Tue</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Wed</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Thu</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Fri</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Sat</div>
+                <div class="p-4 text-center font-semibold text-sm text-slate-600">Sun</div>
             </div>
-            
+
             <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 divide-x divide-y divide-gray-200 bg-gray-50">
+            <div class="grid grid-cols-7 divide-x divide-y divide-slate-100 bg-slate-50/30">
                 {% for day_data in calendar_days %}
-                <div class="min-h-[150px] p-3 {% if not day_data.is_current_month %}bg-gray-100/50{% else %}bg-white{% endif %} 
+                <div class="min-h-[150px] p-3 {% if not day_data.is_current_month %}bg-slate-100/50{% else %}bg-white{% endif %} 
                             {% if day_data.is_today %}ring-4 ring-blue-500 ring-inset bg-blue-50{% endif %} 
                             hover:bg-blue-50/50 transition-all duration-200 relative group">
                     <!-- Day Number -->
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-base font-bold {% if day_data.is_current_month %}text-gray-900{% else %}text-gray-400{% endif %} 
+                        <span class="text-base font-bold {% if day_data.is_current_month %}text-slate-900{% else %}text-slate-400{% endif %}
                                     {% if day_data.is_today %}text-blue-700 text-lg{% endif %}">
                             {{ day_data.day }}
                         </span>
@@ -282,7 +279,7 @@
                            class="block p-2 rounded-lg border hover:shadow-sm transition group/card {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-50 border-red-200 hover:bg-red-100{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-orange-50 border-orange-200 hover:bg-orange-100{% else %}bg-green-50 border-green-200 hover:bg-green-100{% endif %}"
                            title="{{ dividend.stock.symbol }} - ${{ dividend.amount|floatformat:2 }} - {{ dividend.stock.company_name }}">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-gray-900 group-hover/card:text-blue-600 text-sm">
+                                <span class="font-bold text-slate-900 group-hover/card:text-blue-600 text-sm">
                                     {{ dividend.stock.symbol }}
                                 </span>
                                 <span class="{% if dividend.yield_percent and dividend.yield_percent >= 5 %}text-red-700{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}text-orange-700{% else %}text-green-700{% endif %} font-bold text-sm">
@@ -290,7 +287,7 @@
                                 </span>
                             </div>
                             {% if dividend.yield_percent %}
-                            <div class="flex items-center text-xs {% if dividend.yield_percent >= 5 %}text-red-600{% elif dividend.yield_percent >= 3 %}text-orange-600{% else %}text-gray-600{% endif %}">
+                            <div class="flex items-center text-xs {% if dividend.yield_percent >= 5 %}text-red-600{% elif dividend.yield_percent >= 3 %}text-orange-600{% else %}text-slate-600{% endif %}">
                                 <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
                                 </svg>
@@ -301,7 +298,7 @@
                         {% endfor %}
                         {% if day_data.dividend_count > 3 %}
                         <div class="text-xs text-center pt-2 pb-1">
-                            <span class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full font-semibold">
+                            <span class="badge bg-slate-200 text-slate-600">
                                 +{{ day_data.dividend_count|add:"-3" }} more
                             </span>
                         </div>
@@ -310,9 +307,9 @@
                     
                     <!-- Total for Day -->
                     {% if day_data.total_amount > 0 %}
-                    <div class="mt-2 pt-2 border-t-2 border-gray-300">
+                    <div class="mt-2 pt-2 border-t-2 border-slate-200">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-gray-600">Total:</span>
+                            <span class="text-xs font-semibold text-slate-600">Total:</span>
                             <span class="text-sm font-bold text-green-700">
                                 ${{ day_data.total_amount|floatformat:2 }}
                             </span>
@@ -327,42 +324,42 @@
         <!-- Legend & Info -->
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Legend -->
-            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="card p-6">
+                <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
                     <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     Legend
                 </h3>
                 <div class="space-y-3">
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-6 h-6 bg-white border-2 border-gray-300 rounded-lg shadow-sm"></div>
-                        <span class="text-sm font-medium text-gray-700">Current month</span>
+                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                        <div class="w-6 h-6 bg-white border-2 border-slate-200 rounded-lg shadow-sm"></div>
+                        <span class="text-sm font-medium text-slate-700">Current month</span>
                     </div>
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-6 h-6 bg-gray-100 border border-gray-300 rounded-lg"></div>
-                        <span class="text-sm font-medium text-gray-700">Other months</span>
+                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
+                        <div class="w-6 h-6 bg-slate-100 border border-slate-200 rounded-lg"></div>
+                        <span class="text-sm font-medium text-slate-700">Other months</span>
                     </div>
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
                         <div class="w-6 h-6 bg-blue-50 ring-4 ring-blue-500 rounded-lg"></div>
-                        <span class="text-sm font-medium text-gray-700">Today</span>
+                        <span class="text-sm font-medium text-slate-700">Today</span>
                     </div>
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
                         <div class="w-6 h-6 bg-green-50 border border-green-200 rounded-lg"></div>
-                        <span class="text-sm font-medium text-gray-700">Dividend payment</span>
+                        <span class="text-sm font-medium text-slate-700">Dividend payment</span>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Tips -->
-            <div class="bg-blue-50 rounded-lg shadow-sm p-6 border border-blue-200">
-                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="card p-6 border-blue-100 bg-blue-50/30">
+                <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
                     <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                     </svg>
                     Quick Tips
                 </h3>
-                <ul class="space-y-2 text-sm text-gray-700">
+                <ul class="space-y-2 text-sm text-slate-700">
                     <li class="flex items-start">
                         <span class="text-green-600 mr-2">✓</span>
                         <span>Click any stock symbol to view details</span>
@@ -385,12 +382,12 @@
 
         <!-- Empty State -->
         {% if total_dividends == 0 %}
-        <div class="mt-8 bg-white rounded-lg shadow-sm p-12 text-center border border-gray-200">
-            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="mt-8 card p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <h3 class="text-2xl font-bold text-gray-900 mb-3">No Dividends This Month</h3>
-            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+            <h3 class="text-2xl font-bold text-slate-900 mb-3">No Dividends This Month</h3>
+            <p class="text-slate-600 mb-8 max-w-md mx-auto">
                 {% if filter_type == 'portfolio' %}
                     No dividends scheduled for your portfolio this month. Try adding more dividend stocks to your portfolio.
                 {% elif filter_type == 'watchlist' %}
@@ -400,16 +397,14 @@
                 {% endif %}
             </p>
             <div class="flex gap-4 justify-center flex-wrap">
-                <a href="{% url 'all_stocks' %}" 
-                   class="inline-flex items-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{% url 'all_stocks' %}" class="btn btn-primary inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     Browse Stocks
                 </a>
                 {% if filter_type != 'all' %}
-                <a href="?year={{ year }}&month={{ month }}&filter=all" 
-                   class="inline-flex items-center px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
+                <a href="?year={{ year }}&month={{ month }}&filter=all" class="btn btn-secondary inline-flex items-center">
                     View All Stocks
                 </a>
                 {% endif %}

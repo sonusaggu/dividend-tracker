@@ -8,41 +8,42 @@
 {% block meta_keywords %}portfolio dashboard, investment tracking, dividend income, portfolio performance, stock portfolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-slate-50">
   <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
     
     <!-- Clean Header -->
     <div class="mb-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+          <p class="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">Dashboard</p>
+          <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mb-1.5">
             Welcome back, {{ user.username }}
           </h1>
-          <p class="text-gray-600">Your portfolio overview</p>
+          <p class="text-slate-500">Your portfolio overview for today</p>
         </div>
         <div class="flex gap-3 flex-wrap">
           <a href="{% url 'all_stocks' %}" 
-             class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="btn btn-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
             Browse Stocks
           </a>
-          <a href="{% url 'big6_banks_dashboard' %}" 
-             class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-medium transition shadow-sm">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="{% url 'big6_banks_dashboard' %}"
+             class="btn btn-secondary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             Big 6 Banks
           </a>
-          <a href="{% url 'portfolio' %}" 
-             class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
+          <a href="{% url 'portfolio' %}"
+             class="btn btn-secondary">
             Portfolio
           </a>
           {% if total_value > 0 %}
-          <a href="{% url 'export_portfolio' %}" 
-             class="inline-flex items-center px-5 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="{% url 'export_portfolio' %}"
+             class="btn btn-secondary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             Export
@@ -53,7 +54,8 @@
     </div>
 
     <!-- Quick Search -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6" style="overflow: visible;">
+    <div class="card mb-6" style="overflow: visible;">
+      <div class="card-body" style="padding-bottom: 1.25rem; padding-top: 1.25rem;">
       <form method="get" action="{% url 'all_stocks' %}" class="flex gap-3" id="dashboard-search-form">
         <div class="flex-1 relative" style="z-index: 100;">
           <input type="text" 
@@ -61,32 +63,32 @@
                  name="search" 
                  placeholder="Search stocks by symbol or name..."
                  autocomplete="off"
-                 class="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm" />
-          <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm bg-slate-50 focus:bg-white" />
+          <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <div id="dashboard-autocomplete-results" class="hidden absolute w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;"></div>
+          <div id="dashboard-autocomplete-results" class="hidden absolute w-full mt-1 bg-white border border-slate-100 rounded-lg shadow-lg max-h-80 overflow-y-auto" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;"></div>
         </div>
-        <button type="submit"
-                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+        <button type="submit" class="btn btn-primary px-6 py-3">
           Search
         </button>
       </form>
+      </div>
     </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- Portfolio Value -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+      <div class="stat-card">
         <div class="flex items-center justify-between mb-3">
-          <p class="text-sm font-medium text-gray-600">Portfolio Value</p>
-          <div class="w-10 h-10 {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %} rounded-lg flex items-center justify-center">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Portfolio Value</p>
+          <div class="stat-icon {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %}">
             <svg class="w-6 h-6 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
         </div>
-        <p class="text-2xl font-bold text-gray-900 mb-1">${{ total_value|floatformat:2|intcomma|default:"0.00" }}</p>
+        <p class="text-2xl font-black text-slate-900 mb-1">${{ total_value|floatformat:2|intcomma|default:"0.00" }}</p>
         {% if total_value > 0 %}
         <div class="flex items-center gap-2">
           <p class="text-sm font-medium {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
@@ -103,24 +105,24 @@
           {% endif %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-500">No investments yet</p>
+        <p class="text-sm text-slate-400">No investments yet</p>
         {% endif %}
       </div>
 
       <!-- Annual Dividends -->
-      <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-sm border border-green-200 p-6 hover:shadow-md transition">
+      <div class="stat-card">
         <div class="flex items-center justify-between mb-3">
-          <p class="text-sm font-medium text-gray-700">Annual Dividends</p>
-          <div class="w-10 h-10 {% if dividend_yield >= 5 %}bg-green-100{% elif dividend_yield >= 3 %}bg-blue-100{% else %}bg-gray-100{% endif %} rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 {% if dividend_yield >= 5 %}text-green-600{% elif dividend_yield >= 3 %}text-blue-600{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Annual Dividends</p>
+          <div class="stat-icon bg-emerald-50">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
             </svg>
           </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mb-1">${{ annual_dividends|floatformat:2|intcomma|default:"0.00" }}</p>
+        <p class="text-3xl font-black text-slate-900 mb-1">${{ annual_dividends|floatformat:2|intcomma|default:"0.00" }}</p>
         {% if total_value > 0 and annual_dividends > 0 %}
         <div class="flex items-center gap-2">
-          <p class="text-sm font-semibold {% if dividend_yield >= 5 %}text-green-700{% elif dividend_yield >= 3 %}text-blue-700{% else %}text-gray-700{% endif %}">
+          <p class="text-sm font-semibold {% if dividend_yield >= 5 %}text-green-700{% elif dividend_yield >= 3 %}text-blue-700{% else %}text-slate-700{% endif %}">
             {{ dividend_yield|floatformat:2 }}% yield
           </p>
           {% if dividend_yield >= 5 %}
@@ -130,45 +132,45 @@
           {% endif %}
         </div>
         {% if average_monthly_income > 0 %}
-        <p class="text-xs text-gray-600 mt-1">~${{ average_monthly_income|floatformat:2|intcomma }}/month</p>
+        <p class="text-xs text-slate-500 mt-1">~${{ average_monthly_income|floatformat:2|intcomma }}/month</p>
         {% endif %}
         {% else %}
-        <p class="text-sm text-gray-500">0.00% yield</p>
+        <p class="text-sm text-slate-400">0.00% yield</p>
         {% endif %}
       </div>
 
       <!-- Total Holdings -->
-      <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-sm border border-purple-200 p-6 hover:shadow-md transition">
+      <div class="stat-card">
         <div class="flex items-center justify-between mb-3">
-          <p class="text-sm font-medium text-gray-700">Total Holdings</p>
-          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Holdings</p>
+          <div class="stat-icon bg-purple-100">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
           </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mb-1">{{ total_holdings|default:"0" }}</p>
+        <p class="text-3xl font-black text-slate-900 mb-1">{{ total_holdings|default:"0" }}</p>
         {% if total_holdings > 0 %}
-        <p class="text-sm text-gray-600 font-medium">{{ sectors_count|default:1 }} sector{{ sectors_count|pluralize }}</p>
+        <p class="text-sm text-slate-500 font-medium">{{ sectors_count|default:1 }} sector{{ sectors_count|pluralize }}</p>
         <a href="{% url 'portfolio' %}" class="text-xs text-purple-600 hover:text-purple-700 font-medium mt-1 inline-block">View Portfolio →</a>
         {% else %}
-        <p class="text-sm text-gray-500">No holdings yet</p>
+        <p class="text-sm text-slate-400">No holdings yet</p>
         <a href="{% url 'all_stocks' %}" class="text-xs text-purple-600 hover:text-purple-700 font-medium mt-1 inline-block">Add Stocks →</a>
         {% endif %}
       </div>
 
       <!-- Upcoming Dividends -->
-      <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg shadow-sm border border-orange-200 p-6 hover:shadow-md transition">
+      <div class="stat-card">
         <div class="flex items-center justify-between mb-3">
-          <p class="text-sm font-medium text-gray-700">Upcoming Dividends</p>
-          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Upcoming Dividends</p>
+          <div class="stat-icon bg-amber-50">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
           </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900 mb-1">{{ upcoming_dividends_count|default:"0" }}</p>
-        <p class="text-sm text-gray-600 font-medium">Next 30 days</p>
+        <p class="text-3xl font-black text-slate-900 mb-1">{{ upcoming_dividends_count|default:"0" }}</p>
+        <p class="text-sm text-slate-500 font-medium">Next 30 days</p>
         {% if upcoming_dividends_count > 0 %}
         <a href="{% url 'dividend_calendar' %}" class="text-xs text-orange-600 hover:text-orange-700 font-medium mt-1 inline-block">View Calendar →</a>
         {% endif %}
@@ -177,16 +179,16 @@
 
     <!-- Smart Insights (free AI-style insights from your data only) -->
     {% if ai_insights %}
-    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow-sm border border-indigo-200 p-6 mb-6">
+    <div class="card card-body mb-6">
       <div class="flex items-center gap-2 mb-4">
-        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+        <div class="stat-icon bg-indigo-100">
           <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
           </svg>
         </div>
         <div>
-          <h2 class="text-lg font-bold text-gray-900">Smart Insights</h2>
-          <p class="text-xs text-gray-600">Powered by your portfolio data</p>
+          <h2 class="text-lg font-bold text-slate-900">Smart Insights</h2>
+          <p class="text-xs text-slate-500">Powered by your portfolio data</p>
         </div>
       </div>
       <ul class="space-y-3">
@@ -208,8 +210,8 @@
             {% endif %}
           </span>
           <div>
-            <p class="font-semibold text-gray-900 text-sm">{{ insight.title }}</p>
-            <p class="text-sm text-gray-600">{{ insight.message }}</p>
+            <p class="font-bold text-slate-900 text-sm">{{ insight.title }}</p>
+            <p class="text-sm text-slate-600">{{ insight.message }}</p>
           </div>
         </li>
         {% endfor %}
@@ -220,10 +222,10 @@
     <!-- Portfolio Insights & Watchlist -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Portfolio Insights -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="card card-body">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-bold text-gray-900">Portfolio Insights</h2>
-          <a href="{% url 'portfolio' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+          <h2 class="text-lg font-bold text-slate-900">Portfolio Insights</h2>
+          <a href="{% url 'portfolio' %}" class="section-link">
             View All →
           </a>
         </div>
@@ -232,7 +234,7 @@
         <!-- Top Performers -->
         {% if top_performers %}
         <div class="mb-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center">
             <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
             </svg>
@@ -244,17 +246,17 @@
                class="block p-3 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition group">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
+                  <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span class="text-emerald-700 font-black text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
                   </div>
                   <div>
-                    <p class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
-                    <p class="text-xs text-gray-600">{{ performer.stock.company_name|truncatewords:4 }}</p>
+                    <p class="font-semibold text-slate-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
+                    <p class="text-xs text-slate-500">{{ performer.stock.company_name|truncatewords:4 }}</p>
                   </div>
                 </div>
                 <div class="text-right">
                   <p class="text-sm font-bold text-green-600">+{{ performer.gain_percent|floatformat:1 }}%</p>
-                  <p class="text-xs text-gray-600">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
+                  <p class="text-xs text-slate-500">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
                 </div>
               </div>
             </a>
@@ -266,7 +268,7 @@
         <!-- Worst Performers (if any) -->
         {% if worst_performers %}
         <div class="mb-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center">
             <svg class="w-4 h-4 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
             </svg>
@@ -278,17 +280,17 @@
                class="block p-3 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition group">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
+                  <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span class="text-red-700 font-black text-sm">{{ performer.stock.symbol|slice:":1" }}</span>
                   </div>
                   <div>
-                    <p class="font-semibold text-gray-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
-                    <p class="text-xs text-gray-600">{{ performer.stock.company_name|truncatewords:4 }}</p>
+                    <p class="font-semibold text-slate-900 group-hover:text-blue-600 transition">{{ performer.stock.symbol }}</p>
+                    <p class="text-xs text-slate-500">{{ performer.stock.company_name|truncatewords:4 }}</p>
                   </div>
                 </div>
                 <div class="text-right">
                   <p class="text-sm font-bold text-red-600">{{ performer.gain_percent|floatformat:1 }}%</p>
-                  <p class="text-xs text-gray-600">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
+                  <p class="text-xs text-slate-500">${{ performer.gain_loss|floatformat:2|intcomma }}</p>
                 </div>
               </div>
             </a>
@@ -300,7 +302,7 @@
         <!-- Sector Allocation -->
         {% if sector_allocation_sorted %}
         <div>
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center">
             <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
@@ -314,13 +316,13 @@
           {% endif %}
           <div class="space-y-2">
             {% for sector, percent in sector_allocation_sorted %}
-            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-              <span class="text-sm font-medium text-gray-700">{{ sector }}</span>
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+              <span class="text-sm font-medium text-slate-700">{{ sector }}</span>
               <div class="flex items-center space-x-2">
-                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div class="h-full bg-blue-600 rounded-full" style="width: {{ percent|floatformat:1 }}%"></div>
                 </div>
-                <span class="text-sm font-semibold text-gray-900 w-12 text-right">{{ percent|floatformat:1 }}%</span>
+                <span class="text-sm font-semibold text-slate-900 w-12 text-right">{{ percent|floatformat:1 }}%</span>
               </div>
             </div>
             {% endfor %}
@@ -329,13 +331,13 @@
         {% endif %}
         {% else %}
         <div class="text-center py-12">
-          <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
           </svg>
-          <p class="text-gray-600 font-medium mb-2">No portfolio data</p>
-          <p class="text-sm text-gray-500 mb-4">Add stocks to see insights</p>
+          <p class="text-slate-700 font-semibold mb-2">No portfolio data</p>
+          <p class="text-sm text-slate-500 mb-4">Add stocks to see insights</p>
           <a href="{% url 'all_stocks' %}" 
-             class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+             class="btn btn-primary btn-sm">
             Browse Stocks
           </a>
         </div>
@@ -343,11 +345,11 @@
       </div>
 
       <!-- Watchlist -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
+      <div class="card">
+        <div class="section-header">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">Watchlist</h2>
-            <a href="{% url 'watchlist' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+            <h2 class="text-lg font-bold text-slate-900">Watchlist</h2>
+            <a href="{% url 'watchlist' %}" class="section-link">
               View All →
             </a>
           </div>
@@ -361,44 +363,44 @@
               <col style="width: 120px;">
               <col style="width: 100px;">
             </colgroup>
-            <thead class="bg-gray-50 border-b border-gray-200">
+            <thead class="table-head">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Price</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Action</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-slate-100">
               {% for item in watchlist_stocks %}
-              <tr class="hover:bg-gray-50 transition-colors">
+              <tr class="table-row-hover transition-colors">
                 <td class="px-4 py-3">
                   <div class="flex items-center space-x-2">
-                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">{{ item.stock.symbol|slice:":1" }}</span>
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span class="text-blue-700 font-black text-xs">{{ item.stock.symbol|slice:":1" }}</span>
                     </div>
                     <div class="min-w-0 flex-1" style="min-width: 100px;">
-                      <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
+                      <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition block">
                         {{ item.stock.symbol }}
                       </a>
-                      <div class="text-xs text-gray-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
+                      <div class="text-xs text-slate-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
                     </div>
                   </div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-right">
                   {% if item.latest_price %}
-                  <div class="text-sm font-semibold text-gray-900">${{ item.latest_price|floatformat:2 }}</div>
+                  <div class="text-sm font-semibold text-slate-900">${{ item.latest_price|floatformat:2 }}</div>
                   {% if item.price_change_7d is not None %}
                   <div class="flex items-center justify-end gap-1 mt-0.5">
                     <span class="text-xs font-medium {% if item.price_change_7d >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                       {% if item.price_change_7d >= 0 %}+{% endif %}{{ item.price_change_7d|floatformat:1 }}%
                     </span>
-                    <span class="text-xs text-gray-400">7d</span>
+                    <span class="text-xs text-slate-400">7d</span>
                   </div>
                   {% elif item.price_date %}
-                  <div class="text-xs text-gray-500">{{ item.price_date|date:"M d, Y" }}</div>
+                  <div class="text-xs text-slate-400">{{ item.price_date|date:"M d, Y" }}</div>
                   {% endif %}
                   {% else %}
-                  <span class="text-xs text-gray-400">—</span>
+                  <span class="text-xs text-slate-400">—</span>
                   {% endif %}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center">
@@ -414,7 +416,7 @@
                       </svg>
                     </button>
                     <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}" 
-                       class="inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
+                       class="btn btn-primary btn-sm">
                       View
                     </a>
                   </div>
@@ -426,14 +428,14 @@
         </div>
         {% else %}
         <div class="p-12 text-center">
-          <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
           </svg>
-          <p class="text-gray-600 font-medium mb-2">No stocks in watchlist</p>
-          <p class="text-sm text-gray-500 mb-4">Start tracking stocks you're interested in</p>
+          <p class="text-slate-700 font-semibold mb-2">No stocks in watchlist</p>
+          <p class="text-sm text-slate-500 mb-4">Start tracking stocks you're interested in</p>
           <a href="{% url 'all_stocks' %}" 
-             class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+             class="btn btn-primary btn-sm">
             Add Stocks
           </a>
         </div>
@@ -442,17 +444,17 @@
     </div>
 
     <!-- Upcoming Dividends -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-      <div class="p-6 border-b border-gray-200">
+    <div class="card mb-6">
+      <div class="section-header">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-bold text-gray-900">Upcoming Dividend Payments</h2>
+          <h2 class="text-lg font-bold text-slate-900">Upcoming Dividend Payments</h2>
           <div class="flex gap-4">
             {% if upcoming_dividends_count > 0 %}
-            <a href="{% url 'portfolio' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+            <a href="{% url 'portfolio' %}" class="section-link">
               View All →
             </a>
             {% endif %}
-            <a href="{% url 'dividend_calendar' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+            <a href="{% url 'dividend_calendar' %}" class="section-link">
               Calendar
             </a>
           </div>
@@ -462,36 +464,36 @@
       {% if upcoming_dividends %}
       <div class="overflow-x-auto md:overflow-x-visible">
         <table class="w-full" style="table-layout: fixed; width: 100%;">
-          <thead class="bg-gray-50 border-b border-gray-200">
+          <thead class="table-head">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style="width: 25%;">Stock</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 10%;">Dividend</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 18%;">Ex-Date</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap" style="width: 12%;">Days</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style="width: 15%;">Action</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 25%;">Stock</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 10%;">Dividend</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 18%;">Ex-Date</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 12%;">Days</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 15%;">Action</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-white divide-y divide-slate-100">
             {% for dividend in upcoming_dividends %}
-            <tr class="hover:bg-gray-50 transition-colors">
+            <tr class="table-row-hover transition-colors">
               <td class="px-4 py-4" style="width: 25%;">
                 <div class="flex items-center space-x-3">
-                  <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">{{ dividend.stock.symbol|slice:":1" }}</span>
+                  <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span class="text-blue-700 font-black text-sm">{{ dividend.stock.symbol|slice:":1" }}</span>
                   </div>
                   <div class="min-w-0 flex-1" style="min-width: 100px;">
-                    <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition block">
+                    <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition block">
                       {{ dividend.stock.symbol }}
                     </a>
-                    <div class="text-xs text-gray-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ dividend.stock.company_name }}</div>
+                    <div class="text-xs text-slate-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ dividend.stock.company_name }}</div>
                   </div>
                 </div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-right" style="width: 10%;">
-                <div class="text-sm font-semibold text-gray-900">${{ dividend.amount|floatformat:4 }}</div>
+                <div class="text-sm font-semibold text-slate-900">${{ dividend.amount|floatformat:4 }}</div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-right" style="width: 18%;">
-                <div class="text-sm font-medium text-gray-900">{{ dividend.ex_dividend_date|date:"M d, Y" }}</div>
+                <div class="text-sm font-medium text-slate-800">{{ dividend.ex_dividend_date|date:"M d, Y" }}</div>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-right">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {% if dividend.days_until <= 3 %}bg-red-100 text-red-700{% elif dividend.days_until <= 7 %}bg-orange-100 text-orange-700{% else %}bg-green-100 text-green-700{% endif %}">
@@ -499,8 +501,8 @@
                 </span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-center">
-                <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" 
-                   class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
+                <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}"
+                   class="btn btn-primary btn-sm">
                   View
                 </a>
               </td>
@@ -511,13 +513,13 @@
       </div>
       {% else %}
       <div class="p-12 text-center">
-        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
-        <p class="text-gray-600 font-medium mb-2">No upcoming dividends</p>
-        <p class="text-sm text-gray-500 mb-4">Dividends from your holdings will appear here</p>
+        <p class="text-slate-700 font-semibold mb-2">No upcoming dividends</p>
+        <p class="text-sm text-slate-500 mb-4">Dividends from your holdings will appear here</p>
         <a href="{% url 'all_stocks' %}" 
-           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+           class="btn btn-primary btn-sm">
           Browse Dividend Stocks
         </a>
       </div>
@@ -526,14 +528,14 @@
 
     <!-- Dividend Income Projection -->
     {% if dividend_projection %}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-      <div class="p-6 border-b border-gray-200">
-        <h2 class="text-lg font-bold text-gray-900">Dividend Income Projection (Next 12 Months)</h2>
+    <div class="card mb-6">
+      <div class="section-header">
+        <h2 class="text-lg font-bold text-slate-900">Dividend Income Projection (Next 12 Months)</h2>
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
         <!-- Chart -->
-        <div class="bg-gray-50 rounded-lg p-4">
+        <div class="bg-slate-50 rounded-xl p-4">
           <div class="chart-wrapper w-full overflow-x-auto">
             <canvas id="dividendProjectionChart" class="w-full" style="max-width: 100%; height: auto; min-height: 250px;"></canvas>
           </div>
@@ -541,21 +543,21 @@
         
         <!-- Summary Stats -->
         <div class="space-y-4">
-          <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
-            <p class="text-sm font-medium text-gray-600 mb-2">Total Projected Income</p>
-            <p class="text-3xl font-bold text-gray-900">${{ total_projected_income|floatformat:2|intcomma }}</p>
-            <p class="text-xs text-gray-500 mt-1">Over next 12 months</p>
+          <div class="bg-blue-50 rounded-xl p-6 border border-blue-100">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Projected Income</p>
+            <p class="text-3xl font-black text-slate-900">${{ total_projected_income|floatformat:2|intcomma }}</p>
+            <p class="text-xs text-slate-400 mt-1">Over next 12 months</p>
           </div>
-          
-          <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="text-sm text-gray-600 mb-2">Average Monthly Income</p>
-            <p class="text-2xl font-bold text-gray-900">${{ average_monthly_income|floatformat:2|intcomma }}</p>
+
+          <div class="card p-4">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Avg Monthly Income</p>
+            <p class="text-2xl font-black text-slate-900">${{ average_monthly_income|floatformat:2|intcomma }}</p>
           </div>
           
           <div class="space-y-2 max-h-64 overflow-y-auto">
             {% for month in dividend_projection|slice:":6" %}
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span class="text-sm font-medium text-gray-700">{{ month.month }}</span>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              <span class="text-sm font-medium text-slate-700">{{ month.month }}</span>
               <span class="text-sm font-semibold text-green-600">${{ month.income|floatformat:2|intcomma }}</span>
             </div>
             {% endfor %}
@@ -567,11 +569,11 @@
 
     <!-- Recent Transactions -->
     {% if recent_transactions %}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-      <div class="p-6 border-b border-gray-200">
+    <div class="card mb-6">
+      <div class="section-header">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-bold text-gray-900">Recent Transactions</h2>
-          <a href="{% url 'transactions_list' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+          <h2 class="text-lg font-bold text-slate-900">Recent Transactions</h2>
+          <a href="{% url 'transactions_list' %}" class="section-link">
             View All →
           </a>
         </div>
@@ -579,22 +581,22 @@
       
       <div class="overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-gray-50 border-b border-gray-200">
+          <thead class="table-head">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Stock</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Type</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Shares</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Price</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Total</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Stock</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Type</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Shares</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Price</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Total</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-white divide-y divide-slate-100">
             {% for transaction in recent_transactions %}
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ transaction.transaction_date|date:"M d, Y" }}</td>
+            <tr class="table-row-hover transition-colors">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-800">{{ transaction.transaction_date|date:"M d, Y" }}</td>
               <td class="px-4 py-3">
-                <a href="{% url 'stock_detail' transaction.stock.symbol transaction.stock.get_seo_slug %}" class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition">
+                <a href="{% url 'stock_detail' transaction.stock.symbol transaction.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition">
                   {{ transaction.stock.symbol }}
                 </a>
               </td>
@@ -603,9 +605,9 @@
                   {{ transaction.transaction_type }}
                 </span>
               </td>
-              <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">{{ transaction.shares|intcomma }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">${{ transaction.price_per_share|floatformat:2 }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-semibold text-gray-900">${{ transaction.total_amount|floatformat:2|intcomma }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-slate-800">{{ transaction.shares|intcomma }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-slate-800">${{ transaction.price_per_share|floatformat:2 }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-semibold text-slate-900">${{ transaction.total_amount|floatformat:2|intcomma }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -623,49 +625,55 @@
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <a href="{% url 'portfolio' %}" 
-         class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition group">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition">My Portfolio</h3>
-            <p class="text-sm text-gray-600">View and manage investments</p>
+      <a href="{% url 'portfolio' %}"
+         class="card card-hover card-body group">
+        <div class="flex items-center gap-4">
+          <div class="stat-icon bg-blue-100 group-hover:bg-blue-600 transition">
+            <svg class="w-5 h-5 text-blue-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
           </div>
-          <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">My Portfolio</h3>
+            <p class="text-sm text-slate-500">View and manage investments</p>
+          </div>
         </div>
       </a>
-      
-      <a href="{% url 'watchlist' %}" 
-         class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition group">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition">Watchlist</h3>
-            <p class="text-sm text-gray-600">Track stocks of interest</p>
+
+      <a href="{% url 'watchlist' %}"
+         class="card card-hover card-body group">
+        <div class="flex items-center gap-4">
+          <div class="stat-icon bg-violet-100 group-hover:bg-violet-600 transition">
+            <svg class="w-5 h-5 text-violet-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
           </div>
-          <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-          </svg>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">Watchlist</h3>
+            <p class="text-sm text-slate-500">Track stocks of interest</p>
+          </div>
         </div>
       </a>
-      
-      <a href="{% url 'my_alerts' %}" 
-         class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition group">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition">My Alerts</h3>
-            <p class="text-sm text-gray-600">Manage dividend alerts</p>
+
+      <a href="{% url 'my_alerts' %}"
+         class="card card-hover card-body group">
+        <div class="flex items-center gap-4">
+          <div class="stat-icon bg-amber-100 group-hover:bg-amber-500 transition">
+            <svg class="w-5 h-5 text-amber-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
           </div>
-          <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-          </svg>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">My Alerts</h3>
+            <p class="text-sm text-slate-500">Manage dividend alerts</p>
+          </div>
         </div>
       </a>
     </div>
 
     <!-- Newsletter Subscription -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-sm p-8 mb-6 text-white">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-md p-8 mb-6 text-white">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="flex-1">
           <h2 class="text-2xl font-bold mb-2">Boost Your Dividend Strategy</h2>
@@ -688,21 +696,21 @@
         <div class="flex flex-col sm:flex-row gap-3">
           {% if user.is_authenticated %}
             {% if user.newsletter_subscription and user.newsletter_subscription.is_active %}
-              <a href="{% url 'newsletter_subscription' %}" 
-                 class="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium text-center transition hover:bg-blue-50">
+              <a href="{% url 'newsletter_subscription' %}"
+                 class="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-center transition hover:bg-blue-50 text-sm">
                 Manage Subscription
               </a>
               <button onclick="openModal('previewModal')"
-                      class="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-20 transition">
+                      class="border-2 border-white/70 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
                 Preview Latest
               </button>
             {% else %}
               <button onclick="openModal('newsletterModal')"
-                      class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition">
+                      class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold text-sm transition shadow-sm">
                 Subscribe Now
               </button>
               <button onclick="openModal('previewModal')"
-                      class="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-20 transition">
+                      class="border-2 border-white/70 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
                 See Sample
               </button>
             {% endif %}
@@ -723,10 +731,10 @@
 
 <!-- Newsletter Subscription Modal -->
 <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg shadow-xl p-6 mx-4 max-w-md w-full">
+  <div class="bg-white rounded-2xl shadow-xl p-6 mx-4 max-w-md w-full">
     <div class="flex justify-between items-center mb-6">
-      <h3 class="text-xl font-bold text-gray-900">Subscribe to Dividend Digest</h3>
-      <button onclick="closeModal('newsletterModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition">&times;</button>
+      <h3 class="text-xl font-bold text-slate-900">Subscribe to Dividend Digest</h3>
+      <button onclick="closeModal('newsletterModal')" class="text-slate-400 hover:text-slate-600 text-2xl transition">&times;</button>
     </div>
     
     <form method="post" action="{% url 'newsletter_subscription' %}">
@@ -734,8 +742,8 @@
       
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Frequency</label>
-          <select name="frequency" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Frequency</label>
+          <select name="frequency" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 transition">
             <option value="weekly">Weekly</option>
             <option value="biweekly">Bi-Weekly</option>
             <option value="monthly">Monthly</option>
@@ -743,8 +751,8 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Strategy Focus</label>
-          <select name="strategy" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Strategy Focus</label>
+          <select name="strategy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 transition">
             <option value="high_yield">High Yield</option>
             <option value="growth_income">Growth & Income</option>
             <option value="blue_chip">Blue Chip Stocks</option>
@@ -753,7 +761,7 @@
         
         <div class="flex items-center">
           <input type="checkbox" name="terms" required class="mr-3 rounded w-4 h-4" id="terms">
-          <label for="terms" class="text-sm text-gray-600">
+          <label for="terms" class="text-sm text-slate-600">
             I agree to receive dividend insights and market updates
           </label>
         </div>
@@ -761,7 +769,7 @@
       
       <div class="flex gap-3 mt-6">
         <button type="button" onclick="closeModal('newsletterModal')"
-                class="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium">
+                class="flex-1 btn btn-secondary">
           Cancel
         </button>
         <button type="submit" name="subscribe"
@@ -777,56 +785,56 @@
 <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-lg shadow-xl p-6 mx-4 max-w-2xl w-full max-h-96 overflow-y-auto">
     <div class="flex justify-between items-center mb-6">
-      <h3 class="text-xl font-bold text-gray-900">This Week's Dividend Picks</h3>
-      <button onclick="closeModal('previewModal')" class="text-gray-400 hover:text-gray-600 text-2xl transition">&times;</button>
+      <h3 class="text-xl font-bold text-slate-900">This Week's Dividend Picks</h3>
+      <button onclick="closeModal('previewModal')" class="text-slate-400 hover:text-slate-600 text-2xl transition">&times;</button>
     </div>
     
     <div class="space-y-3">
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
         <div class="flex items-center space-x-3">
-          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center font-black text-blue-700">
             A
           </div>
           <div>
-            <p class="font-semibold text-gray-900">AAPL</p>
-            <p class="text-sm text-gray-600">Apple Inc.</p>
+            <p class="font-semibold text-slate-900">AAPL</p>
+            <p class="text-sm text-slate-600">Apple Inc.</p>
           </div>
         </div>
         <div class="text-right">
           <p class="font-semibold text-green-600">$0.24</p>
-          <p class="text-sm text-gray-600">Feb 09, 2024</p>
+          <p class="text-sm text-slate-600">Feb 09, 2024</p>
         </div>
       </div>
       
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
         <div class="flex items-center space-x-3">
-          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center font-black text-blue-700">
             M
           </div>
           <div>
-            <p class="font-semibold text-gray-900">MSFT</p>
-            <p class="text-sm text-gray-600">Microsoft Corporation</p>
+            <p class="font-semibold text-slate-900">MSFT</p>
+            <p class="text-sm text-slate-600">Microsoft Corporation</p>
           </div>
         </div>
         <div class="text-right">
           <p class="font-semibold text-green-600">$0.75</p>
-          <p class="text-sm text-gray-600">Feb 14, 2024</p>
+          <p class="text-sm text-slate-600">Feb 14, 2024</p>
         </div>
       </div>
       
-      <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
         <div class="flex items-center space-x-3">
-          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center font-black text-blue-700">
             J
           </div>
           <div>
-            <p class="font-semibold text-gray-900">JNJ</p>
-            <p class="text-sm text-gray-600">Johnson & Johnson</p>
+            <p class="font-semibold text-slate-900">JNJ</p>
+            <p class="text-sm text-slate-600">Johnson & Johnson</p>
           </div>
         </div>
         <div class="text-right">
           <p class="font-semibold text-green-600">$1.19</p>
-          <p class="text-sm text-gray-600">Feb 16, 2024</p>
+          <p class="text-sm text-slate-600">Feb 16, 2024</p>
         </div>
       </div>
     </div>
@@ -962,19 +970,19 @@
       
       results.forEach((stock) => {
         const item = document.createElement('div');
-        item.className = 'autocomplete-item p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition';
+        item.className = 'autocomplete-item p-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition';
         item.dataset.symbol = stock.symbol;
         item.innerHTML = `
           <div class="flex items-center justify-between">
             <div class="flex-1">
               <div class="flex items-center space-x-2">
-                <span class="font-semibold text-gray-900">${escapeHtml(stock.symbol)}</span>
-                <span class="text-xs text-gray-500">${escapeHtml(stock.code)}</span>
+                <span class="font-semibold text-slate-900">${escapeHtml(stock.symbol)}</span>
+                <span class="text-xs text-slate-500">${escapeHtml(stock.code)}</span>
                 ${stock.sector ? `<span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
               </div>
-              <p class="text-sm text-gray-600 mt-1">${escapeHtml(stock.company_name)}</p>
+              <p class="text-sm text-slate-600 mt-1">${escapeHtml(stock.company_name)}</p>
             </div>
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
             </svg>
           </div>
