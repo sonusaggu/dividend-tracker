@@ -152,11 +152,18 @@ urlpatterns = [
     path('watchlist-groups/<int:group_id>/edit/', views.edit_watchlist_group, name='edit_watchlist_group'),
     path('watchlist-groups/<int:group_id>/delete/', views.delete_watchlist_group, name='delete_watchlist_group'),
     path('watchlist/<int:watchlist_id>/set-group/', views.set_watchlist_group, name='set_watchlist_group'),
-    
+    path('watchlist/<int:watchlist_id>/set-price-target/', views.set_watchlist_price_target, name='set_watchlist_price_target'),
+
     # Analyst Rating Updates
     path('stock/<str:symbol>/update-rating-from-news/', views.update_rating_from_news, name='update_rating_from_news'),
-    
+
     # DRIP Calculator
     path('drip-calculator/', views.drip_calculator, name='drip_calculator'),
+
+    # Dividend Income Goal Tracker
+    path('goals/', views.dividend_goals, name='dividend_goals'),
+
+    # T5 Tax Estimator
+    path('tools/t5-estimator/', views.t5_estimator, name='t5_estimator'),
 
 ]

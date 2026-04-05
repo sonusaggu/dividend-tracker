@@ -392,6 +392,25 @@
                         </div>
                     </div>
                     
+                    {% if dividend_safety_score is not None %}
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs text-slate-500 font-semibold">Safety Score</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-black
+                            {% if dividend_safety_score >= 75 %}bg-emerald-100 text-emerald-700
+                            {% elif dividend_safety_score >= 50 %}bg-amber-100 text-amber-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {{ dividend_safety_score }}/100
+                        </span>
+                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full
+                                {% if dividend_safety_score >= 75 %}bg-emerald-400
+                                {% elif dividend_safety_score >= 50 %}bg-amber-400
+                                {% else %}bg-red-400{% endif %}"
+                                style="width: {{ dividend_safety_score }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {% if dividend_growth_rate is not None or dividend_consistency_score > 0 or annual_dividend_income > 0 %}
                     <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
                         {% if dividend_growth_rate is not None %}
@@ -760,6 +779,53 @@
     </div>
 </div>
 
+<!-- Dividend History Chart -->
+{% if dividend_chart_data %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+    <div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-black text-slate-800">Dividend History (3 Years)</h2>
+            <a href="{% url 'dividend_history' stock.symbol %}" class="text-xs text-blue-600 hover:underline font-semibold">Full history →</a>
+        </div>
+        {{ dividend_chart_data|json_script:"dividend-chart-data" }}
+        <div style="height: 180px;">
+            <canvas id="dividendHistoryChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Stocks Like This -->
+{% if similar_stocks %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+    <div class="card p-5">
+        <h2 class="text-base font-black text-slate-800 mb-4">Stocks Like This</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {% for sim in similar_stocks %}
+            <a href="{% url 'stock_detail' sim.stock.symbol sim.stock.get_seo_slug %}"
+               class="block rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-md transition p-3 text-center">
+                <span class="w-10 h-10 mx-auto mb-2 rounded-xl flex items-center justify-center font-black text-sm
+                    {% if sim.dividend and sim.dividend.yield_percent %}
+                        {% if sim.dividend.yield_percent >= 4 %}bg-emerald-100 text-emerald-700
+                        {% elif sim.dividend.yield_percent >= 2 %}bg-amber-100 text-amber-700
+                        {% else %}bg-blue-100 text-blue-700{% endif %}
+                    {% else %}bg-slate-200 text-slate-600{% endif %}">
+                    {{ sim.stock.symbol|slice:":2" }}
+                </span>
+                <p class="text-xs font-black text-slate-800">{{ sim.stock.symbol }}</p>
+                {% if sim.dividend and sim.dividend.yield_percent %}
+                <p class="text-xs text-emerald-600 font-semibold">{{ sim.dividend.yield_percent|floatformat:1 }}%</p>
+                {% endif %}
+                {% if sim.latest_price %}
+                <p class="text-xs text-slate-500">${{ sim.latest_price|floatformat:2 }}</p>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Portfolio Modal -->
 <div id="portfolioModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
@@ -1100,9 +1166,10 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
 }
 </script>
 
-{% if price_history_data %}
+{% if price_history_data or dividend_chart_data %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+{% if price_history_data %}
 (function() {
     const el = document.getElementById('price-history-data');
     const canvas = document.getElementById('priceHistoryChart');
@@ -1132,19 +1199,51 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        display: true,
-                        ticks: { maxTicksLimit: 6, maxRotation: 0 }
-                    },
-                    y: {
-                        display: true,
-                        beginAtZero: false
-                    }
+                    x: { display: true, ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+                    y: { display: true, beginAtZero: false }
                 }
             }
         });
     } catch (e) { console.warn('Price history chart:', e); }
 })();
+{% endif %}
+
+{% if dividend_chart_data %}
+(function() {
+    const el = document.getElementById('dividend-chart-data');
+    const canvas = document.getElementById('dividendHistoryChart');
+    if (!el || !canvas) return;
+    try {
+        const data = JSON.parse(el.textContent);
+        if (!data || data.length === 0) return;
+        const labels = data.map(function(d) { return d.date; });
+        const values = data.map(function(d) { return d.amount; });
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Dividend ($)',
+                    data: values,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: '#059669',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: true, ticks: { maxTicksLimit: 8, maxRotation: 45 } },
+                    y: { display: true, beginAtZero: true }
+                }
+            }
+        });
+    } catch (e) { console.warn('Dividend chart:', e); }
+})();
+{% endif %}
 </script>
 {% endif %}
 

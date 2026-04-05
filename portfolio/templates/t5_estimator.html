@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}T5 Dividend Tax Estimator — StockFolio{% endblock %}
+{% block meta_description %}Estimate your Canadian T5 dividend tax credits. Calculate after-tax dividend income by province.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <a href="{% url 'canadian_tools' %}" class="inline-flex items-center text-sm text-slate-500 hover:text-slate-700 mb-4">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Canadian Tools
+      </a>
+      <h1 class="text-2xl font-black text-slate-900">T5 Dividend Tax Estimator</h1>
+      <p class="text-slate-500 text-sm mt-1">Estimate your federal + provincial dividend tax credits on Canadian dividend income.</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+      <div class="px-4 py-3 rounded-xl text-sm font-medium
+        {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+        {% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Input Form -->
+    <div class="card p-6 mb-6">
+      <h2 class="text-base font-black text-slate-800 mb-4">Enter Dividend Details</h2>
+      <form method="post" class="space-y-5">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Annual Dividend Amount (CAD)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">$</span>
+            <input type="number" name="gross_dividend" min="0" step="0.01"
+              value="{{ form_data.gross_dividend|default:'' }}"
+              class="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="e.g. 5000.00" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Province</label>
+            <select name="province"
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400">
+              {% for code, name in provinces %}
+              <option value="{{ code }}" {% if form_data.province == code %}selected{% elif not form_data.province and code == 'ON' %}selected{% endif %}>
+                {{ name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Dividend Type</label>
+            <select name="dividend_type"
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <option value="eligible" {% if form_data.dividend_type == 'eligible' or not form_data.dividend_type %}selected{% endif %}>Eligible</option>
+              <option value="non_eligible" {% if form_data.dividend_type == 'non_eligible' %}selected{% endif %}>Non-Eligible</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition">
+          Calculate Tax Credits
+        </button>
+      </form>
+    </div>
+
+    <!-- Results -->
+    {% if result %}
+    <div class="card p-6">
+      <h2 class="text-base font-black text-slate-800 mb-5">
+        Results
+        <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+          {{ result.province }} · {% if result.is_eligible %}Eligible{% else %}Non-Eligible{% endif %}
+        </span>
+      </h2>
+
+      <div class="grid grid-cols-2 gap-4 mb-5">
+        <div class="bg-slate-50 rounded-xl p-4">
+          <p class="text-xs text-slate-500 font-semibold">Gross Dividend</p>
+          <p class="text-2xl font-black text-slate-800">${{ result.dividend_amount|floatformat:2 }}</p>
+        </div>
+        <div class="bg-emerald-50 rounded-xl p-4">
+          <p class="text-xs text-emerald-600 font-semibold">After-Tax Amount</p>
+          <p class="text-2xl font-black text-emerald-700">${{ result.after_tax_amount|floatformat:2 }}</p>
+        </div>
+      </div>
+
+      <div class="divide-y divide-slate-100">
+        <div class="py-3 flex justify-between text-sm">
+          <span class="text-slate-500">Grossed-Up Amount</span>
+          <span class="font-black text-slate-800">${{ result.grossed_up_amount|floatformat:2 }}</span>
+        </div>
+        <div class="py-3 flex justify-between text-sm">
+          <span class="text-slate-500">Federal Tax Credit</span>
+          <span class="font-black text-emerald-600">− ${{ result.federal_credit|floatformat:2 }}</span>
+        </div>
+        <div class="py-3 flex justify-between text-sm">
+          <span class="text-slate-500">Provincial Tax Credit ({{ result.province }})</span>
+          <span class="font-black text-emerald-600">− ${{ result.provincial_credit|floatformat:2 }}</span>
+        </div>
+        <div class="py-3 flex justify-between text-sm">
+          <span class="text-slate-500">Total Tax Credit</span>
+          <span class="font-black text-emerald-700">− ${{ result.total_credit|floatformat:2 }}</span>
+        </div>
+        <div class="py-3 flex justify-between text-sm">
+          <span class="text-slate-500">Effective Tax Rate</span>
+          <span class="font-black {% if result.effective_tax_rate == 0 %}text-emerald-600{% else %}text-amber-600{% endif %}">
+            {{ result.effective_tax_rate }}%
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-5 p-4 bg-blue-50 rounded-xl text-xs text-blue-700 leading-relaxed">
+        <strong>Disclaimer:</strong> This is an estimate based on 2024 federal rates and provincial credit rates. Actual tax owing depends on your total income, RRSP deductions, and other credits. Consult a tax professional for advice.
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

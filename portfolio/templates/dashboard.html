@@ -170,6 +170,55 @@
       </div>
     </div>
 
+    <!-- Dividend Income Goal Widget -->
+    {% if dividend_goal and dividend_goal.target_monthly > 0 %}
+    <div class="card card-body mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="stat-icon bg-emerald-100">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-base font-black text-slate-900">Dividend Income Goal</h2>
+            <p class="text-xs text-slate-400">Monthly target: ${{ dividend_goal.target_monthly|floatformat:0 }}</p>
+          </div>
+        </div>
+        <a href="{% url 'dividend_goals' %}" class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">Edit Goal →</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex-1">
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all
+              {% if dividend_goal_progress >= 100 %}bg-emerald-500{% elif dividend_goal_progress >= 50 %}bg-amber-400{% else %}bg-blue-500{% endif %}"
+              style="width: {{ dividend_goal_progress }}%"></div>
+          </div>
+        </div>
+        <span class="text-sm font-black {% if dividend_goal_progress >= 100 %}text-emerald-600{% elif dividend_goal_progress >= 50 %}text-amber-600{% else %}text-blue-600{% endif %} min-w-[40px] text-right">
+          {{ dividend_goal_progress }}%
+        </span>
+      </div>
+    </div>
+    {% elif user.is_authenticated %}
+    <div class="card card-body mb-6 border-dashed border-2 border-slate-200 bg-slate-50/60">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="stat-icon bg-slate-100">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-black text-slate-700">Set a Dividend Income Goal</p>
+            <p class="text-xs text-slate-400">Track your progress toward monthly passive income</p>
+          </div>
+        </div>
+        <a href="{% url 'dividend_goals' %}" class="btn btn-secondary btn-sm whitespace-nowrap">Set Goal</a>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Smart Insights (free AI-style insights from your data only) -->
     {% if ai_insights %}
     <div class="card card-body mb-6">

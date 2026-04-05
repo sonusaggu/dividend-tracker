@@ -28,21 +28,41 @@
         {% if alerts %}
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="stat-card">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Alerts</p>
-                <div class="text-2xl font-black text-slate-900">{{ alerts|length }}</div>
+            <div class="stat-card flex items-center gap-4">
+                <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Alerts</p>
+                    <div class="text-2xl font-black text-slate-900">{{ alerts|length }}</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Active</p>
-                <div class="text-2xl font-black text-blue-600">{{ active_alerts_count }}</div>
+            <div class="stat-card flex items-center gap-4">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Active</p>
+                    <div class="text-2xl font-black text-emerald-600">{{ active_alerts_count }}</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Upcoming</p>
-                <div class="text-2xl font-black text-amber-500">{{ upcoming_alerts_count }}</div>
+            <div class="stat-card flex items-center gap-4">
+                <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Upcoming</p>
+                    <div class="text-2xl font-black text-amber-600">{{ upcoming_alerts_count }}</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Dividends</p>
-                <div class="text-2xl font-black text-emerald-600">${{ total_upcoming_dividend|floatformat:2|intcomma }}</div>
+            <div class="stat-card flex items-center gap-4">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Dividends</p>
+                    <div class="text-2xl font-black text-blue-600">${{ total_upcoming_dividend|floatformat:2|intcomma }}</div>
+                </div>
             </div>
         </div>
 
@@ -50,28 +70,33 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <!-- Urgent Alerts (Next 3 Days) -->
             {% if urgent_alerts %}
-            <div class="card card-body border-red-100">
+            <div class="card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-slate-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        Urgent Alerts
-                    </h3>
-                    <span class="badge bg-red-100 text-red-700">{{ urgent_alerts|length }}</span>
-                </div>
-                <div class="space-y-3">
-                    {% for alert_data in urgent_alerts|slice:":3" %}
-                    <div class="bg-white rounded-xl p-3 border border-red-100">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-semibold text-sm text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
-                            <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded">
-                                {% if alert_data.days_until == 0 %}Today{% else %}{{ alert_data.days_until }}d{% endif %}
-                            </span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
-                        {% if alert_data.latest_dividend %}
-                        <div class="text-xs text-slate-600">${{ alert_data.latest_dividend.amount|floatformat:2 }} dividend</div>
-                        {% endif %}
+                        <h3 class="text-sm font-black text-slate-900">Urgent — Next 3 Days</h3>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-black">{{ urgent_alerts|length }}</span>
+                </div>
+                <div class="space-y-2">
+                    {% for alert_data in urgent_alerts|slice:":3" %}
+                    <div class="flex items-center justify-between rounded-xl px-3 py-2.5 bg-red-50/60 border border-red-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-red-100 text-red-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                                {{ alert_data.alert.stock.symbol|slice:":2" }}
+                            </span>
+                            <div>
+                                <div class="font-black text-sm text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
+                                {% if alert_data.latest_dividend %}
+                                <div class="text-xs text-slate-400">${{ alert_data.latest_dividend.amount|floatformat:2 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black bg-red-100 text-red-700">
+                            {% if alert_data.days_until == 0 %}Today{% else %}{{ alert_data.days_until }}d{% endif %}
+                        </span>
                     </div>
                     {% endfor %}
                 </div>
@@ -80,33 +105,35 @@
 
             <!-- High Yield Stocks -->
             {% if high_yield_stocks %}
-            <div class="card card-body border-emerald-100">
+            <div class="card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-slate-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                        High Yield (>5%)
-                    </h3>
-                    <span class="badge bg-emerald-100 text-emerald-700">{{ high_yield_stocks|length }}</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        </div>
+                        <h3 class="text-sm font-black text-slate-900">High Yield (&gt;5%)</h3>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">{{ high_yield_stocks|length }}</span>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2">
                     {% for alert_data in high_yield_stocks|slice:":3" %}
-                    <div class="bg-white rounded-xl p-3 border border-emerald-100">
-                        <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between rounded-xl px-3 py-2.5 bg-emerald-50/60 border border-emerald-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                                {{ alert_data.alert.stock.symbol|slice:":2" }}
+                            </span>
                             <div>
-                                <div class="font-semibold text-sm text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
+                                <div class="font-black text-sm text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
                                 {% if alert_data.latest_dividend %}
-                                <div class="text-xs text-slate-600">${{ alert_data.latest_dividend.amount|floatformat:2 }}</div>
+                                <div class="text-xs text-slate-400">${{ alert_data.latest_dividend.amount|floatformat:2 }}</div>
                                 {% endif %}
                             </div>
-                            {% if alert_data.latest_dividend %}
-                            <div class="text-right">
-                                <div class="font-bold text-sm text-green-700">{{ alert_data.latest_dividend.yield_percent|floatformat:1 }}%</div>
-                                <div class="text-xs text-slate-500">yield</div>
-                            </div>
-                            {% endif %}
                         </div>
+                        {% if alert_data.latest_dividend %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">
+                            {{ alert_data.latest_dividend.yield_percent|floatformat:1 }}%
+                        </span>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
@@ -115,22 +142,22 @@
 
             <!-- Recent News -->
             {% if recent_news %}
-            <div class="card card-body border-blue-100">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-slate-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-                        </svg>
-                        Recent News
-                    </h3>
+            <div class="card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                    </div>
+                    <h3 class="text-sm font-black text-slate-900">Recent News</h3>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2">
                     {% for news in recent_news|slice:":3" %}
-                    <a href="{% url 'stock_detail' news.stock.symbol news.stock.get_seo_slug %}" class="block bg-white rounded-lg p-3 border border-blue-100 hover:border-blue-300 hover:shadow-sm transition">
-                        <div class="font-semibold text-sm text-slate-900 line-clamp-2 mb-1">{{ news.title|truncatewords:8 }}</div>
-                        <div class="flex items-center justify-between text-xs text-slate-500">
-                            <span>{{ news.stock.symbol }}</span>
-                            <span>{{ news.published_at|timesince }} ago</span>
+                    <a href="{% url 'stock_detail' news.stock.symbol news.stock.get_seo_slug %}" class="flex gap-3 rounded-xl p-3 bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 transition">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {{ news.stock.symbol|slice:":2" }}
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-xs font-black text-slate-800 leading-snug line-clamp-2">{{ news.title|truncatewords:10 }}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">{{ news.published_at|timesince }} ago</div>
                         </div>
                     </a>
                     {% endfor %}
@@ -141,35 +168,41 @@
 
         <!-- Upcoming Alerts Timeline (Next 7 Days) -->
         {% if upcoming_alerts_7d %}
-        <div class="card card-body mb-6">
-            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                Next 7 Days Timeline
-            </h3>
+        <div class="card p-5 mb-6">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3 class="text-base font-black text-slate-900">Next 7 Days</h3>
+                <span class="ml-auto text-xs text-slate-400 font-semibold">{{ upcoming_alerts_7d|length }} alert{{ upcoming_alerts_7d|length|pluralize }}</span>
+            </div>
             <div class="space-y-2">
                 {% for alert_data in upcoming_alerts_7d %}
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-blue-50 transition">
-                    <div class="flex items-center space-x-3 flex-1">
-                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <span class="text-blue-700 font-black text-xs">{{ alert_data.alert.stock.symbol|slice:":1" }}</span>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-sm text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
+                <div class="flex items-center justify-between px-3 py-2.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-amber-50/60 hover:border-amber-100 transition">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs flex-shrink-0
+                            {% if alert_data.days_until == 0 %}bg-rose-100 text-rose-700
+                            {% elif alert_data.days_until <= 2 %}bg-orange-100 text-orange-700
+                            {% else %}bg-amber-100 text-amber-700{% endif %}">
+                            {{ alert_data.alert.stock.symbol|slice:":2" }}
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-sm font-black text-slate-900">{{ alert_data.alert.stock.symbol }}</div>
                             {% if alert_data.latest_dividend %}
-                            <div class="text-xs text-slate-600">${{ alert_data.latest_dividend.amount|floatformat:2 }} • {{ alert_data.latest_dividend.ex_dividend_date|date:"M d, Y" }}</div>
+                            <div class="text-xs text-slate-400">${{ alert_data.latest_dividend.amount|floatformat:2 }} · {{ alert_data.latest_dividend.ex_dividend_date|date:"M d, Y" }}</div>
                             {% endif %}
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="px-3 py-1 {% if alert_data.days_until == 0 %}bg-red-100 text-red-700{% elif alert_data.days_until <= 2 %}bg-orange-100 text-orange-700{% else %}bg-green-100 text-green-700{% endif %} text-xs font-bold rounded-full">
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black
+                            {% if alert_data.days_until == 0 %}bg-rose-100 text-rose-700
+                            {% elif alert_data.days_until <= 2 %}bg-orange-100 text-orange-700
+                            {% else %}bg-blue-50 text-blue-600{% endif %}">
                             {% if alert_data.days_until == 0 %}Today{% else %}{{ alert_data.days_until }}d{% endif %}
                         </span>
-                        <a href="{% url 'stock_detail' alert_data.alert.stock.symbol alert_data.alert.stock.get_seo_slug %}" class="text-blue-600 hover:text-blue-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
+                        <a href="{% url 'stock_detail' alert_data.alert.stock.symbol alert_data.alert.stock.get_seo_slug %}"
+                           class="w-7 h-7 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 flex items-center justify-center transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                     </div>
                 </div>
@@ -184,12 +217,11 @@
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 18%; min-width: 120px;">Stock</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 8%;">Dividend</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 7%;">Yield</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 12%;">Ex-Date</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 8%;">Days</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 12%;">Settings</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 20%; min-width: 120px;">Stock</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 9%;">Dividend</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 8%;">Yield</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 16%;">Ex-Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 13%;">Notify</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 10%;">Status</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 22%;">Actions</th>
                         </tr>
@@ -197,122 +229,126 @@
                     <tbody class="bg-white divide-y divide-slate-100">
                         {% for alert_data in alerts %}
                         {% with alert=alert_data.alert dividend=alert_data.latest_dividend days_until=alert_data.days_until %}
-                        <tr class="table-row-hover transition-colors {% if alert.is_active %}border-l-4 border-emerald-400{% endif %}" data-alert-id="{{ alert.id }}" data-active="{{ alert.is_active|yesno:'true,false' }}">
+                        <tr class="table-row-hover transition-colors {% if alert.is_active %}border-l-4 border-emerald-400{% else %}border-l-4 border-transparent{% endif %}"
+                            data-alert-id="{{ alert.id }}" data-active="{{ alert.is_active|yesno:'true,false' }}">
+
                             <!-- Stock -->
                             <td class="px-4 py-4" style="width: 18%; min-width: 120px;">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <span class="text-blue-700 font-black text-sm">{{ alert.stock.symbol|slice:":1" }}</span>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm
+                                        {% if dividend and dividend.yield_percent %}
+                                            {% if dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                                            {% elif dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                                            {% else %}bg-emerald-100 text-emerald-700{% endif %}
+                                        {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                        {{ alert.stock.symbol|slice:":2" }}
                                     </div>
-                                    <div class="min-w-0 flex-1">
-                                        <a href="{% url 'stock_detail' alert.stock.symbol alert.stock.get_seo_slug %}" class="text-sm font-bold text-slate-900 hover:text-blue-600 transition block">
+                                    <div class="min-w-0">
+                                        <a href="{% url 'stock_detail' alert.stock.symbol alert.stock.get_seo_slug %}" class="text-sm font-black text-slate-900 hover:text-blue-600 transition block">
                                             {{ alert.stock.symbol }}
                                         </a>
-                                        <div class="text-xs text-slate-600" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 180px;">{{ alert.stock.company_name }}</div>
+                                        <div class="text-xs text-slate-400 leading-snug" style="word-break: break-word; overflow-wrap: break-word;">{{ alert.stock.company_name }}</div>
                                     </div>
                                 </div>
                             </td>
-                            
+
                             <!-- Dividend -->
                             <td class="px-3 py-4 whitespace-nowrap text-right" style="width: 8%;">
                                 {% if dividend %}
-                                <div class="text-xs font-bold text-slate-900">${{ dividend.amount|floatformat:4 }}</div>
-                                <div class="text-xs text-slate-500">{{ dividend.frequency|default:"N/A" }}</div>
+                                <div class="text-xs font-black text-slate-800">${{ dividend.amount|floatformat:4 }}</div>
+                                <div class="text-xs text-slate-400">{{ dividend.frequency|default:"N/A" }}</div>
                                 {% else %}
-                                <span class="text-xs text-slate-400">—</span>
+                                <span class="text-xs text-slate-300">—</span>
                                 {% endif %}
                             </td>
-                            
+
                             <!-- Yield -->
                             <td class="px-3 py-4 whitespace-nowrap text-right" style="width: 7%;">
                                 {% if dividend and dividend.yield_percent %}
-                                <div class="badge bg-emerald-100 text-emerald-700">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black
+                                    {% if dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                                    {% elif dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                                    {% else %}bg-emerald-100 text-emerald-700{% endif %}">
                                     {{ dividend.yield_percent|floatformat:2 }}%
-                                </div>
+                                </span>
                                 {% else %}
-                                <span class="text-xs text-slate-400">—</span>
+                                <span class="text-xs text-slate-300">—</span>
                                 {% endif %}
                             </td>
-                            
-                            <!-- Ex-Date -->
+
+                            <!-- Ex-Date + countdown combined -->
                             <td class="px-3 py-4 text-right" style="width: 12%;">
                                 {% if dividend and dividend.ex_dividend_date %}
-                                <div class="text-xs font-bold text-blue-600 whitespace-nowrap">{{ dividend.ex_dividend_date|date:"M d, Y" }}</div>
-                                {% else %}
-                                <span class="text-xs text-slate-400">TBD</span>
-                                {% endif %}
-                            </td>
-                            
-                            <!-- Days Until -->
-                            <td class="px-3 py-4 whitespace-nowrap text-right" style="width: 8%;">
-                                {% if days_until is not None %}
-                                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if days_until <= 3 %}bg-red-100 text-red-700 border border-red-200{% elif days_until <= 7 %}bg-orange-100 text-orange-700 border border-orange-200{% else %}bg-green-100 text-green-700 border border-green-200{% endif %}">
-                                    {% if days_until < 0 %}Passed{% elif days_until == 0 %}Today{% else %}{{ days_until }}d{% endif %}
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="text-xs font-black text-slate-700 whitespace-nowrap">{{ dividend.ex_dividend_date|date:"M d, Y" }}</span>
+                                    {% if days_until is not None %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-black
+                                        {% if days_until == 0 %}bg-rose-100 text-rose-700
+                                        {% elif days_until <= 3 %}bg-red-100 text-red-700
+                                        {% elif days_until <= 7 %}bg-orange-100 text-orange-700
+                                        {% elif days_until < 0 %}bg-slate-100 text-slate-500
+                                        {% else %}bg-blue-50 text-blue-600{% endif %}">
+                                        {% if days_until < 0 %}Passed{% elif days_until == 0 %}Today{% else %}{{ days_until }}d{% endif %}
+                                    </span>
+                                    {% endif %}
                                 </div>
                                 {% else %}
-                                <span class="text-xs text-slate-400">—</span>
+                                <span class="text-xs text-slate-300">TBD</span>
                                 {% endif %}
                             </td>
-                            
+
                             <!-- Alert Settings -->
                             <td class="px-3 py-4" style="width: 12%;">
-                                <div class="text-xs text-slate-600">
-                                    <div class="font-medium">{{ alert.days_advance }} day{{ alert.days_advance|pluralize }} before</div>
-                                    <div class="text-xs text-slate-500">{{ alert.get_notification_method_display|default:"Email" }}</div>
+                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                                    <svg class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                    <span class="text-xs font-black text-slate-700">{{ alert.days_advance }}d</span>
                                 </div>
+                                <div class="text-xs text-slate-400 mt-1">{{ alert.get_notification_method_display|default:"Email" }}</div>
                             </td>
-                            
+
                             <!-- Status -->
                             <td class="px-2 py-4 text-center" style="width: 10%;">
-                                <span class="badge {% if alert.is_active %}bg-emerald-100 text-emerald-700{% else %}bg-slate-100 text-slate-500{% endif %}">
-                                    {{ alert.is_active|yesno:"Active,Inactive" }}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black
+                                    {% if alert.is_active %}bg-emerald-100 text-emerald-700{% else %}bg-slate-100 text-slate-400{% endif %}">
+                                    {{ alert.is_active|yesno:"Active,Paused" }}
                                 </span>
                             </td>
-                            
+
                             <!-- Actions -->
                             <td class="px-2 py-4" style="width: 22%;">
-                                <div class="flex items-center justify-center gap-1 flex-wrap">
-                                    <!-- Toggle Status -->
-                                    <button onclick="toggleAlertStatus({{ alert.id }}, {{ alert.is_active|yesno:'false,true' }})"
-                                            class="btn btn-sm {% if alert.is_active %}bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200{% endif %}"
-                                            id="toggleBtn{{ alert.id }}"
-                                            title="{% if alert.is_active %}Deactivate{% else %}Activate{% endif %}">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            {% if alert.is_active %}
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            {% else %}
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            {% endif %}
-                                        </svg>
-                                    </button>
-                                    
-                                    <!-- View Button -->
+                                <div class="flex flex-col gap-1.5 items-center">
                                     <a href="{% url 'stock_detail' alert.stock.symbol alert.stock.get_seo_slug %}"
-                                       class="btn btn-primary btn-sm"
-                                       title="View">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
+                                       class="btn btn-primary btn-sm w-full justify-center text-xs font-black">
+                                        View
                                     </a>
-                                    
-                                    <!-- Edit Button -->
-                                    <a href="{% url 'manage_dividend_alerts' alert.stock.symbol %}"
-                                       class="btn btn-secondary btn-sm"
-                                       title="Edit">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                    </a>
-                                    
-                                    <!-- Delete Button -->
-                                    <button onclick="showDeleteConfirm({{ alert.id }}, '{{ alert.stock.symbol }}')"
-                                            class="btn btn-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-                                            title="Delete">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <!-- Toggle -->
+                                        <button onclick="toggleAlertStatus({{ alert.id }}, {{ alert.is_active|yesno:'false,true' }})"
+                                                id="toggleBtn{{ alert.id }}"
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center transition
+                                                    {% if alert.is_active %}bg-emerald-100 text-emerald-700 hover:bg-emerald-200{% else %}bg-slate-100 text-slate-400 hover:bg-slate-200{% endif %}"
+                                                title="{% if alert.is_active %}Pause{% else %}Activate{% endif %}">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {% if alert.is_active %}
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                {% else %}
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                {% endif %}
+                                            </svg>
+                                        </button>
+                                        <!-- Edit -->
+                                        <a href="{% url 'manage_dividend_alerts' alert.stock.symbol %}"
+                                           class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition"
+                                           title="Edit alert">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        </a>
+                                        <!-- Delete -->
+                                        <button onclick="showDeleteConfirm({{ alert.id }}, '{{ alert.stock.symbol }}')"
+                                                class="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition"
+                                                title="Delete">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -324,22 +360,20 @@
         </div>
         {% else %}
         <!-- Empty State -->
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-            <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-            </svg>
-            <h2 class="text-2xl font-semibold text-slate-900 mb-4">No Dividend Alerts</h2>
-            <p class="text-slate-600 mb-8 max-w-md mx-auto">
-                Set up dividend alerts to get notified before ex-dividend dates.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'all_stocks' %}" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Browse Stocks to Set Alerts
+        <div class="card p-12 text-center max-w-lg mx-auto">
+            <div class="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg class="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">No alerts yet</h2>
+            <p class="text-slate-500 mb-6 text-sm leading-relaxed">Set up dividend alerts on any stock to get notified before ex-dividend dates. Never miss a payment again.</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="{% url 'all_stocks' %}" class="btn btn-primary btn-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Browse Stocks
                 </a>
+                <a href="{% url 'watchlist' %}" class="btn btn-secondary btn-lg">My Watchlist</a>
             </div>
         </div>
         {% endif %}
@@ -347,28 +381,22 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-        <div class="flex items-center mb-4">
-            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+<div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
             <div>
-                <h3 class="text-xl font-bold text-slate-900">Delete Alert?</h3>
-                <p class="text-sm text-slate-600" id="deleteModalText">Are you sure you want to delete this alert?</p>
+                <h3 class="text-base font-black text-slate-900">Delete Alert?</h3>
+                <p class="text-sm text-slate-500 mt-0.5" id="deleteModalText">Are you sure you want to delete this alert?</p>
             </div>
         </div>
-        <div class="flex space-x-3">
-            <button onclick="closeDeleteModal()" 
-                    class="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition font-medium">
-                Cancel
-            </button>
-            <button onclick="confirmDelete()" 
-                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
-                Delete
-            </button>
+        <div class="flex gap-3 mt-5">
+            <button onclick="closeDeleteModal()" class="flex-1 btn btn-secondary">Cancel</button>
+            <button onclick="confirmDelete()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition">Delete</button>
         </div>
     </div>
 </div>

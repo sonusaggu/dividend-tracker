@@ -26,7 +26,7 @@ import re
 from .forms import RegistrationForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
 from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote, Transaction
-from .models import WatchlistGroup, StockTag, TaggedStock, Earnings
+from .models import WatchlistGroup, StockTag, TaggedStock, Earnings, DividendGoal
 from .services import PortfolioService, StockService, AlertService, TransactionService
 from .utils.newsletter_utils import DividendNewsletterGenerator
 from .utils.news_fetcher import NewsFetcher
@@ -1684,6 +1684,40 @@ def stock_search_autocomplete(request):
     return JsonResponse({'results': results})
 
 
+def compute_dividend_safety_score(dividend, recent_dividends_list, dividend_growth_rate, dividend_consistency_score):
+    """
+    Returns a score 0-100 rating dividend safety based on:
+    - Consistency (40 pts): how many consecutive payments in the last 8 quarters
+    - Growth (30 pts): positive growth rate earns up to 30 pts
+    - Yield sanity (30 pts): yield in 1-8% range is ideal; too high penalised
+    """
+    if not dividend or not getattr(dividend, 'amount', None):
+        return None
+    score = 0
+    # Consistency component (40 pts)
+    consistency_ratio = min(dividend_consistency_score / 8, 1.0) if dividend_consistency_score else 0
+    score += consistency_ratio * 40
+    # Growth component (30 pts) — positive growth is good, negative loses points
+    if dividend_growth_rate is not None:
+        if dividend_growth_rate >= 5:
+            score += 30
+        elif dividend_growth_rate >= 0:
+            score += 15 + (dividend_growth_rate / 5) * 15
+        else:
+            score += max(0, 15 + dividend_growth_rate * 1.5)
+    else:
+        score += 10  # neutral when unknown
+    # Yield sanity component (30 pts)
+    yield_pct = float(getattr(dividend, 'yield_percent', 0) or 0)
+    if 1 <= yield_pct <= 8:
+        score += 30
+    elif yield_pct > 8:
+        score += max(0, 30 - (yield_pct - 8) * 3)
+    elif yield_pct > 0:
+        score += yield_pct * 5
+    return round(min(100, max(0, score)))
+
+
 @cache_control(max_age=180)  # Cache for 3 minutes (stock data changes frequently)
 def stock_detail(request, symbol, slug=None):
     """Detailed view for a single stock - Optimized with single query. Supports SEO URL: /stocks/SYMBOL/company-name/"""
@@ -1983,6 +2017,57 @@ def stock_detail(request, symbol, slug=None):
     if next_earnings:
         days_until_earnings = (next_earnings.earnings_date - today).days
     
+    # Dividend Safety Score
+    dividend_safety_score = compute_dividend_safety_score(
+        dividend, recent_dividends_list, dividend_growth_rate, dividend_consistency_score
+    )
+
+    # Dividend History Chart data (last 3 years, quarterly buckets)
+    dividend_chart_data = []
+    _div_chart_key = f'stock_div_chart_{stock.symbol}'
+    dividend_chart_data = cache.get(_div_chart_key)
+    if dividend_chart_data is None:
+        three_years_ago = today - timedelta(days=3 * 365)
+        chart_divs = list(
+            Dividend.objects.filter(
+                stock=stock,
+                ex_dividend_date__gte=three_years_ago,
+                amount__isnull=False,
+            ).order_by('ex_dividend_date').values_list('ex_dividend_date', 'amount')
+        )
+        dividend_chart_data = [
+            {'date': str(d), 'amount': float(a)} for d, a in chart_divs
+        ]
+        cache.set(_div_chart_key, dividend_chart_data, 60 * 60)
+
+    # Stocks Like This (same sector, similar yield, exclude current)
+    similar_stocks = []
+    _similar_key = f'similar_stocks_{stock.symbol}'
+    similar_stocks = cache.get(_similar_key)
+    if similar_stocks is None:
+        if stock.sector:
+            current_yield = float(getattr(dividend, 'yield_percent', 0) or 0)
+            yield_min = max(0, current_yield - 2)
+            yield_max = current_yield + 2
+            similar_qs = Stock.objects.filter(
+                sector=stock.sector,
+                dividends__yield_percent__gte=yield_min,
+                dividends__yield_percent__lte=yield_max,
+            ).exclude(symbol=stock.symbol).distinct()
+            sim_list = []
+            for s in similar_qs[:6]:
+                latest_div = Dividend.objects.filter(stock=s).order_by('-ex_dividend_date').first()
+                latest_pr = StockPrice.objects.filter(stock=s).order_by('-price_date').values('last_price').first()
+                sim_list.append({
+                    'stock': s,
+                    'dividend': latest_div,
+                    'latest_price': latest_pr['last_price'] if latest_pr else None,
+                })
+            similar_stocks = sim_list
+        else:
+            similar_stocks = []
+        cache.set(_similar_key, similar_stocks, 60 * 60)
+
     # Smart Insights (free, from DB only)
     try:
         from .ai_insights import get_stock_insights_for_view
@@ -2021,6 +2106,9 @@ def stock_detail(request, symbol, slug=None):
         'price_history_data': price_history_data,
         'stock_ai_insights': stock_ai_insights,
         'stock_news_summary': stock_news_summary,
+        'dividend_safety_score': dividend_safety_score,
+        'dividend_chart_data': dividend_chart_data,
+        'similar_stocks': similar_stocks,
     }
 
     return render(request, 'stock_detail.html', context)
@@ -2713,6 +2801,8 @@ def watchlist_view(request):
                 'latest_dividend': latest_dividend,
                 'in_portfolio': in_portfolio,
                 'watchlist_item': item,
+                'watchlist_item_id': item.id,
+                'price_target': item.price_target,
                 'price_change_7d': price_change_7d,
                 'price_change_30d': price_change_30d,
                 'days_until_dividend': days_until_dividend,
@@ -4511,6 +4601,16 @@ def dashboard(request):
         except Exception:
             ai_insights = []
 
+        # Dividend Goal progress
+        dividend_goal = None
+        dividend_goal_progress = 0
+        try:
+            dividend_goal = DividendGoal.objects.get(user=request.user)
+            if dividend_goal and float(dividend_goal.target_monthly) > 0:
+                dividend_goal_progress = min(100, round(average_monthly_income / float(dividend_goal.target_monthly) * 100, 1))
+        except DividendGoal.DoesNotExist:
+            pass
+
         context = {
             'portfolio_items': portfolio_items,
             'affiliate_links': affiliate_links,
@@ -4540,6 +4640,8 @@ def dashboard(request):
             'sector_allocation_sorted': sector_allocation_sorted,
             'recent_transactions': recent_transactions,
             'ai_insights': ai_insights,
+            'dividend_goal': dividend_goal,
+            'dividend_goal_progress': dividend_goal_progress,
         }
 
         return render(request, 'dashboard.html', context)
@@ -7223,3 +7325,122 @@ def stock_earnings(request, symbol):
     }
     
     return render(request, 'stock_earnings.html', context)
+
+
+# ──────────────────────────────────────────────────────────────────
+# Feature: Dividend Income Goal Tracker
+# ──────────────────────────────────────────────────────────────────
+@login_required
+@require_http_methods(["GET", "POST"])
+def dividend_goals(request):
+    """Set and track monthly/annual dividend income goals."""
+    goal, _ = DividendGoal.objects.get_or_create(
+        user=request.user,
+        defaults={'target_monthly': 0, 'target_annual': 0}
+    )
+
+    if request.method == 'POST':
+        try:
+            target_monthly = float(request.POST.get('target_monthly', 0))
+            if target_monthly < 0:
+                raise ValueError("Negative target")
+            goal.target_monthly = target_monthly
+            goal.target_annual = target_monthly * 12
+            goal.save()
+            messages.success(request, 'Dividend goal updated!')
+        except (ValueError, TypeError):
+            messages.error(request, 'Please enter a valid monthly target.')
+        return redirect('dividend_goals')
+
+    # Calculate current monthly income from portfolio
+    portfolio_items = PortfolioService.get_portfolio_with_annotations(request.user)
+    current_annual = sum(
+        PortfolioService.calculate_annual_dividend(
+            item.latest_dividend_amount,
+            item.shares_owned,
+            item.latest_dividend_frequency,
+        )
+        for item in portfolio_items
+    )
+    current_monthly = current_annual / 12
+
+    target_monthly = float(goal.target_monthly)
+    target_annual = float(goal.target_annual)
+    progress_pct = min(100, (current_monthly / target_monthly * 100)) if target_monthly > 0 else 0
+    remaining_monthly = max(0, target_monthly - current_monthly)
+
+    context = {
+        'goal': goal,
+        'current_monthly': current_monthly,
+        'current_annual': current_annual,
+        'target_monthly': target_monthly,
+        'target_annual': target_annual,
+        'progress_pct': round(progress_pct, 1),
+        'remaining_monthly': remaining_monthly,
+        'portfolio_items': portfolio_items,
+    }
+    return render(request, 'goals.html', context)
+
+
+# ──────────────────────────────────────────────────────────────────
+# Feature: Price Target on Watchlist (AJAX)
+# ──────────────────────────────────────────────────────────────────
+@login_required
+@require_http_methods(["POST"])
+def set_watchlist_price_target(request, watchlist_id):
+    """Set or clear the price target for a watchlist item."""
+    watchlist_item = get_object_or_404(Watchlist, id=watchlist_id, user=request.user)
+    try:
+        raw = request.POST.get('price_target', '').strip()
+        if raw == '' or raw is None:
+            watchlist_item.price_target = None
+        else:
+            watchlist_item.price_target = float(raw)
+        watchlist_item.save(update_fields=['price_target'])
+        return JsonResponse({'status': 'ok', 'price_target': str(watchlist_item.price_target) if watchlist_item.price_target else None})
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid price target'}, status=400)
+
+
+# ──────────────────────────────────────────────────────────────────
+# Feature: T5 Tax Estimator
+# ──────────────────────────────────────────────────────────────────
+@login_required
+@require_http_methods(["GET", "POST"])
+def t5_estimator(request):
+    """Estimate Canadian T5 dividend tax using CanadianTaxCalculator."""
+    result = None
+    form_data = {}
+
+    if request.method == 'POST':
+        try:
+            gross_dividend = float(request.POST.get('gross_dividend', 0))
+            province = request.POST.get('province', 'ON')
+            dividend_type = request.POST.get('dividend_type', 'eligible')
+            form_data = {
+                'gross_dividend': gross_dividend,
+                'province': province,
+                'dividend_type': dividend_type,
+            }
+            is_eligible = (dividend_type == 'eligible')
+            result = CanadianTaxCalculator.calculate_dividend_tax_credit(
+                dividend_amount=gross_dividend,
+                is_eligible=is_eligible,
+                province=province,
+            )
+        except (ValueError, TypeError, AttributeError) as e:
+            messages.error(request, f'Calculation error: {e}')
+
+    provinces = [
+        ('AB', 'Alberta'), ('BC', 'British Columbia'), ('MB', 'Manitoba'),
+        ('NB', 'New Brunswick'), ('NL', 'Newfoundland'), ('NS', 'Nova Scotia'),
+        ('NT', 'Northwest Territories'), ('NU', 'Nunavut'), ('ON', 'Ontario'),
+        ('PE', 'Prince Edward Island'), ('QC', 'Quebec'), ('SK', 'Saskatchewan'),
+        ('YT', 'Yukon'),
+    ]
+    context = {
+        'result': result,
+        'form_data': form_data,
+        'provinces': provinces,
+    }
+    return render(request, 't5_estimator.html', context)

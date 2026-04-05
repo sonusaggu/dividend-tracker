@@ -314,8 +314,9 @@ class Watchlist(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True)
     group = models.ForeignKey(WatchlistGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='watchlist_items', db_index=True)
     notes = models.TextField(blank=True)
+    price_target = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         unique_together = ['user', 'stock']
         ordering = ['-created_at']
@@ -380,6 +381,17 @@ class DividendAlert(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.stock.symbol} - Dividend Alert"
+
+
+class DividendGoal(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='dividend_goal')
+    target_monthly = models.DecimalField(max_digits=10, decimal_places=2)
+    target_annual = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - ${self.target_monthly}/month"
 
 
 class NewsletterSubscription(models.Model):

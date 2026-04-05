@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dividend Income Goal — StockFolio{% endblock %}
+{% block meta_description %}Set and track your monthly dividend income goal. See how close your portfolio is to financial freedom.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm text-slate-500 hover:text-slate-700 mb-4">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Dashboard
+      </a>
+      <h1 class="text-2xl font-black text-slate-900">Dividend Income Goal</h1>
+      <p class="text-slate-500 text-sm mt-1">Track how your portfolio is growing toward your target monthly income.</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+      <div class="px-4 py-3 rounded-xl text-sm font-medium
+        {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+        {% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Progress Card -->
+    <div class="card p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Progress</p>
+          <p class="text-3xl font-black text-slate-900 mt-1">${{ current_monthly|floatformat:2 }}</p>
+          <p class="text-sm text-slate-500">of ${{ target_monthly|floatformat:2 }} goal</p>
+        </div>
+        <div class="text-right">
+          <span class="text-5xl font-black {% if progress_pct >= 100 %}text-emerald-500{% elif progress_pct >= 50 %}text-amber-500{% else %}text-slate-400{% endif %}">
+            {{ progress_pct }}%
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="h-4 bg-slate-100 rounded-full overflow-hidden mb-3">
+        <div class="h-full rounded-full transition-all
+          {% if progress_pct >= 100 %}bg-emerald-500{% elif progress_pct >= 50 %}bg-amber-400{% else %}bg-blue-500{% endif %}"
+          style="width: {{ progress_pct }}%"></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 text-center mt-4">
+        <div class="bg-slate-50 rounded-xl p-3">
+          <p class="text-xs text-slate-500">Current/mo</p>
+          <p class="text-lg font-black text-emerald-600">${{ current_monthly|floatformat:2 }}</p>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3">
+          <p class="text-xs text-slate-500">Still needed</p>
+          <p class="text-lg font-black text-slate-700">${{ remaining_monthly|floatformat:2 }}</p>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3">
+          <p class="text-xs text-slate-500">Annual pace</p>
+          <p class="text-lg font-black text-blue-600">${{ current_annual|floatformat:0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set / Update Goal -->
+    <div class="card p-6 mb-6">
+      <h2 class="text-base font-black text-slate-800 mb-4">Update Goal</h2>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Monthly Target ($)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">$</span>
+            <input type="number" name="target_monthly" min="0" step="0.01"
+              value="{{ target_monthly|floatformat:2 }}"
+              class="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              placeholder="e.g. 1000.00" required>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Annual target will be set to 12× this amount.</p>
+        </div>
+        <button type="submit"
+          class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl transition">
+          Save Goal
+        </button>
+      </form>
+    </div>
+
+    <!-- Portfolio breakdown -->
+    {% if portfolio_items %}
+    <div class="card p-6">
+      <h2 class="text-base font-black text-slate-800 mb-4">Portfolio Income Breakdown</h2>
+      <div class="divide-y divide-slate-100">
+        {% for item in portfolio_items %}
+        {% if item.latest_dividend_amount and item.shares_owned %}
+        <div class="py-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 font-black text-sm flex items-center justify-center">
+              {{ item.stock.symbol|slice:":2" }}
+            </span>
+            <div>
+              <p class="text-sm font-black text-slate-800">{{ item.stock.symbol }}</p>
+              <p class="text-xs text-slate-400">{{ item.shares_owned }} shares</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-black text-emerald-600">
+              ${% widthratio item.latest_dividend_amount 1 item.shares_owned %}/payment
+            </p>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
