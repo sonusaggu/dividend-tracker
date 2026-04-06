@@ -265,8 +265,14 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
                     <h2 class="text-lg font-bold text-slate-900">Your Holdings</h2>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <input type="text" id="portfolioSearch" placeholder="Search stocks..."
-                               class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <div class="relative">
+                            <input type="text" id="portfolioSearch" placeholder="Filter holdings…"
+                                   class="pl-8 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-semibold placeholder:font-normal w-44 focus:w-56" style="transition:width 0.2s;">
+                            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <button type="button" id="portfolioSearchClear" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition">
+                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
                         <select id="sectorFilter" class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
                             <option value="">All Sectors</option>
                             {% for item in sector_chart_data %}
@@ -884,8 +890,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    const portfolioSearchClear = document.getElementById('portfolioSearchClear');
     if (searchInput) {
-        searchInput.addEventListener('input', filterPortfolio);
+        searchInput.addEventListener('input', function() {
+            portfolioSearchClear && (this.value.length > 0 ? portfolioSearchClear.classList.remove('hidden') : portfolioSearchClear.classList.add('hidden'));
+            filterPortfolio();
+        });
+    }
+    if (portfolioSearchClear) {
+        portfolioSearchClear.addEventListener('click', function() {
+            searchInput.value = '';
+            this.classList.add('hidden');
+            filterPortfolio();
+            searchInput.focus();
+        });
     }
     if (sectorFilter) {
         sectorFilter.addEventListener('change', filterPortfolio);

@@ -1649,13 +1649,13 @@ def stock_quick_view(request, symbol):
 
 def stock_search_autocomplete(request):
     """API endpoint for stock search autocomplete - Only shows stocks with dividend data"""
-    from django.db.models import Exists, OuterRef
-    
+    from django.db.models import Exists, OuterRef, Case, When, IntegerField, Value
+
     query = request.GET.get('q', '').strip()
-    
+
     if len(query) < 2:
         return JsonResponse({'results': []})
-    
+
     # Search stocks by symbol, code, or company name
     # Only include stocks that have dividend data
     stocks = Stock.objects.filter(
@@ -1663,9 +1663,16 @@ def stock_search_autocomplete(request):
         | Q(company_name__icontains=query)
         | Q(code__icontains=query)
     ).filter(
-        # Only show stocks with dividend data
         Exists(Dividend.objects.filter(stock=OuterRef('pk')))
-    ).order_by('symbol')[:10]  # Limit to 10 results
+    ).annotate(
+        match_priority=Case(
+            When(symbol__iexact=query, then=Value(0)),       # exact symbol match: TD → TD
+            When(symbol__istartswith=query, then=Value(1)),  # symbol prefix: TD → TDB, TDG.UN
+            When(symbol__icontains=query, then=Value(2)),    # symbol contains: TD → ATD
+            default=Value(3),                                # company/code name match
+            output_field=IntegerField(),
+        )
+    ).order_by('match_priority', 'symbol')[:10]
     
     results = []
     for stock in stocks:

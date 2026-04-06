@@ -80,29 +80,42 @@
                     <!-- Search Input -->
                     <div class="md:col-span-2 relative" id="search-container">
                         <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Search</label>
-                        <input 
-                            type="text" 
-                            id="stock-search-input"
-                            name="search" 
-                            placeholder="Symbol or company name..." 
-                            value="{{ search_query }}"
-                            autocomplete="off"
-                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                        >
-                        <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-96 overflow-y-auto"></div>
-                        <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg">
-                            <div class="p-3 border-b border-slate-100">
-                                <h4 class="text-sm font-semibold text-slate-700">Recent Searches</h4>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="stock-search-input"
+                                name="search"
+                                placeholder="Symbol or company name… e.g. TD, Royal Bank"
+                                value="{{ search_query }}"
+                                autocomplete="off"
+                                class="w-full pl-10 pr-9 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-semibold placeholder:font-normal"
+                            >
+                            <svg id="stocks-search-icon" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" style="width:1rem;height:1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <svg id="stocks-search-spinner" class="hidden absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-blue-500 pointer-events-none" style="width:1rem;height:1rem;" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <button type="button" id="stocks-search-clear"
+                                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden"></div>
+                        <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
+                            <div class="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <h4 class="text-xs font-black text-slate-600 uppercase tracking-wide">Recent Searches</h4>
                             </div>
-                            <div id="recent-searches-list" class="p-2">
+                            <div id="recent-searches-list" class="p-1.5">
                                 {% for search in recent_searches %}
-                                <button type="button" class="w-full text-left px-4 py-2 hover:bg-slate-50 rounded text-sm text-slate-700 recent-search-item" data-search="{{ search }}">
-                                    <svg class="w-4 h-4 text-slate-400 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>{{ search }}
+                                <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 recent-search-item flex items-center gap-2" data-search="{{ search }}">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ search }}
                                 </button>
                                 {% empty %}
-                                <p class="px-4 py-2 text-sm text-slate-500">No recent searches</p>
+                                <p class="px-4 py-3 text-sm text-slate-400">No recent searches</p>
                                 {% endfor %}
                             </div>
                         </div>
@@ -733,53 +746,100 @@
     const autocompleteResults = document.getElementById('autocomplete-results');
     const recentSearches = document.getElementById('recent-searches');
     const recentSearchesList = document.getElementById('recent-searches-list');
+    const searchIcon = document.getElementById('stocks-search-icon');
+    const searchSpinner = document.getElementById('stocks-search-spinner');
+    const clearBtn = document.getElementById('stocks-search-clear');
     let autocompleteTimeout;
     let selectedIndex = -1;
-    
+
     if (!searchInput) return;
-    
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function setLoading(loading) {
+        if (loading) {
+            searchIcon && searchIcon.classList.add('hidden');
+            searchSpinner && searchSpinner.classList.remove('hidden');
+        } else {
+            searchIcon && searchIcon.classList.remove('hidden');
+            searchSpinner && searchSpinner.classList.add('hidden');
+        }
+    }
+
+    function yieldColor(y) {
+        if (y >= 5) return { bg: 'bg-red-100', text: 'text-red-700', avatarBg: '#fee2e2', avatarText: '#b91c1c' };
+        if (y >= 3) return { bg: 'bg-amber-100', text: 'text-amber-700', avatarBg: '#fef3c7', avatarText: '#b45309' };
+        if (y >= 1) return { bg: 'bg-emerald-100', text: 'text-emerald-700', avatarBg: '#d1fae5', avatarText: '#047857' };
+        return { bg: 'bg-blue-100', text: 'text-blue-700', avatarBg: '#dbeafe', avatarText: '#1d4ed8' };
+    }
+
+    function highlightMatch(text, query) {
+        if (!query) return escapeHtml(text);
+        const escaped = escapeHtml(text);
+        const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return escaped.replace(new RegExp(`(${safeQuery})`, 'gi'), '<mark class="bg-yellow-100 text-yellow-900 rounded px-0.5 not-italic font-black">$1</mark>');
+    }
+
+    // Show clear button if pre-filled value exists
+    if (searchInput.value.trim()) {
+        clearBtn && clearBtn.classList.remove('hidden');
+    }
+
+    clearBtn && clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        clearBtn.classList.add('hidden');
+        autocompleteResults.classList.add('hidden');
+        if (recentSearchesList && recentSearchesList.children.length > 0) {
+            recentSearches.classList.remove('hidden');
+        }
+        searchInput.focus();
+    });
+
     searchInput.addEventListener('focus', function() {
-        if (!this.value.trim() && recentSearchesList.children.length > 0) {
+        if (!this.value.trim() && recentSearchesList && recentSearchesList.children.length > 0) {
             recentSearches.classList.remove('hidden');
             autocompleteResults.classList.add('hidden');
         }
     });
-    
+
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#search-container')) {
             autocompleteResults.classList.add('hidden');
             recentSearches.classList.add('hidden');
         }
     });
-    
+
     searchInput.addEventListener('input', function() {
         const query = this.value.trim();
         clearTimeout(autocompleteTimeout);
         recentSearches.classList.add('hidden');
-        
+        clearBtn && (query.length > 0 ? clearBtn.classList.remove('hidden') : clearBtn.classList.add('hidden'));
+
         if (query.length < 2) {
             autocompleteResults.classList.add('hidden');
-            if (query.length === 0 && recentSearchesList.children.length > 0) {
+            setLoading(false);
+            if (query.length === 0 && recentSearchesList && recentSearchesList.children.length > 0) {
                 recentSearches.classList.remove('hidden');
             }
             return;
         }
-        
+
+        setLoading(true);
         autocompleteTimeout = setTimeout(function() {
             fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    displayAutocompleteResults(data.results);
-                })
-                .catch(error => {
-                    console.error('Autocomplete error:', error);
-                });
-        }, 300);
+                .then(r => r.json())
+                .then(data => { setLoading(false); displayAutocompleteResults(data.results, query); })
+                .catch(() => { setLoading(false); autocompleteResults.classList.add('hidden'); });
+        }, 280);
     });
-    
+
     searchInput.addEventListener('keydown', function(e) {
         const items = autocompleteResults.querySelectorAll('.autocomplete-item');
-        
+
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
@@ -790,72 +850,87 @@
             updateSelection(items);
         } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
             e.preventDefault();
-            items[selectedIndex].click();
+            window.location.href = items[selectedIndex].dataset.url;
         } else if (e.key === 'Escape') {
             autocompleteResults.classList.add('hidden');
             recentSearches.classList.add('hidden');
         }
     });
-    
+
     function updateSelection(items) {
         items.forEach((item, index) => {
             if (index === selectedIndex) {
-                item.classList.add('bg-blue-50', 'border-blue-500');
+                item.classList.add('bg-blue-50');
             } else {
-                item.classList.remove('bg-blue-50', 'border-blue-500');
+                item.classList.remove('bg-blue-50');
             }
         });
     }
-    
-    function displayAutocompleteResults(results) {
-        if (results.length === 0) {
-            autocompleteResults.classList.add('hidden');
-            return;
-        }
-        
+
+    function displayAutocompleteResults(results, query) {
         autocompleteResults.innerHTML = '';
         selectedIndex = -1;
-        
+
+        if (results.length === 0) {
+            autocompleteResults.innerHTML = `
+                <div class="px-4 py-8 text-center">
+                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <p class="text-sm font-black text-slate-700 mb-1">No stocks found</p>
+                    <p class="text-xs text-slate-400">Try a different symbol or company name</p>
+                </div>`;
+            autocompleteResults.classList.remove('hidden');
+            return;
+        }
+
         results.forEach((stock) => {
+            const y = stock.dividend_yield;
+            const colors = y ? yieldColor(y) : null;
+            const avatarStyle = colors
+                ? `background-color:${colors.avatarBg};color:${colors.avatarText};`
+                : 'background-color:#f1f5f9;color:#64748b;';
+            const yieldBadge = y
+                ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${colors.bg} ${colors.text}">${y.toFixed(2)}%</span>`
+                : '';
+            const sectorBadge = stock.sector
+                ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">${escapeHtml(stock.sector)}</span>`
+                : '';
+
             const item = document.createElement('div');
-            item.className = 'autocomplete-item p-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition';
+            item.className = 'autocomplete-item px-3 py-2.5 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition flex items-center gap-3';
             item.dataset.url = stock.url;
             item.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-semibold text-slate-900">${escapeHtml(stock.symbol)}</span>
-                            <span class="text-xs text-slate-500">${escapeHtml(stock.code)}</span>
-                            ${stock.sector ? `<span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
-                        </div>
-                        <p class="text-sm text-slate-600 mt-1">${escapeHtml(stock.company_name)}</p>
-                    </div>
+                <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs" style="${avatarStyle}">
+                    ${escapeHtml(stock.symbol.slice(0, 2))}
                 </div>
-            `;
-            
-            item.addEventListener('click', function() {
-                window.location.href = stock.url;
-            });
-            
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-black text-slate-900">${highlightMatch(stock.symbol, query)}</span>
+                        ${yieldBadge}
+                        ${sectorBadge}
+                    </div>
+                    <div class="text-xs text-slate-500 truncate mt-0.5">${highlightMatch(stock.company_name, query)}</div>
+                </div>
+                <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>`;
+
+            item.addEventListener('click', function() { window.location.href = stock.url; });
+            item.addEventListener('mousedown', function(e) { e.preventDefault(); });
             autocompleteResults.appendChild(item);
         });
-        
+
         autocompleteResults.classList.remove('hidden');
     }
-    
+
     document.querySelectorAll('.recent-search-item').forEach(item => {
         item.addEventListener('click', function() {
-            const searchTerm = this.dataset.search;
-            searchInput.value = searchTerm;
+            searchInput.value = this.dataset.search;
+            recentSearches.classList.add('hidden');
             searchInput.closest('form').submit();
         });
     });
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 })();
 
 // Get CSRF token

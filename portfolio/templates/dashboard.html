@@ -54,26 +54,44 @@
     </div>
 
     <!-- Quick Search -->
-    <div class="card mb-6" style="overflow: visible;">
-      <div class="card-body" style="padding-bottom: 1.25rem; padding-top: 1.25rem;">
-      <form method="get" action="{% url 'all_stocks' %}" class="flex gap-3" id="dashboard-search-form">
-        <div class="flex-1 relative" style="z-index: 100;">
-          <input type="text" 
-                 id="dashboard-search-input" 
-                 name="search" 
-                 placeholder="Search stocks by symbol or name..."
-                 autocomplete="off"
-                 class="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm bg-slate-50 focus:bg-white" />
-          <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="card mb-6 p-5 sm:p-6" style="overflow: visible;">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <div id="dashboard-autocomplete-results" class="hidden absolute w-full mt-1 bg-white border border-slate-100 rounded-lg shadow-lg max-h-80 overflow-y-auto" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;"></div>
         </div>
-        <button type="submit" class="btn btn-primary px-6 py-3">
+        <span class="text-sm font-black text-slate-700">Quick Stock Search</span>
+        <span class="text-xs text-slate-400 ml-auto hidden sm:block">Press <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono text-[11px]">↩</kbd> to go directly to stock</span>
+      </div>
+      <form method="get" action="{% url 'all_stocks' %}" class="flex gap-2 sm:gap-3" id="dashboard-search-form">
+        <div class="flex-1 relative" style="z-index: 100;">
+          <input type="text"
+                 id="dashboard-search-input"
+                 name="search"
+                 placeholder="Symbol or company name… e.g. TD, Royal Bank"
+                 autocomplete="off"
+                 class="w-full pl-11 pr-10 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm bg-slate-50 focus:bg-white font-semibold placeholder:font-normal" />
+          <svg id="search-icon" class="absolute left-3.5 top-3.5 w-4.5 h-4.5 text-slate-400 pointer-events-none" style="width:1.125rem;height:1.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <!-- Loading spinner (hidden by default) -->
+          <svg id="search-spinner" class="hidden absolute left-3.5 top-3.5 animate-spin text-blue-500 pointer-events-none" style="width:1.125rem;height:1.125rem;" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <!-- Clear button -->
+          <button type="button" id="search-clear-btn"
+                  class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition"
+                  onclick="document.getElementById('dashboard-search-input').value='';this.classList.add('hidden');document.getElementById('dashboard-autocomplete-results').classList.add('hidden');">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          <div id="dashboard-autocomplete-results" class="hidden absolute w-full mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;"></div>
+        </div>
+        <button type="submit" class="btn btn-primary px-5 py-3 whitespace-nowrap">
           Search
         </button>
       </form>
-      </div>
     </div>
 
     <!-- Stats Grid -->
@@ -885,48 +903,62 @@
     const searchInput = document.getElementById('dashboard-search-input');
     const resultsContainer = document.getElementById('dashboard-autocomplete-results');
     const searchForm = document.getElementById('dashboard-search-form');
+    const searchIcon = document.getElementById('search-icon');
+    const searchSpinner = document.getElementById('search-spinner');
+    const clearBtn = document.getElementById('search-clear-btn');
     let autocompleteTimeout;
     let selectedIndex = -1;
     let isSelecting = false;
-    
+
     if (!searchInput || !resultsContainer) return;
-    
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
-    
-    searchInput.addEventListener('input', function() {
-      if (isSelecting) {
-        isSelecting = false;
-        return;
+
+    function setLoading(loading) {
+      if (loading) {
+        searchIcon && searchIcon.classList.add('hidden');
+        searchSpinner && searchSpinner.classList.remove('hidden');
+      } else {
+        searchIcon && searchIcon.classList.remove('hidden');
+        searchSpinner && searchSpinner.classList.add('hidden');
       }
-      
+    }
+
+    function yieldColor(y) {
+      if (y >= 5) return { bg: 'bg-red-100', text: 'text-red-700', avatarBg: '#fee2e2', avatarText: '#b91c1c' };
+      if (y >= 3) return { bg: 'bg-amber-100', text: 'text-amber-700', avatarBg: '#fef3c7', avatarText: '#b45309' };
+      if (y >= 1) return { bg: 'bg-emerald-100', text: 'text-emerald-700', avatarBg: '#d1fae5', avatarText: '#047857' };
+      return { bg: 'bg-blue-100', text: 'text-blue-700', avatarBg: '#dbeafe', avatarText: '#1d4ed8' };
+    }
+
+    searchInput.addEventListener('input', function() {
+      if (isSelecting) { isSelecting = false; return; }
       const query = this.value.trim();
       clearTimeout(autocompleteTimeout);
-      
+      clearBtn && (query.length > 0 ? clearBtn.classList.remove('hidden') : clearBtn.classList.add('hidden'));
+
       if (query.length < 2) {
         resultsContainer.classList.add('hidden');
         selectedIndex = -1;
+        setLoading(false);
         return;
       }
-      
+
+      setLoading(true);
       autocompleteTimeout = setTimeout(function() {
         fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
-          .then(response => response.json())
-          .then(data => {
-            displayAutocompleteResults(data.results);
-          })
-          .catch(error => {
-            console.error('Autocomplete error:', error);
-          });
-      }, 300);
+          .then(r => r.json())
+          .then(data => { setLoading(false); displayAutocompleteResults(data.results, query); })
+          .catch(() => { setLoading(false); resultsContainer.classList.add('hidden'); });
+      }, 280);
     });
-    
+
     searchInput.addEventListener('keydown', function(e) {
       const items = resultsContainer.querySelectorAll('.autocomplete-item');
-      
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
@@ -943,93 +975,120 @@
         selectedIndex = -1;
       }
     });
-    
+
     searchInput.addEventListener('focus', function() {
       if (this.value.trim().length >= 2) {
         const query = this.value.trim();
+        setLoading(true);
         fetch(`/api/stock-search/?q=${encodeURIComponent(query)}`)
-          .then(response => response.json())
-          .then(data => {
-            displayAutocompleteResults(data.results);
-          })
-          .catch(error => {
-            console.error('Autocomplete error:', error);
-          });
+          .then(r => r.json())
+          .then(data => { setLoading(false); displayAutocompleteResults(data.results, query); })
+          .catch(() => { setLoading(false); });
       }
     });
-    
-    const inputContainer = searchInput.closest('.relative');
+
     document.addEventListener('click', function(e) {
+      const inputContainer = searchInput.closest('.relative');
       if (inputContainer && !inputContainer.contains(e.target)) {
         resultsContainer.classList.add('hidden');
         selectedIndex = -1;
       }
     });
-    
+
     function updateSelection(items) {
       items.forEach((item, index) => {
         if (index === selectedIndex) {
-          item.classList.add('bg-blue-50', 'border-blue-500');
+          item.classList.add('bg-blue-50');
+          item.classList.remove('hover:bg-slate-50');
         } else {
-          item.classList.remove('bg-blue-50', 'border-blue-500');
+          item.classList.remove('bg-blue-50');
+          item.classList.add('hover:bg-slate-50');
         }
       });
     }
-    
+
     function selectStock(item, event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      if (event) { event.preventDefault(); event.stopPropagation(); }
+      const url = item.dataset.url;
       const symbol = item.dataset.symbol;
       isSelecting = true;
       searchInput.value = symbol;
       resultsContainer.classList.add('hidden');
       selectedIndex = -1;
       clearTimeout(autocompleteTimeout);
-      window.location.href = `/stocks/${symbol}/`;
+      if (url) window.location.href = url;
     }
-    
-    function displayAutocompleteResults(results) {
-      if (results.length === 0) {
-        resultsContainer.classList.add('hidden');
-        return;
-      }
-      
+
+    function highlightMatch(text, query) {
+      if (!query) return escapeHtml(text);
+      const escaped = escapeHtml(text);
+      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return escaped.replace(new RegExp(`(${safeQuery})`, 'gi'), '<mark class="bg-yellow-100 text-yellow-900 rounded px-0.5 not-italic font-black">$1</mark>');
+    }
+
+    function displayAutocompleteResults(results, query) {
       resultsContainer.innerHTML = '';
       selectedIndex = -1;
-      
-      results.forEach((stock) => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item p-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition';
-        item.dataset.symbol = stock.symbol;
-        item.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-2">
-                <span class="font-semibold text-slate-900">${escapeHtml(stock.symbol)}</span>
-                <span class="text-xs text-slate-500">${escapeHtml(stock.code)}</span>
-                ${stock.sector ? `<span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${escapeHtml(stock.sector)}</span>` : ''}
-              </div>
-              <p class="text-sm text-slate-600 mt-1">${escapeHtml(stock.company_name)}</p>
+
+      if (results.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="px-4 py-8 text-center">
+            <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
-            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
+            <p class="text-sm font-black text-slate-700 mb-1">No stocks found</p>
+            <p class="text-xs text-slate-400">Try a different symbol or company name</p>
+          </div>`;
+        resultsContainer.classList.remove('hidden');
+        return;
+      }
+
+      results.forEach((stock) => {
+        const y = stock.dividend_yield;
+        const colors = y ? yieldColor(y) : null;
+        const avatarStyle = colors
+          ? `background-color:${colors.avatarBg};color:${colors.avatarText};`
+          : 'background-color:#f1f5f9;color:#64748b;';
+        const yieldBadge = y
+          ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-black ${colors.bg} ${colors.text}">${y.toFixed(2)}%</span>`
+          : '';
+        const sectorBadge = stock.sector
+          ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">${escapeHtml(stock.sector)}</span>`
+          : '';
+
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item px-3 py-2.5 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition flex items-center gap-3';
+        item.dataset.symbol = stock.symbol;
+        item.dataset.url = stock.url || '';
+        item.innerHTML = `
+          <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs" style="${avatarStyle}">
+            ${escapeHtml(stock.symbol.slice(0, 2))}
           </div>
-        `;
-        
-        item.addEventListener('click', function(e) {
-          selectStock(item, e);
-        });
-        
-        item.addEventListener('mousedown', function(e) {
-          e.preventDefault();
-        });
-        
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-sm font-black text-slate-900">${highlightMatch(stock.symbol, query)}</span>
+              ${yieldBadge}
+              ${sectorBadge}
+            </div>
+            <div class="text-xs text-slate-500 truncate mt-0.5">${highlightMatch(stock.company_name, query)}</div>
+          </div>
+          <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>`;
+
+        item.addEventListener('click', function(e) { selectStock(item, e); });
+        item.addEventListener('mousedown', function(e) { e.preventDefault(); });
         resultsContainer.appendChild(item);
       });
-      
+
+      // "View all results" footer
+      const footer = document.createElement('a');
+      footer.href = `/stocks/?search=${encodeURIComponent(searchInput.value.trim())}`;
+      footer.className = 'flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-black text-blue-600 hover:bg-blue-50 transition border-t border-slate-100';
+      footer.innerHTML = `View all results for "<span class="italic">${escapeHtml(searchInput.value.trim())}</span>" →`;
+      footer.addEventListener('mousedown', function(e) { e.preventDefault(); });
+      resultsContainer.appendChild(footer);
+
       resultsContainer.classList.remove('hidden');
     }
   })();
