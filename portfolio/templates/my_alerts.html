@@ -213,6 +213,53 @@
 
         <!-- Alerts Table -->
         <div class="card overflow-hidden">
+            <!-- Table Toolbar -->
+            <div class="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <!-- Search -->
+                <div class="relative flex-shrink-0">
+                    <input type="text" id="alertSearch" placeholder="Filter by symbol…"
+                           class="pl-8 pr-8 py-1.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-semibold placeholder:font-normal w-44"
+                           oninput="filterAlerts()">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <button type="button" id="alertSearchClear" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition"
+                            onclick="document.getElementById('alertSearch').value='';this.classList.add('hidden');filterAlerts();">
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Status filter tabs -->
+                <div class="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
+                    <button onclick="setStatusFilter('all')" id="filter-all"
+                            class="alert-filter-btn px-3 py-1 text-xs font-black rounded-md transition bg-white text-slate-700 shadow-sm">All</button>
+                    <button onclick="setStatusFilter('active')" id="filter-active"
+                            class="alert-filter-btn px-3 py-1 text-xs font-black rounded-md transition text-slate-500 hover:text-slate-700">Active</button>
+                    <button onclick="setStatusFilter('paused')" id="filter-paused"
+                            class="alert-filter-btn px-3 py-1 text-xs font-black rounded-md transition text-slate-500 hover:text-slate-700">Paused</button>
+                    <button onclick="setStatusFilter('upcoming')" id="filter-upcoming"
+                            class="alert-filter-btn px-3 py-1 text-xs font-black rounded-md transition text-slate-500 hover:text-slate-700">Upcoming</button>
+                </div>
+                <!-- Bulk actions -->
+                <div class="flex items-center gap-2 sm:ml-auto">
+                    <span class="text-xs text-slate-400 font-semibold" id="alertCount">{{ alerts|length }} alerts</span>
+                    <button onclick="bulkToggleAll(true)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-black rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        All On
+                    </button>
+                    <button onclick="bulkToggleAll(false)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-black rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Pause All
+                    </button>
+                </div>
+            </div>
+            <!-- No results message -->
+            <div id="alertNoResults" class="hidden px-6 py-12 text-center">
+                <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <p class="text-sm font-black text-slate-700 mb-1">No matching alerts</p>
+                <p class="text-xs text-slate-400">Try a different filter or search term</p>
+            </div>
             <div class="overflow-x-auto md:overflow-x-visible">
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
@@ -230,7 +277,11 @@
                         {% for alert_data in alerts %}
                         {% with alert=alert_data.alert dividend=alert_data.latest_dividend days_until=alert_data.days_until %}
                         <tr class="table-row-hover transition-colors {% if alert.is_active %}border-l-4 border-emerald-400{% else %}border-l-4 border-transparent{% endif %}"
-                            data-alert-id="{{ alert.id }}" data-active="{{ alert.is_active|yesno:'true,false' }}">
+                            data-alert-id="{{ alert.id }}"
+                            data-active="{{ alert.is_active|yesno:'true,false' }}"
+                            data-symbol="{{ alert.stock.symbol|lower }}"
+                            data-company="{{ alert.stock.company_name|lower }}"
+                            data-days-until="{{ days_until|default:'999' }}">
 
                             <!-- Stock -->
                             <td class="px-4 py-4" style="width: 18%; min-width: 120px;">
@@ -308,7 +359,7 @@
 
                             <!-- Status -->
                             <td class="px-2 py-4 text-center" style="width: 10%;">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black
+                                <span class="alert-status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black
                                     {% if alert.is_active %}bg-emerald-100 text-emerald-700{% else %}bg-slate-100 text-slate-400{% endif %}">
                                     {{ alert.is_active|yesno:"Active,Paused" }}
                                 </span>
@@ -476,17 +527,12 @@ function confirmDelete() {
 function toggleAlertStatus(alertId, currentActive) {
     const row = document.querySelector(`[data-alert-id="${alertId}"]`);
     if (!row) return;
-    
+
     const button = document.getElementById(`toggleBtn${alertId}`);
-    const toggleText = document.getElementById(`toggleText${alertId}`);
     const icon = button ? button.querySelector('svg') : null;
-    
-    if (button) {
-        button.disabled = true;
-        button.style.opacity = '0.6';
-        if (toggleText) toggleText.textContent = '...';
-    }
-    
+
+    if (button) { button.disabled = true; button.style.opacity = '0.5'; }
+
     fetch(`/toggle-alert-status/${alertId}/`, {
         method: 'POST',
         headers: {
@@ -495,78 +541,100 @@ function toggleAlertStatus(alertId, currentActive) {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        } else {
-            return response.json().then(data => {
-                if (data.status === 'success') {
-                    const activeState = data.is_active;
-                    row.dataset.active = activeState.toString();
-                    
-                    // Update status badge
-                    const statusCell = row.querySelector('td:nth-child(7) span');
-                    if (statusCell) {
-                        statusCell.textContent = activeState ? 'Active' : 'Inactive';
-                        statusCell.className = activeState 
-                            ? 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700 border border-green-200'
-                            : 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-600 border border-slate-200';
-                    }
-                    
-                    // Update row border
-                    if (activeState) {
-                        row.classList.add('border-l-4', 'border-green-500');
-                    } else {
-                        row.classList.remove('border-l-4', 'border-green-500');
-                    }
-                    
-                    // Update toggle button
-                    if (button) {
-                        if (activeState) {
-                            button.className = 'inline-flex items-center justify-center px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 border border-green-300 rounded-lg transition font-medium text-sm';
-                            if (icon) {
-                                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                            }
-                            if (toggleText) toggleText.textContent = 'On';
-                            button.title = 'Deactivate alert';
-                        } else {
-                            button.className = 'inline-flex items-center justify-center px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 rounded-lg transition font-medium text-sm';
-                            if (icon) {
-                                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                            }
-                            if (toggleText) toggleText.textContent = 'Off';
-                            button.title = 'Activate alert';
-                        }
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                    }
-                    
-                    // Show success message
-                    if (typeof Toast !== 'undefined') {
-                        Toast.success(data.message || (activeState ? 'Alert activated' : 'Alert deactivated'));
-                    }
-                } else {
-                    if (button) {
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                        if (toggleText) toggleText.textContent = currentActive ? 'On' : 'Off';
-                    }
-                    if (typeof Toast !== 'undefined') {
-                        Toast.error(data.message || 'Error updating alert status');
-                    }
+    .then(r => r.redirected ? (window.location.href = r.url) : r.json())
+    .then(data => {
+        if (!data) return;
+        if (data.status === 'success') {
+            const active = data.is_active;
+            row.dataset.active = active.toString();
+
+            // Update left border accent
+            row.classList.toggle('border-l-4', active);
+            row.classList.toggle('border-emerald-400', active);
+            row.classList.toggle('border-transparent', !active);
+
+            // Update status badge (6th td)
+            const statusBadge = row.querySelector('.alert-status-badge');
+            if (statusBadge) {
+                statusBadge.textContent = active ? 'Active' : 'Paused';
+                statusBadge.className = 'alert-status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black ' +
+                    (active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400');
+            }
+
+            // Update toggle button
+            if (button) {
+                button.className = 'w-7 h-7 rounded-lg flex items-center justify-center transition ' +
+                    (active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200');
+                button.onclick = () => toggleAlertStatus(alertId, !active);
+                button.title = active ? 'Pause alert' : 'Activate alert';
+                if (icon) {
+                    icon.innerHTML = active
+                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
                 }
-            });
+                button.disabled = false;
+                button.style.opacity = '1';
+            }
+        } else {
+            if (button) { button.disabled = false; button.style.opacity = '1'; }
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        if (button) {
-            button.disabled = false;
-            button.style.opacity = '1';
-            if (toggleText) toggleText.textContent = currentActive ? 'On' : 'Off';
-        }
-        if (typeof Toast !== 'undefined') {
-            Toast.error('Error updating alert status. Please try again.');
+    .catch(() => { if (button) { button.disabled = false; button.style.opacity = '1'; } });
+}
+
+// --- Filter helpers ---
+let activeStatusFilter = 'all';
+
+function setStatusFilter(status) {
+    activeStatusFilter = status;
+    document.querySelectorAll('.alert-filter-btn').forEach(btn => {
+        const isActive = btn.id === `filter-${status}`;
+        btn.className = 'alert-filter-btn px-3 py-1 text-xs font-black rounded-md transition ' +
+            (isActive ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700');
+    });
+    filterAlerts();
+}
+
+function filterAlerts() {
+    const query = (document.getElementById('alertSearch')?.value || '').toLowerCase().trim();
+    const clearBtn = document.getElementById('alertSearchClear');
+    if (clearBtn) clearBtn.classList.toggle('hidden', query.length === 0);
+
+    const rows = document.querySelectorAll('tbody tr[data-alert-id]');
+    let visible = 0;
+
+    rows.forEach(row => {
+        const symbol = (row.dataset.symbol || '').toLowerCase();
+        const company = (row.dataset.company || '').toLowerCase();
+        const active = row.dataset.active === 'true';
+        const daysUntil = parseInt(row.dataset.daysUntil ?? '999', 10);
+
+        const matchesSearch = !query || symbol.includes(query) || company.includes(query);
+        const matchesStatus =
+            activeStatusFilter === 'all' ||
+            (activeStatusFilter === 'active' && active) ||
+            (activeStatusFilter === 'paused' && !active) ||
+            (activeStatusFilter === 'upcoming' && active && daysUntil >= 0 && daysUntil <= 14);
+
+        const show = matchesSearch && matchesStatus;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+
+    const counter = document.getElementById('alertCount');
+    if (counter) counter.textContent = `${visible} alert${visible !== 1 ? 's' : ''}`;
+
+    const noResults = document.getElementById('alertNoResults');
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+}
+
+function bulkToggleAll(activate) {
+    const rows = document.querySelectorAll('tbody tr[data-alert-id]');
+    rows.forEach(row => {
+        const alertId = row.dataset.alertId;
+        const currentActive = row.dataset.active === 'true';
+        if (alertId && currentActive !== activate) {
+            toggleAlertStatus(parseInt(alertId), !activate);
         }
     });
 }
