@@ -1315,3 +1315,53 @@ class UserSession(models.Model):
         """Calculate session duration in seconds"""
         end_time = self.ended_at or timezone.now()
         return int((end_time - self.started_at).total_seconds())
+
+
+class InsiderTrade(models.Model):
+    """Canadian insider trading data sourced from SEDI (sedi.ca)."""
+
+    TRANSACTION_TYPES = [
+        ('buy',   'Purchase'),
+        ('sell',  'Sale'),
+        ('grant', 'Grant / Award'),
+        ('other', 'Other'),
+    ]
+
+    stock            = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='insider_trades', db_index=True)
+    insider_name     = models.CharField(max_length=200)
+    insider_title    = models.CharField(max_length=200, blank=True)
+    security_type    = models.CharField(max_length=100, blank=True)   # e.g. "Common Shares"
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, default='other')
+    nature_of_trade  = models.CharField(max_length=100, blank=True)   # raw SEDI description
+    shares           = models.BigIntegerField()                        # shares acquired (+) or disposed (-)
+    price            = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    total_value      = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
+    closing_balance  = models.BigIntegerField(null=True, blank=True)   # shares held after trade
+    transaction_date = models.DateField(db_index=True)
+    filing_date      = models.DateField(null=True, blank=True)
+    sedi_issuer_id   = models.CharField(max_length=20, blank=True)    # SEDI numeric issuer ID
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-transaction_date']
+        indexes = [
+            models.Index(fields=['stock', '-transaction_date']),
+        ]
+        # Prevent duplicate rows if the scraper reruns
+        unique_together = ['stock', 'insider_name', 'transaction_date', 'shares', 'transaction_type']
+
+    def __str__(self):
+        direction = 'bought' if self.shares > 0 else 'sold'
+        return f"{self.insider_name} {direction} {abs(self.shares):,} shares of {self.stock.symbol}"
+
+    @property
+    def is_buy(self):
+        return self.transaction_type == 'buy'
+
+    @property
+    def display_value(self):
+        if self.total_value:
+            return f"${self.total_value:,.0f}"
+        if self.price and self.shares:
+            return f"${abs(self.shares) * self.price:,.0f}"
+        return None

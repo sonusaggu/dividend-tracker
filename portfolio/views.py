@@ -2075,6 +2075,23 @@ def stock_detail(request, symbol, slug=None):
             similar_stocks = []
         cache.set(_similar_key, similar_stocks, 60 * 60)
 
+    # Insider trades — last 90 days, cached per symbol for 1 hour
+    _insider_key = f'insider_trades_{stock.symbol}'
+    insider_trades = cache.get(_insider_key)
+    if insider_trades is None:
+        from .models import InsiderTrade as _InsiderTrade
+        ninety_days_ago = today - timedelta(days=90)
+        insider_trades = list(
+            _InsiderTrade.objects.filter(
+                stock=stock,
+                transaction_date__gte=ninety_days_ago,
+            ).order_by('-transaction_date')[:20]
+        )
+        cache.set(_insider_key, insider_trades, 60 * 60)
+
+    insider_buys  = sum(1 for t in insider_trades if t.transaction_type == 'buy')
+    insider_sells = sum(1 for t in insider_trades if t.transaction_type == 'sell')
+
     # Smart Insights (free, from DB only)
     try:
         from .ai_insights import get_stock_insights_for_view
@@ -2116,6 +2133,9 @@ def stock_detail(request, symbol, slug=None):
         'dividend_safety_score': dividend_safety_score,
         'dividend_chart_data': dividend_chart_data,
         'similar_stocks': similar_stocks,
+        'insider_trades': insider_trades,
+        'insider_buys': insider_buys,
+        'insider_sells': insider_sells,
     }
 
     return render(request, 'stock_detail.html', context)
@@ -4985,6 +5005,143 @@ def trigger_dividend_alerts(request):
             'status': 'error', 
             'message': f'Error: {str(e)}'
         }, status=500)
+
+@csrf_exempt
+@require_POST
+def trigger_insider_trades(request):
+    """
+    API endpoint to fetch insider trading data from Yahoo Finance (SEDI data).
+
+    Auth:   X-API-Key header  OR  secret_key POST field (same key as DIVIDEND_ALERT_SECRET)
+    Runs:   background thread — returns immediately, logs progress
+
+    POST fields (all optional):
+        symbol      - single TSX ticker, e.g. "TD"  (omit for all TSX60 stocks)
+        days        - how many days back to fetch (default 90)
+        tsx60_only  - "true" to restrict --all-stocks run to TSX60 members
+        limit       - max stocks when running all-stocks (default 0 = no limit)
+
+    Examples:
+        curl -X POST https://yoursite.com/api/insider-trades/fetch/ \\
+             -H "X-API-Key: YOUR_SECRET" \\
+             -d "symbol=TD"
+
+        curl -X POST https://yoursite.com/api/insider-trades/fetch/ \\
+             -H "X-API-Key: YOUR_SECRET" \\
+             -d "tsx60_only=true&days=90"
+    """
+    import threading
+
+    secret_key = request.POST.get('secret_key') or request.headers.get('X-API-Key')
+    if not secret_key or secret_key != getattr(settings, 'DIVIDEND_ALERT_SECRET', ''):
+        logger.warning(f"Unauthorized insider trades fetch attempt from {request.META.get('REMOTE_ADDR')}")
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    symbol     = (request.POST.get('symbol') or '').strip().upper()
+    days       = int(request.POST.get('days', 90))
+    tsx60_only = request.POST.get('tsx60_only', '').lower() == 'true'
+    limit      = int(request.POST.get('limit', 0))
+
+    # Validate
+    if days < 1 or days > 365:
+        return JsonResponse({'error': 'days must be between 1 and 365'}, status=400)
+
+    def run():
+        try:
+            kwargs = {'days': days}
+            if symbol:
+                kwargs['symbol'] = symbol
+                logger.info(f"[insider_trades API] Starting fetch for {symbol}, days={days}")
+            else:
+                kwargs['all_stocks'] = True
+                kwargs['tsx60_only'] = tsx60_only
+                if limit:
+                    kwargs['limit'] = limit
+                logger.info(f"[insider_trades API] Starting all-stocks fetch, tsx60_only={tsx60_only}, days={days}")
+
+            call_command('fetch_insider_trades', **kwargs)
+            logger.info("[insider_trades API] Fetch completed")
+        except Exception as e:
+            logger.error(f"[insider_trades API] Error: {e}")
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+
+    return JsonResponse({
+        'status':  'accepted',
+        'message': f'Insider trades fetch started in background',
+        'symbol':  symbol or 'all',
+        'days':    days,
+        'tsx60_only': tsx60_only,
+    })
+
+
+@csrf_exempt
+@require_POST
+def insider_trades_list(request, symbol):
+    """
+    Read-only API — returns the last N insider trades for a symbol as JSON.
+
+    GET  /api/insider-trades/<SYMBOL>/
+    POST /api/insider-trades/<SYMBOL>/
+
+    Query params:
+        limit  - number of trades (default 20, max 100)
+        days   - only return trades within this many days (default 90)
+
+    No auth required (public data).
+
+    Example:
+        curl https://yoursite.com/api/insider-trades/TD/?limit=10
+    """
+    from .models import InsiderTrade as _InsiderTrade
+
+    if not symbol or len(symbol) > 10:
+        return JsonResponse({'error': 'Invalid symbol'}, status=400)
+
+    symbol = symbol.upper()
+    limit  = min(int(request.GET.get('limit', 20)), 100)
+    days   = int(request.GET.get('days', 90))
+
+    try:
+        from datetime import timedelta
+        cutoff = timezone.now().date() - timedelta(days=days)
+        trades_qs = _InsiderTrade.objects.filter(
+            stock__symbol=symbol,
+            transaction_date__gte=cutoff,
+        ).order_by('-transaction_date')[:limit]
+
+        data = []
+        for t in trades_qs:
+            data.append({
+                'insider':          t.insider_name,
+                'title':            t.insider_title,
+                'type':             t.transaction_type,
+                'action':           t.get_transaction_type_display(),
+                'nature':           t.nature_of_trade,
+                'shares':           t.shares,
+                'price':            float(t.price) if t.price else None,
+                'value':            float(t.total_value) if t.total_value else None,
+                'transaction_date': str(t.transaction_date),
+                'filing_date':      str(t.filing_date) if t.filing_date else None,
+            })
+
+        buys  = sum(1 for t in data if t['type'] == 'buy')
+        sells = sum(1 for t in data if t['type'] == 'sell')
+
+        return JsonResponse({
+            'symbol':      symbol,
+            'count':       len(data),
+            'insider_buys':  buys,
+            'insider_sells': sells,
+            'sentiment':   'bullish' if buys > sells else 'bearish' if sells > buys else 'neutral',
+            'trades':      data,
+        })
+
+    except Exception as e:
+        logger.error(f"insider_trades_list error for {symbol}: {e}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
 
 @csrf_exempt
 @require_POST
