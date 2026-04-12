@@ -2,10 +2,49 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}All Stocks - Browse TSX Dividend Stocks | StockFolio{% endblock %}
+{% block title %}{% if page_obj.number > 1 %}Page {{ page_obj.number }} — {% endif %}All Stocks - Browse TSX Dividend Stocks | StockFolio{% endblock %}
 {% block meta_title %}Browse All TSX Dividend Stocks - Dividend Screener & Filter{% endblock %}
-{% block meta_description %}Browse and search all TSX dividend stocks. Filter by sector, dividend yield, price, and frequency. Find high-yield Canadian dividend stocks and build your portfolio.{% endblock %}
+{% block meta_description %}{% if page_obj.number > 1 %}Page {{ page_obj.number }} of TSX dividend stocks. {% endif %}Browse and search all TSX dividend stocks. Filter by sector, dividend yield, price, and frequency. Find high-yield Canadian dividend stocks and build your portfolio.{% endblock %}
 {% block meta_keywords %}all stocks, TSX stocks, dividend stocks list, stock screener, TSX dividend stocks, Canadian dividend stocks, high yield dividend stocks, dividend filter, filter by sector, dividend yield filter, stock search, TSX dividend list, Canadian stocks, dividend investing, stock screener Canada{% endblock %}
+
+{# Canonical: always points to page 1 (or no page param) for paginated results #}
+{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}{% if search_query %}?search={{ search_query }}{% endif %}{% endblock %}
+
+{# rel=prev / rel=next for Google pagination signals #}
+{% block extra_meta %}
+{% if page_obj.has_previous %}
+<link rel="prev" href="{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">
+{% endif %}
+{% if page_obj.has_next %}
+<link rel="next" href="{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">
+{% endif %}
+{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "All TSX Dividend Stocks{% if page_obj.number > 1 %} — Page {{ page_obj.number }}{% endif %}",
+  "description": "Browse and filter dividend-paying stocks listed on the Toronto Stock Exchange.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}",
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": {{ page_obj.paginator.count }},
+    "itemListElement": [
+      {% for item in stocks %}{% if forloop.counter <= 10 %}
+      {
+        "@type": "ListItem",
+        "position": {{ forloop.counter }},
+        "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}",
+        "name": "{{ item.stock.company_name|escapejs }} ({{ item.stock.symbol }})"
+      }{% if not forloop.last and forloop.counter < 10 %},{% endif %}
+      {% endif %}{% endfor %}
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-slate-50 py-8">

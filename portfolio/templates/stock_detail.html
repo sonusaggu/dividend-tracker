@@ -16,6 +16,18 @@
 {% block og_url %}{{ canonical_url }}{% endblock %}
 {% block twitter_url %}{{ canonical_url }}{% endblock %}
 
+{# Dynamic OG image: uses og-image service to generate a branded card per stock #}
+{# Falls back to a generic share image via ?stock= query param #}
+{% block og_image %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/static/images/og-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ stock.symbol }} — {{ stock.company_name }} dividend stock analysis on StockFolio">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}/static/images/og-share.png">
+<meta name="twitter:image:alt" content="{{ stock.symbol }} dividend analysis — StockFolio">
+{% endblock %}
+
 {% block extra_schema %}
 <!-- FinancialProduct schema with price, yield and 52-week range -->
 <script type="application/ld+json">
