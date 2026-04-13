@@ -45,7 +45,79 @@
     <!-- Earnings Table -->
     {% if earnings %}
     <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-        <div class="overflow-x-auto">
+
+        <!-- Mobile earnings cards -->
+        <div class="block md:hidden divide-y divide-gray-100">
+            {% for item in earnings %}
+            {% with earning=item.earning days_until=item.days_until %}
+            <div class="px-4 py-3 {% if earning.earnings_date == today %}bg-yellow-50{% elif earning.earnings_date < today %}bg-gray-50 opacity-75{% endif %}">
+                <!-- Top row: avatar + symbol + company + date -->
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <span class="text-blue-700 font-black text-sm" style="white-space:nowrap;">{{ earning.stock.symbol|slice:":2" }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <a href="{% url 'stock_detail' earning.stock.symbol earning.stock.get_seo_slug %}"
+                               class="text-sm font-black text-blue-600" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ earning.stock.symbol }}</a>
+                            {% if earning.stock.symbol in user_portfolio_symbols %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800" style="white-space:nowrap;">Portfolio</span>
+                            {% endif %}
+                            {% if earning.stock.symbol in user_watchlist_symbols %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800" style="white-space:nowrap;">Watchlist</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-400 truncate">{{ earning.stock.company_name|truncatewords:5 }}</div>
+                    </div>
+                    <!-- Date + countdown -->
+                    <div class="flex-shrink-0 text-right">
+                        <div class="text-xs font-semibold text-gray-700" style="white-space:nowrap;">{{ earning.earnings_date|date:"M d, Y" }}</div>
+                        <div class="text-xs mt-0.5" style="white-space:nowrap;">
+                            {% if earning.earnings_date == today %}<span class="text-yellow-600 font-medium">Today</span>
+                            {% elif earning.earnings_date < today %}<span class="text-gray-400">Past</span>
+                            {% elif days_until == 1 %}<span class="text-green-600">Tomorrow</span>
+                            {% elif days_until is not None %}<span class="text-green-600">{{ days_until }}d away</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Stats row: time + EPS estimate + actual + surprise -->
+                <div class="flex items-center gap-2 mt-2.5 flex-wrap">
+                    {% if earning.time == 'bmo' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800" style="white-space:nowrap;">Before Open</span>
+                    {% elif earning.time == 'amc' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800" style="white-space:nowrap;">After Close</span>
+                    {% elif earning.time == 'dmh' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800" style="white-space:nowrap;">During Hours</span>
+                    {% endif %}
+                    {% if earning.eps_estimate %}
+                    <span class="text-xs text-gray-500" style="white-space:nowrap;">Est <span class="font-semibold text-gray-800">${{ earning.eps_estimate|floatformat:2 }}</span></span>
+                    {% endif %}
+                    {% if earning.eps_actual %}
+                    <span class="text-xs text-gray-500" style="white-space:nowrap;">Act <span class="font-semibold text-gray-800">${{ earning.eps_actual|floatformat:2 }}</span></span>
+                    {% endif %}
+                    {% if earning.eps_surprise %}
+                    {% if earning.eps_surprise > 0 %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800" style="white-space:nowrap;">+{{ earning.eps_surprise|floatformat:1 }}%</span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800" style="white-space:nowrap;">{{ earning.eps_surprise|floatformat:1 }}%</span>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <!-- Action -->
+                <div class="mt-2.5">
+                    <a href="{% url 'stock_earnings' earning.stock.symbol %}"
+                       class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg" style="min-height:0;">
+                        View History
+                    </a>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -86,11 +158,11 @@
                                 {% endif %}
                             </div>
                         </td>
-                        
+
                         <!-- Symbol -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
-                                <a href="{% url 'stock_detail' earning.stock.symbol earning.stock.get_seo_slug %}" 
+                                <a href="{% url 'stock_detail' earning.stock.symbol earning.stock.get_seo_slug %}"
                                    class="text-sm font-bold text-blue-600 hover:text-blue-800">
                                     {{ earning.stock.symbol }}
                                 </a>
@@ -106,12 +178,12 @@
                                 {% endif %}
                             </div>
                         </td>
-                        
+
                         <!-- Company -->
                         <td class="px-6 py-4">
                             <div class="text-sm text-gray-900">{{ earning.stock.company_name|truncatewords:5 }}</div>
                         </td>
-                        
+
                         <!-- Time -->
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             {% if earning.time == 'bmo' %}
@@ -130,7 +202,7 @@
                             <span class="text-xs text-gray-400">—</span>
                             {% endif %}
                         </td>
-                        
+
                         <!-- EPS Estimate -->
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             {% if earning.eps_estimate %}
@@ -139,7 +211,7 @@
                             <span class="text-sm text-gray-400">—</span>
                             {% endif %}
                         </td>
-                        
+
                         <!-- EPS Actual -->
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             {% if earning.eps_actual %}
@@ -148,7 +220,7 @@
                             <span class="text-sm text-gray-400">—</span>
                             {% endif %}
                         </td>
-                        
+
                         <!-- Surprise -->
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             {% if earning.eps_surprise %}
@@ -165,10 +237,10 @@
                             <span class="text-xs text-gray-400">—</span>
                             {% endif %}
                         </td>
-                        
+
                         <!-- Action -->
                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <a href="{% url 'stock_earnings' earning.stock.symbol %}" 
+                            <a href="{% url 'stock_earnings' earning.stock.symbol %}"
                                class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
                                 View History
                             </a>

@@ -216,8 +216,112 @@
         
         <!-- All Watchlist Items (if no groups) -->
         {% if not watchlist_by_group and not ungrouped_items and watchlist_items %}
-        <!-- Watchlist Table -->
-        <div class="card overflow-hidden">
+
+        <!-- Mobile cards -->
+        <div class="block md:hidden divide-y divide-slate-100 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-4">
+            {% for item in watchlist_items %}
+            <div class="px-4 py-3" data-stock-id="{{ item.stock.id }}">
+                <!-- Top row: avatar + symbol/company + price + actions -->
+                <div class="flex items-center gap-3">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm
+                        {% if item.latest_dividend and item.latest_dividend.yield_percent %}
+                            {% if item.latest_dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                            {% elif item.latest_dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                            {% else %}bg-emerald-100 text-emerald-700{% endif %}
+                        {% else %}bg-slate-100 text-slate-600{% endif %}">
+                        {{ item.stock.symbol|slice:":2" }}
+                    </div>
+                    <!-- Symbol + company -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-black text-slate-900" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ item.stock.symbol }}</span>
+                            {% if item.in_portfolio %}<span class="badge bg-blue-100 text-blue-700 text-xs" style="white-space:nowrap;">Portfolio</span>{% endif %}
+                        </div>
+                        <div class="text-xs text-slate-400 truncate">{{ item.stock.company_name }}</div>
+                    </div>
+                    <!-- Price -->
+                    <div class="flex-shrink-0 text-right">
+                        {% if item.latest_price %}
+                        <div class="text-sm font-black text-slate-900">${{ item.latest_price.last_price|floatformat:2 }}</div>
+                        {% if item.price_change_7d is not None %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-black
+                            {% if item.price_change_7d >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-700{% endif %}" style="white-space:nowrap;">
+                            {% if item.price_change_7d >= 0 %}▲{% else %}▼{% endif %}{{ item.price_change_7d|floatformat:1 }}%
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-sm text-slate-400">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Meta row: yield + dividend + ex-date -->
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                    {% if item.latest_dividend and item.latest_dividend.yield_percent %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black
+                        {% if item.latest_dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                        {% elif item.latest_dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                        {% else %}bg-emerald-100 text-emerald-700{% endif %}" style="white-space:nowrap;">
+                        {{ item.latest_dividend.yield_percent|floatformat:2 }}%
+                    </span>
+                    {% endif %}
+                    {% if item.latest_dividend %}
+                    <span class="text-xs font-black text-slate-600" style="white-space:nowrap;">${{ item.latest_dividend.amount|floatformat:4 }}</span>
+                    {% endif %}
+                    {% if item.latest_dividend and item.latest_dividend.ex_dividend_date %}
+                    <span class="text-xs text-slate-400" style="white-space:nowrap;">Ex {{ item.latest_dividend.ex_dividend_date|date:"M d" }}</span>
+                    {% if item.days_until_dividend is not None %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-black
+                        {% if item.days_until_dividend == 0 %}bg-rose-100 text-rose-700
+                        {% elif item.days_until_dividend <= 7 %}bg-orange-100 text-orange-700
+                        {% elif item.days_until_dividend < 0 %}bg-slate-100 text-slate-500
+                        {% else %}bg-blue-50 text-blue-600{% endif %}" style="white-space:nowrap;">
+                        {% if item.days_until_dividend == 0 %}Today{% elif item.days_until_dividend < 0 %}Passed{% else %}{{ item.days_until_dividend }}d{% endif %}
+                    </span>
+                    {% endif %}
+                    {% endif %}
+                    {% if item.price_target %}
+                    <span class="inline-flex items-center gap-0.5 text-xs text-violet-600 font-black bg-violet-50 px-1.5 py-0.5 rounded-full border border-violet-100" style="white-space:nowrap;">🎯 ${{ item.price_target|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                <!-- Action row -->
+                <div class="flex items-center gap-2 mt-2.5">
+                    <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}"
+                       class="flex-1 btn btn-primary btn-sm justify-center text-xs font-black" style="min-height:0;padding-top:0.375rem;padding-bottom:0.375rem;">View</a>
+                    <button onclick="openPortfolioModal('{{ item.stock.symbol }}', '{{ item.stock.company_name|escapejs }}')"
+                            class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center transition active:bg-slate-200"
+                            title="Add to portfolio" style="min-height:0;flex-shrink:0;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    {% if item.latest_dividend %}
+                    <a href="{% url 'manage_dividend_alerts' item.stock.symbol %}"
+                       class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center transition active:bg-amber-100"
+                       title="Set alert" style="min-height:0;flex-shrink:0;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    </a>
+                    {% endif %}
+                    <button onclick="openTargetModal({{ item.watchlist_item_id }}, '{{ item.stock.symbol|escapejs }}', '{{ item.price_target|default:"" }}')"
+                            class="w-9 h-9 rounded-xl {% if item.price_target %}bg-violet-100 text-violet-600{% else %}bg-slate-100 text-slate-500{% endif %} flex items-center justify-center transition"
+                            title="Price target" style="min-height:0;flex-shrink:0;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </button>
+                    <button onclick="openGroupModal({{ item.watchlist_item.id }}, '{{ item.stock.symbol|escapejs }}')"
+                            class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center transition active:bg-blue-100"
+                            title="Set group" style="min-height:0;flex-shrink:0;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    </button>
+                    <button onclick="showRemoveConfirm({{ item.stock.id }}, '{{ item.stock.symbol|escapejs }}')"
+                            class="w-9 h-9 rounded-xl bg-red-50 text-red-400 flex items-center justify-center transition active:bg-red-100"
+                            title="Remove" style="min-height:0;flex-shrink:0;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden md:block card overflow-hidden">
             <div class="overflow-x-auto md:overflow-x-visible">
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
@@ -280,7 +384,7 @@
                                 </div>
                                 {% endif %}
                             </td>
-                            
+
                             <!-- Price -->
                             <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right" style="width: 10%;">
                                 {% if item.latest_price %}
@@ -304,7 +408,7 @@
                                 <span class="text-sm text-slate-400">—</span>
                                 {% endif %}
                             </td>
-                            
+
                             <!-- Dividend -->
                             <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right" style="width: 8%;">
                                 {% if item.latest_dividend %}
@@ -347,7 +451,7 @@
                                 <span class="text-sm text-slate-300">—</span>
                                 {% endif %}
                             </td>
-                            
+
                             <!-- Actions -->
                             <td class="px-2 md:px-3 py-4" style="width: 15%;">
                                 <div class="flex flex-col gap-1.5 items-center">

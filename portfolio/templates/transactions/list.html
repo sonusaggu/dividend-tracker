@@ -25,35 +25,38 @@
                     <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 mb-1">Transaction History</h1>
                     <p class="text-sm sm:text-base text-slate-500">Track your buy/sell transactions and cost basis</p>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div class="flex flex-wrap gap-2">
                     <a href="{% if symbol %}{% url 'create_transaction_with_symbol' symbol=symbol %}{% else %}{% url 'create_transaction' %}{% endif %}"
-                       class="btn btn-primary">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="btn btn-primary btn-sm sm:btn-md">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        Add Transaction
+                        <span class="hidden sm:inline">Add Transaction</span>
+                        <span class="sm:hidden">Add</span>
                     </a>
                     <a href="{% url 'import_wealthsimple_csv' %}"
-                       class="btn btn-secondary">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="btn btn-secondary btn-sm sm:btn-md">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        Import CSV
+                        <span class="hidden sm:inline">Import CSV</span>
+                        <span class="sm:hidden">Import</span>
                     </a>
                     <a href="{% url 'export_transactions' %}{% if symbol %}?symbol={{ symbol }}{% endif %}"
-                       class="btn btn-secondary">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="btn btn-secondary btn-sm sm:btn-md">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        Export CSV
+                        Export
                     </a>
                     {% if transactions %}
                     <button onclick="showDeleteAllTransactionsConfirm()"
-                            class="btn bg-red-600 hover:bg-red-700 text-white border-red-600">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="btn btn-sm sm:btn-md bg-red-600 hover:bg-red-700 text-white border-red-600">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
-                        Delete All
+                        <span class="hidden sm:inline">Delete All</span>
+                        <span class="sm:hidden">Delete</span>
                     </button>
                     {% endif %}
                 </div>
@@ -90,7 +93,68 @@
 
         <!-- Transactions Table -->
         <div class="card overflow-hidden">
-            <div class="overflow-x-auto md:overflow-x-visible">
+
+            <!-- Mobile transaction cards -->
+            <div class="block md:hidden divide-y divide-slate-100">
+                {% for transaction in transactions %}
+                <div class="px-4 py-3">
+                    <!-- Top row: date + type badge + symbol + total -->
+                    <div class="flex items-center gap-2">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm
+                            {% if transaction.transaction_type == 'BUY' %}bg-emerald-100 text-emerald-700
+                            {% elif transaction.transaction_type == 'SELL' %}bg-red-100 text-red-700
+                            {% else %}bg-slate-100 text-slate-600{% endif %}">
+                            {{ transaction.stock.symbol|slice:":2" }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <a href="{% url 'stock_detail' transaction.stock.symbol transaction.stock.get_seo_slug %}"
+                                   class="text-sm font-black text-blue-600" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ transaction.stock.symbol }}</a>
+                                <span class="badge text-xs {% if transaction.transaction_type == 'BUY' %}bg-emerald-100 text-emerald-700{% elif transaction.transaction_type == 'SELL' %}bg-red-100 text-red-700{% else %}bg-slate-100 text-slate-600{% endif %}" style="white-space:nowrap;">
+                                    {{ transaction.get_transaction_type_display }}
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-400" style="white-space:nowrap;">{{ transaction.transaction_date|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                            <div class="text-sm font-black text-slate-900" style="white-space:nowrap;">${{ transaction.total_amount|floatformat:2 }}</div>
+                            {% if transaction.realized_gain_loss is not None %}
+                            <div class="text-xs font-semibold {% if transaction.realized_gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}" style="white-space:nowrap;">
+                                ${{ transaction.realized_gain_loss|floatformat:2 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Detail row: shares × price -->
+                    <div class="flex items-center gap-3 mt-1.5">
+                        <span class="text-xs text-slate-500" style="white-space:nowrap;">{{ transaction.shares|floatformat:4 }} shares @ ${{ transaction.price_per_share|floatformat:4 }}</span>
+                        {% if transaction.fees %}
+                        <span class="text-xs text-slate-400" style="white-space:nowrap;">Fee ${{ transaction.fees|floatformat:2 }}</span>
+                        {% endif %}
+                    </div>
+                    <!-- Action row -->
+                    <div class="flex items-center gap-2 mt-2">
+                        <a href="{% url 'edit_transaction' transaction.id %}"
+                           class="flex-1 btn btn-secondary btn-sm justify-center" style="min-height:0;padding-top:0.375rem;padding-bottom:0.375rem;">Edit</a>
+                        <button onclick="showDeleteTransactionConfirm({{ transaction.id }}, '{{ transaction.stock.symbol|escapejs }}')"
+                                class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0" style="min-height:0;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="px-6 py-12 text-center">
+                    <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <p class="text-lg font-semibold text-slate-900 mb-2">No transactions found</p>
+                    <a href="{% url 'create_transaction' %}" class="btn btn-primary">Add your first transaction</a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden md:block overflow-x-auto md:overflow-x-visible">
                 <table class="w-full divide-y divide-slate-100" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
                         <tr>

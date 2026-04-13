@@ -240,8 +240,63 @@
             </div>
         </div>
 
-        <!-- Calendar -->
-        <div class="card overflow-hidden">
+        <!-- Mobile agenda view -->
+        <div class="block md:hidden card overflow-hidden mb-6">
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                <h2 class="text-sm font-black text-slate-700 uppercase tracking-wide">{{ month_name }} {{ year }} — Dividend Schedule</h2>
+            </div>
+            {% with has_any=False %}
+            {% for day_data in calendar_days %}
+            {% if day_data.dividends and day_data.is_current_month %}
+            <div class="border-b border-slate-100 last:border-0">
+                <div class="px-4 py-2 bg-slate-50/60 flex items-center justify-between">
+                    <span class="text-xs font-black text-slate-700 uppercase tracking-wide">
+                        {{ year }}-{{ month }}-{{ day_data.day|stringformat:"02d" }}
+                        {% if day_data.is_today %}<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black">Today</span>{% endif %}
+                    </span>
+                    {% if day_data.total_amount > 0 %}
+                    <span class="text-xs font-black text-emerald-700" style="white-space:nowrap;">${{ day_data.total_amount|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                <div class="divide-y divide-slate-50">
+                    {% for dividend in day_data.dividends %}
+                    <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}"
+                       class="flex items-center gap-3 px-4 py-2.5 active:bg-slate-50">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs
+                            {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                            {% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                            {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                            {{ dividend.stock.symbol|slice:":2" }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-black text-slate-900" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ dividend.stock.symbol }}</span>
+                            <div class="text-xs text-slate-400 truncate">{{ dividend.stock.company_name }}</div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                            <div class="text-sm font-black text-slate-800" style="white-space:nowrap;">${{ dividend.amount|floatformat:4 }}</div>
+                            {% if dividend.yield_percent %}
+                            <div class="text-xs font-semibold
+                                {% if dividend.yield_percent >= 5 %}text-red-600
+                                {% elif dividend.yield_percent >= 3 %}text-amber-600
+                                {% else %}text-emerald-600{% endif %}" style="white-space:nowrap;">
+                                {{ dividend.yield_percent|floatformat:2 }}%
+                            </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endwith %}
+            <div id="cal-mobile-empty" class="px-4 py-10 text-center text-sm text-slate-400">
+                No dividends scheduled for this month.
+            </div>
+        </div>
+
+        <!-- Desktop Calendar -->
+        <div class="hidden md:block card overflow-hidden">
             <!-- Calendar Header (Days of Week) -->
             <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-100">
                 <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Mon</div>
@@ -457,4 +512,13 @@
     background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
 }
 </style>
+<script>
+(function() {
+    var agenda = document.getElementById('cal-mobile-empty');
+    if (!agenda) return;
+    var parent = agenda.parentElement;
+    var dayRows = parent ? parent.querySelectorAll('.border-b.border-slate-100') : [];
+    if (dayRows.length > 0) agenda.style.display = 'none';
+})();
+</script>
 {% endblock %}

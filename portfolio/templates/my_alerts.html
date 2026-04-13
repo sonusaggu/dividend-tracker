@@ -261,7 +261,112 @@
                 <p class="text-sm font-black text-slate-700 mb-1">No matching alerts</p>
                 <p class="text-xs text-slate-400">Try a different filter or search term</p>
             </div>
-            <div class="overflow-x-auto md:overflow-x-visible">
+
+            <!-- Mobile alert cards -->
+            <div class="block md:hidden divide-y divide-slate-100">
+                {% for alert_data in alerts %}
+                {% with alert=alert_data.alert dividend=alert_data.latest_dividend days_until=alert_data.days_until %}
+                <div class="px-4 py-3 {% if alert.is_active %}border-l-4 border-emerald-400{% else %}border-l-4 border-transparent{% endif %}"
+                     data-alert-id="{{ alert.id }}"
+                     data-active="{{ alert.is_active|yesno:'true,false' }}"
+                     data-symbol="{{ alert.stock.symbol|lower }}"
+                     data-company="{{ alert.stock.company_name|lower }}"
+                     data-days-until="{{ days_until|default:'999' }}">
+                    <!-- Top row: avatar + symbol + company + status -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm
+                            {% if dividend and dividend.yield_percent %}
+                                {% if dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                                {% elif dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                                {% else %}bg-emerald-100 text-emerald-700{% endif %}
+                            {% else %}bg-slate-100 text-slate-600{% endif %}">
+                            {{ alert.stock.symbol|slice:":2" }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-black text-slate-900" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ alert.stock.symbol }}</span>
+                                <span class="alert-status-badge inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black
+                                    {% if alert.is_active %}bg-emerald-100 text-emerald-700{% else %}bg-slate-100 text-slate-400{% endif %}" style="white-space:nowrap;">
+                                    {{ alert.is_active|yesno:"Active,Paused" }}
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-400 truncate">{{ alert.stock.company_name }}</div>
+                        </div>
+                        <!-- Notify advance -->
+                        <div class="flex-shrink-0 text-right">
+                            <div class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                                <svg class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                <span class="text-xs font-black text-slate-700" style="white-space:nowrap;">{{ alert.days_advance }}d</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Meta row: yield + dividend + ex-date + countdown -->
+                    <div class="flex items-center gap-2 mt-2 flex-wrap">
+                        {% if dividend and dividend.yield_percent %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black
+                            {% if dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                            {% elif dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                            {% else %}bg-emerald-100 text-emerald-700{% endif %}" style="white-space:nowrap;">
+                            {{ dividend.yield_percent|floatformat:2 }}%
+                        </span>
+                        {% endif %}
+                        {% if dividend %}
+                        <span class="text-xs font-black text-slate-600" style="white-space:nowrap;">${{ dividend.amount|floatformat:4 }}</span>
+                        {% endif %}
+                        {% if dividend and dividend.ex_dividend_date %}
+                        <span class="text-xs text-slate-400" style="white-space:nowrap;">Ex {{ dividend.ex_dividend_date|date:"M d, Y" }}</span>
+                        {% if days_until is not None %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-black
+                            {% if days_until == 0 %}bg-rose-100 text-rose-700
+                            {% elif days_until <= 3 %}bg-red-100 text-red-700
+                            {% elif days_until <= 7 %}bg-orange-100 text-orange-700
+                            {% elif days_until < 0 %}bg-slate-100 text-slate-500
+                            {% else %}bg-blue-50 text-blue-600{% endif %}" style="white-space:nowrap;">
+                            {% if days_until < 0 %}Passed{% elif days_until == 0 %}Today{% else %}{{ days_until }}d{% endif %}
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-xs text-slate-300" style="white-space:nowrap;">No ex-date</span>
+                        {% endif %}
+                    </div>
+                    <!-- Action row -->
+                    <div class="flex items-center gap-2 mt-2.5">
+                        <a href="{% url 'stock_detail' alert.stock.symbol alert.stock.get_seo_slug %}"
+                           class="flex-1 btn btn-primary btn-sm justify-center text-xs font-black" style="min-height:0;padding-top:0.375rem;padding-bottom:0.375rem;">View</a>
+                        <!-- Toggle -->
+                        <button onclick="toggleAlertStatus({{ alert.id }}, {{ alert.is_active|yesno:'false,true' }})"
+                                id="mobileToggleBtn{{ alert.id }}"
+                                class="w-9 h-9 rounded-xl flex items-center justify-center transition
+                                    {% if alert.is_active %}bg-emerald-100 text-emerald-700 active:bg-emerald-200{% else %}bg-slate-100 text-slate-400 active:bg-slate-200{% endif %}"
+                                title="{% if alert.is_active %}Pause{% else %}Activate{% endif %}" style="min-height:0;flex-shrink:0;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {% if alert.is_active %}
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                {% else %}
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                {% endif %}
+                            </svg>
+                        </button>
+                        <!-- Edit -->
+                        <a href="{% url 'manage_dividend_alerts' alert.stock.symbol %}"
+                           class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center transition active:bg-blue-100"
+                           title="Edit alert" style="min-height:0;flex-shrink:0;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </a>
+                        <!-- Delete -->
+                        <button onclick="showDeleteConfirm({{ alert.id }}, '{{ alert.stock.symbol }}')"
+                                class="w-9 h-9 rounded-xl bg-red-50 text-red-400 flex items-center justify-center transition active:bg-red-100"
+                                title="Delete" style="min-height:0;flex-shrink:0;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden md:block overflow-x-auto md:overflow-x-visible">
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
                         <tr>
@@ -526,13 +631,15 @@ function confirmDelete() {
 }
 
 function toggleAlertStatus(alertId, currentActive) {
-    const row = document.querySelector(`[data-alert-id="${alertId}"]`);
-    if (!row) return;
+    // Target all elements with this alert id (mobile card div + desktop tr)
+    const allRows = document.querySelectorAll(`[data-alert-id="${alertId}"]`);
+    if (!allRows.length) return;
 
     const button = document.getElementById(`toggleBtn${alertId}`);
-    const icon = button ? button.querySelector('svg') : null;
+    const mobileButton = document.getElementById(`mobileToggleBtn${alertId}`);
+    const allButtons = [button, mobileButton].filter(Boolean);
 
-    if (button) { button.disabled = true; button.style.opacity = '0.5'; }
+    allButtons.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
 
     fetch(`/toggle-alert-status/${alertId}/`, {
         method: 'POST',
@@ -547,40 +654,51 @@ function toggleAlertStatus(alertId, currentActive) {
         if (!data) return;
         if (data.status === 'success') {
             const active = data.is_active;
-            row.dataset.active = active.toString();
 
-            // Update left border accent
-            row.classList.toggle('border-l-4', active);
-            row.classList.toggle('border-emerald-400', active);
-            row.classList.toggle('border-transparent', !active);
+            allRows.forEach(row => {
+                row.dataset.active = active.toString();
+                row.classList.toggle('border-l-4', true);
+                row.classList.toggle('border-emerald-400', active);
+                row.classList.toggle('border-transparent', !active);
 
-            // Update status badge (6th td)
-            const statusBadge = row.querySelector('.alert-status-badge');
-            if (statusBadge) {
-                statusBadge.textContent = active ? 'Active' : 'Paused';
-                statusBadge.className = 'alert-status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black ' +
-                    (active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400');
-            }
+                // Update any status badge inside this row/card
+                const statusBadge = row.querySelector('.alert-status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = active ? 'Active' : 'Paused';
+                    statusBadge.className = 'alert-status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black ' +
+                        (active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400');
+                }
+            });
 
-            // Update toggle button
+            const svgActive = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+            const svgPaused = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+
+            // Update desktop toggle button
             if (button) {
                 button.className = 'w-7 h-7 rounded-lg flex items-center justify-center transition ' +
                     (active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200');
                 button.onclick = () => toggleAlertStatus(alertId, !active);
                 button.title = active ? 'Pause alert' : 'Activate alert';
-                if (icon) {
-                    icon.innerHTML = active
-                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                }
-                button.disabled = false;
-                button.style.opacity = '1';
+                const icon = button.querySelector('svg');
+                if (icon) icon.innerHTML = active ? svgActive : svgPaused;
+                button.disabled = false; button.style.opacity = '1';
+            }
+
+            // Update mobile toggle button
+            if (mobileButton) {
+                mobileButton.className = 'w-9 h-9 rounded-xl flex items-center justify-center transition ' +
+                    (active ? 'bg-emerald-100 text-emerald-700 active:bg-emerald-200' : 'bg-slate-100 text-slate-400 active:bg-slate-200');
+                mobileButton.onclick = () => toggleAlertStatus(alertId, !active);
+                mobileButton.title = active ? 'Pause alert' : 'Activate alert';
+                const mIcon = mobileButton.querySelector('svg');
+                if (mIcon) mIcon.innerHTML = active ? svgActive : svgPaused;
+                mobileButton.disabled = false; mobileButton.style.opacity = '1';
             }
         } else {
-            if (button) { button.disabled = false; button.style.opacity = '1'; }
+            allButtons.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
         }
     })
-    .catch(() => { if (button) { button.disabled = false; button.style.opacity = '1'; } });
+    .catch(() => { allButtons.forEach(b => { b.disabled = false; b.style.opacity = '1'; }); });
 }
 
 // --- Filter helpers ---
@@ -601,14 +719,16 @@ function filterAlerts() {
     const clearBtn = document.getElementById('alertSearchClear');
     if (clearBtn) clearBtn.classList.toggle('hidden', query.length === 0);
 
-    const rows = document.querySelectorAll('tbody tr[data-alert-id]');
+    // Select both desktop rows and mobile cards; use a Set to count unique alert IDs
+    const allEls = document.querySelectorAll('[data-alert-id]');
+    const seenIds = new Set();
     let visible = 0;
 
-    rows.forEach(row => {
-        const symbol = (row.dataset.symbol || '').toLowerCase();
-        const company = (row.dataset.company || '').toLowerCase();
-        const active = row.dataset.active === 'true';
-        const daysUntil = parseInt(row.dataset.daysUntil ?? '999', 10);
+    allEls.forEach(el => {
+        const symbol = (el.dataset.symbol || '').toLowerCase();
+        const company = (el.dataset.company || '').toLowerCase();
+        const active = el.dataset.active === 'true';
+        const daysUntil = parseInt(el.dataset.daysUntil ?? '999', 10);
 
         const matchesSearch = !query || symbol.includes(query) || company.includes(query);
         const matchesStatus =
@@ -618,8 +738,11 @@ function filterAlerts() {
             (activeStatusFilter === 'upcoming' && active && daysUntil >= 0 && daysUntil <= 14);
 
         const show = matchesSearch && matchesStatus;
-        row.style.display = show ? '' : 'none';
-        if (show) visible++;
+        el.style.display = show ? '' : 'none';
+        if (show && !seenIds.has(el.dataset.alertId)) {
+            seenIds.add(el.dataset.alertId);
+            visible++;
+        }
     });
 
     const counter = document.getElementById('alertCount');
@@ -630,6 +753,7 @@ function filterAlerts() {
 }
 
 function bulkToggleAll(activate) {
+    // Use desktop rows as the canonical source (one per alert)
     const rows = document.querySelectorAll('tbody tr[data-alert-id]');
     rows.forEach(row => {
         const alertId = row.dataset.alertId;

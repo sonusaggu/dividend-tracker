@@ -110,7 +110,8 @@
 
 {% block content %}
 <div class="min-h-screen bg-slate-50">
-    <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
+    <!-- Extra bottom padding on mobile to clear sticky action bar + bottom nav -->
+    <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 pb-32 md:pb-5">
 
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-1.5 text-xs text-slate-400 mb-4 font-medium">
@@ -187,14 +188,15 @@
                         {% if user.is_authenticated %}
                         <div class="flex flex-wrap gap-2">
                             <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
-                                    class="btn btn-primary">
+                                    class="btn btn-primary btn-sm sm:btn-md">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
-                                {% if in_portfolio %}Update{% else %}Add to Portfolio{% endif %}
+                                <span class="hidden sm:inline">{% if in_portfolio %}Update Portfolio{% else %}Add to Portfolio{% endif %}</span>
+                                <span class="sm:hidden">{% if in_portfolio %}Update{% else %}Add{% endif %}</span>
                             </button>
                             <button id="watchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
-                                    class="btn {% if in_watchlist %}btn-primary{% else %}btn-secondary{% endif %}" style="{% if in_watchlist %}background:#059669;{% endif %}">
+                                    class="btn btn-sm sm:btn-md {% if in_watchlist %}btn-primary{% else %}btn-secondary{% endif %}" style="{% if in_watchlist %}background:#059669;{% endif %}">
                                 <svg id="watchlistIcon" class="w-4 h-4" fill="{% if in_watchlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     {% if in_watchlist %}
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -207,7 +209,7 @@
                             </button>
                             {% if dividend %}
                             <a href="{% url 'manage_dividend_alerts' stock.symbol %}"
-                               class="btn relative {% if has_dividend_alert %}bg-amber-500 hover:bg-amber-600 text-white border-transparent{% else %}btn-secondary{% endif %}">
+                               class="btn btn-sm sm:btn-md relative {% if has_dividend_alert %}bg-amber-500 hover:bg-amber-600 text-white border-transparent{% else %}btn-secondary{% endif %}">
                                 <svg class="w-4 h-4" fill="{% if has_dividend_alert %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                                 </svg>
@@ -218,7 +220,7 @@
                             </a>
                             {% endif %}
                             <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
-                                    class="btn btn-secondary">
+                                    class="btn btn-secondary btn-sm sm:btn-md">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
                                 </svg>
@@ -534,29 +536,17 @@
                 </div>
                 {% endif %}
 
-                <!-- Valuation Metrics - Compact -->
-                {% if valuation %}
+                <!-- 3Y Growth (only shown if available, avoids duplicating key strip) -->
+                {% if valuation and valuation.growth_3_year %}
                 <div class="card p-5">
-                    <h2 class="text-lg font-bold text-gray-900 mb-3">Valuation Metrics</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">Growth</h2>
+                    <div class="flex items-center gap-4">
                         <div>
-                            <div class="text-xs text-gray-600 mb-1">P/E Ratio</div>
-                            <div class="text-base font-bold text-gray-900">{{ valuation.pe_ratio|default:"N/A" }}</div>
+                            <div class="text-xs text-gray-600 mb-1">3-Year Revenue Growth</div>
+                            <div class="text-2xl font-black {% if valuation.growth_3_year >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                {% if valuation.growth_3_year >= 0 %}+{% endif %}{{ valuation.growth_3_year|floatformat:1 }}%
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-xs text-gray-600 mb-1">EPS</div>
-                            <div class="text-base font-bold text-gray-900">${{ valuation.eps|default:"N/A" }}</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-gray-600 mb-1">Market Cap</div>
-                            <div class="text-sm font-bold text-gray-900">{{ valuation.market_cap|default:"N/A" }}</div>
-                        </div>
-                        {% if valuation.growth_3_year %}
-                        <div>
-                            <div class="text-xs text-gray-600 mb-1">3Y Growth</div>
-                            <div class="text-base font-bold text-gray-900">{{ valuation.growth_3_year|default:"N/A" }}%</div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
@@ -1135,10 +1125,14 @@ function toggleWatchlist(stockId) {
         return response.json();
     })
     .then(data => {
+        const mobileBtn = document.getElementById('mobileWatchlistBtn');
+        const mobileTxt = document.getElementById('mobileWatchlistText');
         if (data.status === 'added') {
             watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
             const watchlistText = document.getElementById('watchlistText');
             if (watchlistText) watchlistText.textContent = 'In Watchlist';
+            if (mobileTxt) mobileTxt.textContent = 'Watching';
+            if (mobileBtn) { mobileBtn.classList.remove('btn-secondary'); mobileBtn.classList.add('btn-primary'); mobileBtn.style.background = '#059669'; }
             watchlistBtn.classList.remove('bg-white', 'border-2', 'border-green-500', 'text-green-700', 'hover:bg-green-50');
             watchlistBtn.classList.add('bg-gradient-to-r', 'from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700', 'text-white', 'shadow-md', 'hover:shadow-lg');
             if (typeof Toast !== 'undefined') {
@@ -1148,6 +1142,8 @@ function toggleWatchlist(stockId) {
             watchlistIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
             const watchlistText = document.getElementById('watchlistText');
             if (watchlistText) watchlistText.textContent = 'Watchlist';
+            if (mobileTxt) mobileTxt.textContent = 'Watch';
+            if (mobileBtn) { mobileBtn.classList.remove('btn-primary'); mobileBtn.classList.add('btn-secondary'); mobileBtn.style.background = ''; }
             watchlistBtn.classList.remove('bg-gradient-to-r', 'from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700', 'text-white', 'shadow-md', 'hover:shadow-lg');
             watchlistBtn.classList.add('bg-white', 'border-2', 'border-green-500', 'text-green-700', 'hover:bg-green-50', 'shadow-sm', 'hover:shadow-md');
             if (typeof Toast !== 'undefined') {
@@ -1394,5 +1390,49 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
 {% endif %}
 
 {% include 'components/share_modal.html' %}
+
+<!-- ── Mobile Sticky Action Bar (visible only on mobile) ── -->
+{% if user.is_authenticated %}
+<div id="stock-sticky-bar" class="md:hidden fixed bottom-14 left-0 right-0 z-[150] bg-white border-t border-slate-100"
+     style="box-shadow: 0 -2px 16px rgba(0,0,0,0.07); padding-bottom: env(safe-area-inset-bottom);">
+    <div class="flex items-center gap-2 px-4 py-2.5">
+        <!-- Add / Update Portfolio -->
+        <button onclick="openPortfolioModal('{{ stock.symbol }}', '{{ stock.company_name }}')"
+                class="flex-1 btn btn-primary text-sm py-2.5 min-h-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            {% if in_portfolio %}Update{% else %}Add{% endif %}
+        </button>
+        <!-- Watchlist -->
+        <button id="mobileWatchlistBtn" onclick="toggleWatchlist({{ stock.id }})"
+                class="flex-1 btn text-sm py-2.5 min-h-0 {% if in_watchlist %}btn-primary{% else %}btn-secondary{% endif %}"
+                {% if in_watchlist %}style="background:#059669;"{% endif %}>
+            <svg class="w-4 h-4" fill="{% if in_watchlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            <span id="mobileWatchlistText" style="white-space:nowrap;">{% if in_watchlist %}Watching{% else %}Watch{% endif %}</span>
+        </button>
+        {% if dividend %}
+        <!-- Alert -->
+        <a href="{% url 'manage_dividend_alerts' stock.symbol %}"
+           class="btn text-sm py-2.5 min-h-0 {% if has_dividend_alert %}bg-amber-500 text-white border-transparent{% else %}btn-secondary{% endif %} px-3">
+            <svg class="w-4 h-4" fill="{% if has_dividend_alert %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+        </a>
+        {% endif %}
+        <!-- Share -->
+        <button onclick="openShareModal('{{ stock.symbol }}', '{{ stock.company_name|escapejs }}', {% if latest_price %}{{ latest_price.last_price }}{% else %}null{% endif %}, {% if dividend.yield_percent %}{{ dividend.yield_percent }}{% else %}null{% endif %})"
+                class="btn btn-secondary text-sm py-2.5 min-h-0 px-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+<!-- Extra padding on mobile so content doesn't hide under both bars -->
+<div class="md:hidden h-16"></div>
+{% endif %}
 
 {% endblock %}

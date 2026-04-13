@@ -145,7 +145,68 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- Mobile dividend cards -->
+            <div class="block md:hidden divide-y divide-slate-100">
+                {% for dividend in dividends %}
+                <div class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs
+                            {% if dividend.yield_percent %}
+                                {% if dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                                {% elif dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                                {% else %}bg-emerald-100 text-emerald-700{% endif %}
+                            {% else %}bg-slate-100 text-slate-500{% endif %}">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-black text-slate-900" style="white-space:nowrap;">
+                                {% if dividend.ex_dividend_date %}{{ dividend.ex_dividend_date|date:"M d, Y" }}{% else %}—{% endif %}
+                            </div>
+                            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {% if dividend.frequency %}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold
+                                    {% if dividend.frequency == 'Monthly' %}bg-emerald-100 text-emerald-700
+                                    {% elif dividend.frequency == 'Quarterly' %}bg-blue-100 text-blue-700
+                                    {% elif dividend.frequency == 'Semi-Annual' %}bg-violet-100 text-violet-700
+                                    {% elif dividend.frequency == 'Annual' %}bg-amber-100 text-amber-700
+                                    {% else %}bg-slate-100 text-slate-600{% endif %}" style="white-space:nowrap;">
+                                    {{ dividend.frequency }}
+                                </span>
+                                {% endif %}
+                                {% if dividend.ex_dividend_date %}
+                                    {% if dividend.ex_dividend_date < today %}
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500" style="white-space:nowrap;">Past</span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100" style="white-space:nowrap;">Upcoming</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                            <div class="text-base font-black text-slate-900" style="white-space:nowrap;">${{ dividend.amount|floatformat:4 }}</div>
+                            {% if dividend.yield_percent %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100" style="white-space:nowrap;">
+                                {{ dividend.yield_percent|floatformat:2 }}%
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if dividend.payment_date %}
+                    <div class="mt-1 ml-12 text-xs text-slate-400">
+                        Pay: {{ dividend.payment_date|date:"M d, Y" }}
+                        <span class="{% if dividend.payment_date < today %}text-emerald-500 font-semibold{% else %}text-amber-500 font-medium{% endif %}">— {% if dividend.payment_date < today %}Paid{% else %}Upcoming{% endif %}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="px-6 py-16 text-center">
+                    <p class="text-sm text-slate-400 font-medium">No dividend records</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full">
                     <thead class="table-head">
                         <tr>

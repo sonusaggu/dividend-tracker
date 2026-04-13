@@ -1,106 +1,105 @@
 <!-- User Menu Component -->
-<div class="flex items-center space-x-2 sm:space-x-4">
+<div class="flex items-center space-x-2 sm:space-x-3">
     {% if user.is_authenticated %}
     <div class="relative group">
-        <button class="flex items-center space-x-1 sm:space-x-2 text-slate-700 hover:text-blue-600 transition duration-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-slate-50 min-w-0">
-            <span class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 text-xs sm:text-sm font-black transition-transform flex-shrink-0">
+        <button class="flex items-center space-x-1.5 sm:space-x-2 text-slate-700 hover:text-blue-600 transition-all duration-200 px-2 py-1.5 rounded-xl hover:bg-slate-100/80 min-w-0">
+            <span class="w-8 h-8 rounded-xl flex items-center justify-center text-blue-700 text-xs font-black transition-transform group-hover:scale-105 flex-shrink-0"
+                  style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
                 {{ user.username|first|upper }}
             </span>
-            <span class="hidden sm:block font-medium truncate max-w-[100px] md:max-w-none">{{ user.username }}</span>
-            <svg class="hidden sm:block w-4 h-4 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <span class="hidden sm:block font-semibold text-sm truncate max-w-[90px] md:max-w-none text-slate-700">{{ user.username }}</span>
+            <svg class="hidden sm:block w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
             </svg>
         </button>
-        <div class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
-            <div class="py-2">
+        <div class="absolute right-0 mt-2 w-56 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-250 z-50 overflow-hidden"
+             style="background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 12px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.06); border: 1px solid rgba(226,232,240,0.7);">
+            <div class="py-1.5">
                 <!-- User Info -->
-                <div class="px-4 py-3 bg-blue-50/50 border-b border-slate-100">
-                    <p class="font-semibold text-slate-900 truncate">{{ user.username }}</p>
-                    <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                <div class="px-4 py-3 border-b border-slate-100/80"
+                     style="background: linear-gradient(135deg, rgba(239,246,255,0.7), rgba(238,242,255,0.5));">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-blue-700 text-sm font-black flex-shrink-0"
+                              style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
+                            {{ user.username|first|upper }}
+                        </span>
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-900 truncate text-sm">{{ user.username }}</p>
+                            <p class="text-xs text-slate-400 truncate">{{ user.email }}</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Quick Links -->
-                <div class="py-2">
-                    <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="py-1.5">
+                    <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                         </svg>
-                        <span class="font-medium">Dashboard</span>
+                        <span>Dashboard</span>
                     </a>
-                    <a href="{% url 'portfolio' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'portfolio' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
-                        <span class="font-medium">Portfolio</span>
+                        <span>Portfolio</span>
                     </a>
-                    <a href="{% url 'watchlist' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'watchlist' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                         </svg>
-                        <span class="font-medium">Watchlist</span>
+                        <span>Watchlist</span>
                     </a>
-                    <a href="{% url 'my_alerts' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'my_alerts' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
-                        <span class="font-medium">Alerts</span>
+                        <span>Alerts</span>
                     </a>
-                    <a href="{% url 'stock_notes' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'stock_notes' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
-                        <span class="font-medium">My Notes</span>
+                        <span>My Notes</span>
                     </a>
-                    <a href="{% url 'transactions_list' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'transactions_list' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                         </svg>
-                        <span class="font-medium">Transactions</span>
+                        <span>Transactions</span>
                     </a>
-                    <a href="{% url 'newsletter_subscription' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <span class="font-medium">Newsletter</span>
-                    </a>
-                    <a href="{% url 'user_profile' user.username %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'user_profile' user.username %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
-                        <span class="font-medium">My Profile</span>
+                        <span>My Profile</span>
                     </a>
-                    <a href="{% url 'posts_feed' %}" class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 transition duration-200 group/item">
-                        <svg class="w-5 h-5 text-slate-400 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'posts_feed' %}" class="flex items-center space-x-3 px-3.5 py-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium group/item">
+                        <svg class="w-4 h-4 text-slate-400 group-hover/item:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
                         </svg>
-                        <span class="font-medium">Community</span>
-                    </a>
-                    <a href="{% url 'create_post' %}" class="flex items-center space-x-3 px-4 py-2.5 text-blue-600 hover:bg-blue-50 transition duration-200 group/item font-semibold">
-                        <svg class="w-5 h-5 group-hover/item:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span>Create Post</span>
+                        <span>Community</span>
                     </a>
                 </div>
             </div>
-            <div class="border-t border-slate-100 bg-slate-50/50">
-                <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition duration-200 group/item">
-                    <svg class="w-5 h-5 group-hover/item:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="border-t border-slate-100/80 mx-2 mt-1 pt-1 pb-1.5">
+                <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-3.5 py-2 text-red-500 hover:bg-red-50 rounded-lg transition text-sm font-semibold group/item">
+                    <svg class="w-4 h-4 group-hover/item:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
-                    <span class="font-semibold">Logout</span>
+                    <span>Sign Out</span>
                 </a>
             </div>
         </div>
     </div>
     {% else %}
-    <div class="flex items-center space-x-2 sm:space-x-3">
-        <a href="{% url 'login' %}" 
-           class="text-slate-700 hover:text-blue-600 transition duration-200 font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-50 text-sm sm:text-base whitespace-nowrap">
-            Login
+    <div class="flex items-center space-x-2">
+        <a href="{% url 'login' %}"
+           class="text-slate-600 hover:text-blue-600 transition font-semibold px-3 py-2 rounded-xl hover:bg-slate-100/80 text-sm whitespace-nowrap">
+            Sign In
         </a>
-        <a href="{% url 'register' %}" class="btn btn-primary text-sm sm:text-base whitespace-nowrap">
-            Sign Up
+        <a href="{% url 'register' %}" class="btn btn-primary btn-sm whitespace-nowrap">
+            Get Started
         </a>
     </div>
     {% endif %}

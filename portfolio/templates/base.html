@@ -115,8 +115,8 @@
         }
     </script>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter (full weight range for rich typography) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Custom Styles -->
     <style>
@@ -127,6 +127,13 @@
             -webkit-hyphens: auto;
             -moz-hyphens: auto;
             hyphens: auto;
+            /* Subtle mesh gradient background — fixed so it doesn't scroll */
+            background-color: #f0f4fa;
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 10%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 90%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
         }
         
         /* Smooth scrolling */
@@ -579,6 +586,37 @@
             }
         }
         
+        /* ── Mobile fixes: prevent symbol/label/pill text from breaking ── */
+        /* Bottom nav labels */
+        #mobile-bottom-nav span,
+        #mobile-bottom-nav a,
+        #mobile-bottom-nav button {
+            white-space: nowrap;
+            word-break: normal;
+            hyphens: none;
+            -webkit-hyphens: none;
+        }
+        /* Stock symbol text in cards and tables */
+        .stock-symbol {
+            white-space: nowrap !important;
+            word-break: normal !important;
+            hyphens: none !important;
+            -webkit-hyphens: none !important;
+        }
+        /* Sticky action bar — override global 44px min-height on .btn */
+        #stock-sticky-bar .btn {
+            min-height: 40px !important;
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            font-size: 0.8125rem !important;
+        }
+        /* Pill/badge spans should not break */
+        .badge, [class*="rounded-full"] span {
+            white-space: nowrap;
+            word-break: normal;
+            hyphens: none;
+        }
+
         /* Prevent text selection on buttons (mobile UX) */
         button, .btn, a.button, [role="button"] {
             -webkit-user-select: none;
@@ -641,75 +679,93 @@
             font-weight: 600;
             font-size: 0.875rem;
             padding: 0.625rem 1.25rem;
-            border-radius: 0.625rem;
-            transition: all 0.15s ease;
+            border-radius: 0.75rem;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             cursor: pointer;
             border: 1px solid transparent;
+            letter-spacing: -0.01em;
         }
         .btn:focus-visible {
             outline: 2px solid #3b82f6;
             outline-offset: 2px;
         }
         .btn-primary {
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: #fff;
-            box-shadow: 0 1px 3px rgba(37,99,235,0.25);
+            box-shadow: 0 2px 8px rgba(37,99,235,0.32), 0 1px 2px rgba(0,0,0,0.08);
         }
         .btn-primary:hover {
-            background: #1d4ed8;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.42), 0 2px 6px rgba(0,0,0,0.1);
             transform: translateY(-1px);
         }
-        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 1px 4px rgba(37,99,235,0.25);
+        }
         .btn-secondary {
-            background: #fff;
+            background: rgba(255,255,255,0.9);
             color: #475569;
-            border-color: #e2e8f0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            border-color: rgba(226, 232, 240, 0.9);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8) inset;
         }
         .btn-secondary:hover {
             background: #eff6ff;
             border-color: #bfdbfe;
             color: #2563eb;
+            box-shadow: 0 3px 10px rgba(37,99,235,0.1);
         }
+        .btn-secondary:active { transform: scale(0.98); }
         .btn-danger {
-            background: #fff;
+            background: rgba(255,255,255,0.9);
             color: #dc2626;
             border-color: #fecaca;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
         .btn-danger:hover {
             background: #fef2f2;
             border-color: #fca5a5;
+            box-shadow: 0 3px 10px rgba(220,38,38,0.1);
         }
         .btn-sm {
             font-size: 0.75rem;
             padding: 0.375rem 0.75rem;
             border-radius: 0.5rem;
+            min-height: 0;
+        }
+        .btn-md {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.625rem;
         }
         .btn-lg {
             font-size: 1rem;
             padding: 0.75rem 1.75rem;
-            border-radius: 0.75rem;
+            border-radius: 0.875rem;
+            font-weight: 700;
         }
 
         /* Cards */
         .card {
-            background: #fff;
-            border-radius: 0.875rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
         .card-hover {
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
         }
         .card-hover:hover {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-            border-color: #dbeafe;
+            box-shadow: 0 8px 28px rgba(37,99,235,0.09), 0 2px 8px rgba(0,0,0,0.06);
+            border-color: rgba(191, 219, 254, 0.7);
+            transform: translateY(-2px);
         }
         .card-header {
             padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid rgba(241, 245, 249, 0.9);
         }
         .card-body {
             padding: 1.5rem;
@@ -717,29 +773,45 @@
 
         /* Tables */
         .table-head {
-            background: #f8fafc;
-            border-bottom: 1px solid #f1f5f9;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
         }
         .table-row-hover:hover {
-            background: #f8fafc;
+            background: linear-gradient(90deg, #f8faff 0%, #f9fbff 100%);
+        }
+        .table-row-hover {
+            transition: background 0.12s ease;
         }
 
         /* Stat cards */
         .stat-card {
-            background: #fff;
-            border-radius: 0.875rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
             padding: 1.5rem;
-            transition: box-shadow 0.2s ease;
+            transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%);
+            pointer-events: none;
         }
         .stat-card:hover {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 28px rgba(37,99,235,0.09), 0 2px 8px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
+            border-color: rgba(191, 219, 254, 0.6);
         }
         .stat-icon {
             width: 2.75rem;
             height: 2.75rem;
-            border-radius: 0.625rem;
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -752,30 +824,59 @@
             align-items: center;
             justify-content: space-between;
             padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid rgba(241, 245, 249, 0.9);
         }
         .section-link {
             font-size: 0.8125rem;
             font-weight: 600;
             color: #2563eb;
-            transition: color 0.15s;
+            transition: color 0.15s, opacity 0.15s;
         }
-        .section-link:hover { color: #1d4ed8; }
+        .section-link:hover { color: #1d4ed8; opacity: 0.85; }
 
         /* Badge pills */
         .badge {
             display: inline-flex;
             align-items: center;
-            padding: 0.25rem 0.625rem;
+            padding: 0.2rem 0.55rem;
             border-radius: 9999px;
             font-size: 0.6875rem;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        /* ── Premium input styles ── */
+        input[type="text"]:not([class*="no-style"]),
+        input[type="number"]:not([class*="no-style"]),
+        input[type="email"]:not([class*="no-style"]),
+        input[type="password"]:not([class*="no-style"]),
+        input[type="search"]:not([class*="no-style"]),
+        select:not([class*="no-style"]),
+        textarea:not([class*="no-style"]) {
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
+            outline: none !important;
+        }
+
+        /* ── Modern page section titles ── */
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+        @media (min-width: 640px) {
+            .page-title { font-size: 1.875rem; }
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
     <!-- Navigation -->
     {% include 'components/navbar.html' %}
     
@@ -792,12 +893,201 @@
     {% endif %}
     
     <!-- Main Content -->
-    <main class="flex-grow">
+    <main class="flex-grow pb-16 md:pb-0">
         {% block content %}{% endblock %}
     </main>
-    
+
     <!-- Footer -->
     {% include 'components/footer.html' %}
+
+    <!-- ── Mobile Bottom Navigation Bar (hidden on md+) ── -->
+    <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-[200]"
+         style="background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(226,232,240,0.6); box-shadow: 0 -2px 16px rgba(0,0,0,0.06); padding-bottom: env(safe-area-inset-bottom);">
+        <div class="grid grid-cols-5 h-[3.5rem]">
+            {% if user.is_authenticated %}
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard' %}"
+               class="flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all duration-200
+                      {% if request.resolver_match.url_name == 'dashboard' %}text-blue-600{% else %}text-slate-400 active:scale-95{% endif %}">
+                <div class="w-8 h-5 flex items-center justify-center rounded-full transition-all duration-200
+                     {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-100{% endif %}">
+                    <svg class="w-[18px] h-[18px]" fill="{% if request.resolver_match.url_name == 'dashboard' %}none{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="{% if request.resolver_match.url_name == 'dashboard' %}2.5{% else %}1.8{% endif %}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                </div>
+                <span>Home</span>
+            </a>
+            <!-- Stocks -->
+            <a href="{% url 'all_stocks' %}"
+               class="flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all duration-200
+                      {% if request.resolver_match.url_name == 'all_stocks' or request.resolver_match.url_name == 'stock_detail' %}text-blue-600{% else %}text-slate-400 active:scale-95{% endif %}">
+                <div class="w-8 h-5 flex items-center justify-center rounded-full transition-all duration-200
+                     {% if request.resolver_match.url_name == 'all_stocks' or request.resolver_match.url_name == 'stock_detail' %}bg-blue-100{% endif %}">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="{% if request.resolver_match.url_name == 'all_stocks' or request.resolver_match.url_name == 'stock_detail' %}2.5{% else %}1.8{% endif %}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <span>Stocks</span>
+            </a>
+            <!-- Portfolio -->
+            <a href="{% url 'portfolio' %}"
+               class="flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all duration-200
+                      {% if request.resolver_match.url_name == 'portfolio' %}text-blue-600{% else %}text-slate-400 active:scale-95{% endif %}">
+                <div class="w-8 h-5 flex items-center justify-center rounded-full transition-all duration-200
+                     {% if request.resolver_match.url_name == 'portfolio' %}bg-blue-100{% endif %}">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="{% if request.resolver_match.url_name == 'portfolio' %}2.5{% else %}1.8{% endif %}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span>Portfolio</span>
+            </a>
+            <!-- Watchlist -->
+            <a href="{% url 'watchlist' %}"
+               class="flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all duration-200
+                      {% if request.resolver_match.url_name == 'watchlist' %}text-blue-600{% else %}text-slate-400 active:scale-95{% endif %}">
+                <div class="w-8 h-5 flex items-center justify-center rounded-full transition-all duration-200
+                     {% if request.resolver_match.url_name == 'watchlist' %}bg-blue-100{% endif %}">
+                    <svg class="w-[18px] h-[18px]" fill="{% if request.resolver_match.url_name == 'watchlist' %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="{% if request.resolver_match.url_name == 'watchlist' %}2{% else %}1.8{% endif %}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <span>Watchlist</span>
+            </a>
+            <!-- More -->
+            <button onclick="toggleMobileMenu()"
+               class="flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-all duration-200 text-slate-400 active:scale-95">
+                <div class="w-8 h-5 flex items-center justify-center">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </div>
+                <span>More</span>
+            </button>
+            {% else %}
+            <!-- Home -->
+            <a href="{% url 'home' %}"
+               class="col-span-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors
+                      {% if request.resolver_match.url_name == 'home' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <!-- Stocks -->
+            <a href="{% url 'all_stocks' %}"
+               class="col-span-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors
+                      {% if request.resolver_match.url_name == 'all_stocks' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span>Stocks</span>
+            </a>
+            <!-- Login -->
+            <a href="{% url 'login' %}"
+               class="col-span-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors
+                      {% if request.resolver_match.url_name == 'login' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                </svg>
+                <span>Sign In</span>
+            </a>
+            <!-- Register -->
+            <a href="{% url 'register' %}"
+               class="col-span-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors text-slate-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                <span>Register</span>
+            </a>
+            <!-- Demo -->
+            <a href="{% url 'demo_mode' %}"
+               class="col-span-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors text-slate-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Demo</span>
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Mobile "More" Slide-up Menu -->
+    <div id="mobile-more-menu" class="md:hidden fixed inset-0 z-[300] hidden" onclick="closeMobileMenuOutside(event)">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-md"></div>
+        <!-- Sheet -->
+        <div class="absolute bottom-0 left-0 right-0 rounded-t-3xl shadow-2xl overflow-hidden"
+             style="background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom);">
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1 bg-slate-200 rounded-full"></div>
+            </div>
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100/80">
+                <span class="font-black text-slate-900 text-base tracking-tight">Menu</span>
+                <button onclick="closeMobileMenu()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Links -->
+            <div class="px-4 py-3 space-y-1">
+                {% if user.is_authenticated %}
+                <a href="{% url 'my_alerts' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </span>
+                    My Alerts
+                </a>
+                <a href="{% url 'dividend_calendar' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </span>
+                    Dividend Calendar
+                </a>
+                <a href="{% url 'earnings_calendar' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </span>
+                    Earnings Calendar
+                </a>
+                <a href="{% url 'stock_comparison' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </span>
+                    Compare Stocks
+                </a>
+                <a href="{% url 'drip_calculator' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </span>
+                    DRIP Calculator
+                </a>
+                <a href="{% url 'stock_notes' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-yellow-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </span>
+                    Stock Notes
+                </a>
+                <a href="{% url 'transactions_list' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors">
+                    <span class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </span>
+                    Transactions
+                </a>
+                <div class="border-t border-slate-100 mt-2 pt-2">
+                    <a href="{% url 'logout' %}" class="flex items-center gap-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 font-medium transition-colors">
+                        <span class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </span>
+                        Sign Out
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
     
     <!-- Common JavaScript -->
     <script>
@@ -1020,6 +1310,22 @@
         };
     </script>
     
+    <!-- Mobile More Menu JS -->
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-more-menu');
+            menu.classList.toggle('hidden');
+            document.body.style.overflow = menu.classList.contains('hidden') ? '' : 'hidden';
+        }
+        function closeMobileMenu() {
+            document.getElementById('mobile-more-menu').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        function closeMobileMenuOutside(e) {
+            if (e.target === document.getElementById('mobile-more-menu')) closeMobileMenu();
+        }
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

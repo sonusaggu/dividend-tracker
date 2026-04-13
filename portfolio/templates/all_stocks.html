@@ -404,8 +404,103 @@
             </div>
         </div>
 
+        <!-- ── Mobile Card List (visible only on mobile) ── -->
+        <div class="block md:hidden space-y-2.5 mb-4">
+            <!-- Mobile results count -->
+            <div class="text-xs text-slate-500 px-1">
+                Showing <span class="font-semibold text-slate-900">{{ page_obj.start_index }}</span>–<span class="font-semibold text-slate-900">{{ page_obj.end_index }}</span> of <span class="font-semibold text-slate-900">{{ page_obj.paginator.count|intcomma }}</span> stocks
+            </div>
+            {% for item in stocks_with_dividends %}
+            <a href="{% url 'stock_detail' item.stock.symbol item.stock.get_seo_slug %}"
+               class="block bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-[0.99] transition-transform"
+               style="box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+                <!-- Yield accent bar -->
+                <div class="h-0.5 rounded-t-2xl
+                    {% if item.latest_dividend and item.latest_dividend.yield_percent %}{% with y=item.latest_dividend.yield_percent %}{% if y >= 5 %}bg-red-400{% elif y >= 3 %}bg-amber-400{% elif y >= 1 %}bg-emerald-400{% else %}bg-blue-400{% endif %}{% endwith %}{% else %}bg-slate-100{% endif %}">
+                </div>
+                <div class="px-4 py-3.5">
+                    <!-- Top row: Avatar + Symbol/Name + Price -->
+                    <div class="flex items-center justify-between gap-3">
+                        <!-- Left: Avatar + Name -->
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                                {% if item.latest_dividend and item.latest_dividend.yield_percent %}{% with y=item.latest_dividend.yield_percent %}{% if y >= 5 %}bg-red-100{% elif y >= 3 %}bg-amber-100{% elif y >= 1 %}bg-emerald-100{% else %}bg-blue-100{% endif %}{% endwith %}{% else %}bg-slate-100{% endif %}">
+                                <span style="white-space:nowrap;word-break:normal;hyphens:none;" class="font-black text-sm
+                                    {% if item.latest_dividend and item.latest_dividend.yield_percent %}{% with y=item.latest_dividend.yield_percent %}{% if y >= 5 %}text-red-700{% elif y >= 3 %}text-amber-700{% elif y >= 1 %}text-emerald-700{% else %}text-blue-700{% endif %}{% endwith %}{% else %}text-slate-400{% endif %}
+                                ">{{ item.stock.symbol|slice:":2" }}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span style="white-space:nowrap;word-break:normal;hyphens:none;" class="text-sm font-black text-slate-900">{{ item.stock.symbol }}</span>
+                                    {% if item.stock.tsx60_member %}<span class="flex-shrink-0 badge bg-amber-100 text-amber-700 text-[9px] px-1 py-0.5" style="white-space:nowrap;">TSX60</span>{% endif %}
+                                </div>
+                                <p class="text-xs text-slate-400 truncate">{{ item.stock.company_name }}</p>
+                            </div>
+                        </div>
+                        <!-- Right: Price + 7d change + Watchlist -->
+                        <div class="flex-shrink-0 flex items-center gap-2">
+                            <div class="text-right">
+                                {% if item.latest_price %}
+                                <div style="white-space:nowrap;" class="text-sm font-black text-slate-900">${{ item.latest_price.price|floatformat:2 }}</div>
+                                {% if item.price_change_7d is not None %}
+                                <span style="white-space:nowrap;" class="text-[11px] font-bold {% if item.price_change_7d >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                                    {% if item.price_change_7d >= 0 %}▲{% else %}▼{% endif %}{{ item.price_change_7d|floatformat:1 }}%
+                                </span>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-sm text-slate-300">—</span>
+                                {% endif %}
+                            </div>
+                            {% if user.is_authenticated %}
+                            <button onclick="event.preventDefault(); toggleWatchlist({{ item.stock.id }}, this)"
+                                    data-in-watchlist="{% if item.in_watchlist %}true{% else %}false{% endif %}"
+                                    style="min-height:36px;min-width:36px;flex-shrink:0;"
+                                    class="p-2 rounded-xl transition
+                                        {% if item.in_watchlist %}text-rose-500 bg-rose-50{% else %}text-slate-300 hover:text-rose-400 hover:bg-rose-50{% endif %}">
+                                <svg class="w-4 h-4" fill="{% if item.in_watchlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Bottom row: Yield pill + Div amount + Ex-date -->
+                    <div class="mt-2 flex items-center gap-2 flex-wrap">
+                        {% if item.latest_dividend and item.latest_dividend.yield_percent %}
+                        {% with y=item.latest_dividend.yield_percent %}
+                        <span style="white-space:nowrap;" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border
+                            {% if y >= 5 %}bg-red-50 text-red-700 border-red-200{% elif y >= 3 %}bg-amber-50 text-amber-700 border-amber-200{% elif y >= 1 %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %}">
+                            {{ y|floatformat:2 }}% yield
+                        </span>
+                        {% endwith %}
+                        {% endif %}
+                        {% if item.latest_dividend %}
+                        <span style="white-space:nowrap;" class="text-[11px] text-slate-500 font-medium">${{ item.latest_dividend.amount|floatformat:4 }}/sh</span>
+                        {% endif %}
+                        {% if item.upcoming_dividend_date %}
+                        <span style="white-space:nowrap;" class="text-[11px] text-slate-400">Ex {{ item.upcoming_dividend_date|date:"M d" }}{% if item.days_until is not None %} · <span class="font-semibold {% if item.days_until <= 7 and item.days_until >= 0 %}text-orange-500{% endif %}">{% if item.days_until == 0 %}Today{% elif item.days_until < 0 %}Passed{% else %}{{ item.days_until }}d{% endif %}</span>{% endif %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="py-16 text-center">
+                <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <p class="font-black text-slate-900 mb-1">No stocks found</p>
+                <p class="text-sm text-slate-400 mb-4">Try adjusting your filters</p>
+                {% if search_query or sector_filter %}
+                <a href="{% url 'all_stocks' %}" class="btn btn-primary btn-sm">Clear Filters</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
         <!-- Results Info, View Toggle, and Export -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
+        <div class="hidden md:flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
             <div class="text-xs sm:text-sm text-slate-500">
                 Showing <span class="font-semibold text-slate-900">{{ page_obj.start_index }}</span> –
                 <span class="font-semibold text-slate-900">{{ page_obj.end_index }}</span> of
@@ -443,8 +538,8 @@
             </div>
         </div>
 
-        <!-- Stocks Table View -->
-        <div id="table-view" class="card overflow-hidden">
+        <!-- Stocks Table View (desktop only) -->
+        <div id="table-view" class="hidden md:block card overflow-hidden">
             <div class="overflow-x-auto md:overflow-x-visible">
                 <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
                     <thead class="table-head">
@@ -604,8 +699,8 @@
             </div>
         </div>
 
-        <!-- Stocks Grid View -->
-        <div id="grid-view" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Stocks Grid View (desktop only) -->
+        <div id="grid-view" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {% for item in stocks_with_dividends %}
             <div class="card card-hover overflow-hidden flex flex-col">
 
@@ -1050,15 +1145,18 @@ function toggleWatchlist(stockId, button) {
     });
 }
 
-// View Mode Toggle
+// View Mode Toggle (desktop only — mobile always uses card list)
 function setViewMode(mode) {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return; // mobile card list handles its own view
     const tableView = document.getElementById('table-view');
     const gridView = document.getElementById('grid-view');
     const tableBtn = document.getElementById('view-table-btn');
     const gridBtn = document.getElementById('view-grid-btn');
-    
+
     if (mode === 'table') {
         tableView.classList.remove('hidden');
+        gridView.classList.remove('grid');
         gridView.classList.add('hidden');
         tableBtn.classList.add('active');
         tableBtn.classList.remove('text-slate-500');
@@ -1068,6 +1166,7 @@ function setViewMode(mode) {
     } else {
         tableView.classList.add('hidden');
         gridView.classList.remove('hidden');
+        gridView.classList.add('grid');
         gridBtn.classList.add('active');
         gridBtn.classList.remove('text-slate-500');
         tableBtn.classList.remove('active');

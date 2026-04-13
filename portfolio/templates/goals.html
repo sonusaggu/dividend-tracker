@@ -54,18 +54,18 @@
           style="width: {{ progress_pct }}%"></div>
       </div>
 
-      <div class="grid grid-cols-3 gap-4 text-center mt-4">
-        <div class="bg-slate-50 rounded-xl p-3">
+      <div class="grid grid-cols-3 gap-2 sm:gap-4 text-center mt-4">
+        <div class="bg-slate-50 rounded-xl p-2 sm:p-3">
           <p class="text-xs text-slate-500">Current/mo</p>
-          <p class="text-lg font-black text-emerald-600">${{ current_monthly|floatformat:2 }}</p>
+          <p class="text-sm sm:text-lg font-black text-emerald-600 truncate">${{ current_monthly|floatformat:2 }}</p>
         </div>
-        <div class="bg-slate-50 rounded-xl p-3">
+        <div class="bg-slate-50 rounded-xl p-2 sm:p-3">
           <p class="text-xs text-slate-500">Still needed</p>
-          <p class="text-lg font-black text-slate-700">${{ remaining_monthly|floatformat:2 }}</p>
+          <p class="text-sm sm:text-lg font-black text-slate-700 truncate">${{ remaining_monthly|floatformat:2 }}</p>
         </div>
-        <div class="bg-slate-50 rounded-xl p-3">
+        <div class="bg-slate-50 rounded-xl p-2 sm:p-3">
           <p class="text-xs text-slate-500">Annual pace</p>
-          <p class="text-lg font-black text-blue-600">${{ current_annual|floatformat:0 }}</p>
+          <p class="text-sm sm:text-lg font-black text-blue-600 truncate">${{ current_annual|floatformat:0 }}</p>
         </div>
       </div>
     </div>
