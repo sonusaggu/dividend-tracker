@@ -33,42 +33,65 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50">
-  <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    
-    <!-- Clean Header -->
-    <div class="mb-5 sm:mb-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-5 sm:mb-6 p-5 sm:p-8"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 140px;">
+      <!-- Glow orbs -->
+      <div class="absolute top-0 right-0 w-80 h-80 rounded-full opacity-10 pointer-events-none"
+           style="background: radial-gradient(circle, #2563eb, transparent 70%); transform: translate(30%, -40%);"></div>
+      <div class="absolute bottom-0 left-20 w-48 h-48 rounded-full opacity-8 pointer-events-none"
+           style="background: radial-gradient(circle, #10b981, transparent 70%); transform: translateY(40%);"></div>
+      <!-- Accent line -->
+      <div class="absolute top-0 left-0 right-0 h-0.5"
+           style="background: linear-gradient(90deg, #2563eb, #6366f1, transparent);"></div>
+      <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">Dashboard</p>
-          <h1 class="text-2xl sm:text-4xl font-black text-slate-900 mb-1">
-            Hi, {{ user.username }}
+          <div class="flex items-center gap-2 mb-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-blue-300 border border-blue-500/30"
+                  style="background: rgba(37,99,235,0.15);">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              </svg>
+              Dashboard
+            </span>
+            {% if total_value > 0 %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30"
+                  style="background: rgba(5,150,105,0.15);">
+              Active Portfolio
+            </span>
+            {% endif %}
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">
+            Hi, {{ user.username }} 👋
           </h1>
-          <p class="text-sm text-slate-500 hidden sm:block">Your portfolio overview for today</p>
+          <p class="text-slate-400 text-sm">Here's your portfolio overview for today</p>
         </div>
-        <!-- Desktop buttons (hidden on mobile — quick-actions grid covers it) -->
-        <div class="hidden sm:flex gap-3 flex-wrap">
+        <!-- Desktop action buttons -->
+        <div class="hidden sm:flex gap-2 flex-wrap">
           <a href="{% url 'all_stocks' %}"
-             class="btn btn-primary">
+             class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition"
+             style="background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 2px 8px rgba(37,99,235,0.4);">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
             Browse Stocks
           </a>
           <a href="{% url 'big6_banks_dashboard' %}"
-             class="btn btn-secondary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-            </svg>
-            Big 6 Banks
+             class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
+             style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
+            Big 6
           </a>
           <a href="{% url 'portfolio' %}"
-             class="btn btn-secondary">
+             class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
+             style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
             Portfolio
           </a>
           {% if total_value > 0 %}
           <a href="{% url 'export_portfolio' %}"
-             class="btn btn-secondary">
+             class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
+             style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
@@ -844,7 +867,6 @@
       {% include 'components/sponsored_content.html' %}
     </div>
   </main>
-</div>
 
 <!-- Newsletter Subscription Modal -->
 <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
