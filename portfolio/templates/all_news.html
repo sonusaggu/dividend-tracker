@@ -8,47 +8,68 @@
 {% block meta_keywords %}stock news, portfolio news, watchlist news, financial news, market news{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-6">
-                <div class="mb-4 md:mb-0">
-                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Stock News</h1>
-                    <p class="text-sm sm:text-base text-gray-600">Latest news prioritizing upcoming dividend stocks, then your portfolio and watchlist</p>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #2563eb, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #2563eb, #6366f1, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-7">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                              style="background: rgba(37,99,235,0.2); color: #93c5fd; border: 1px solid rgba(37,99,235,0.3);">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                            </svg>
+                            Market News
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">Stock News</h1>
+                    <p class="text-sm" style="color: #94a3b8;">Latest news prioritizing upcoming dividend stocks, then your portfolio and watchlist</p>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    <a href="{% url 'portfolio' %}" 
-                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm text-sm sm:text-base whitespace-nowrap">
+                <div class="flex gap-2 flex-wrap">
+                    <a href="{% url 'portfolio' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold"
+                       style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                         My Portfolio
                     </a>
-                    <a href="{% url 'watchlist' %}" 
-                       class="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition text-sm sm:text-base whitespace-nowrap">
+                    <a href="{% url 'watchlist' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold"
+                       style="background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15);">
                         My Watchlist
                     </a>
                 </div>
             </div>
-                
             <!-- Filter Buttons -->
-            <div class="flex flex-wrap gap-2 sm:gap-3">
-                <a href="?filter=all" 
-                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <div class="flex flex-wrap gap-2">
+                <a href="?filter=all"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                   style="{% if filter_type == 'all' %}background: rgba(37,99,235,0.4); color: #93c5fd; border: 1px solid rgba(37,99,235,0.5);{% else %}background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);{% endif %}">
                     All ({{ total_articles }})
                 </a>
-                <a href="?filter=upcoming" 
-                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'upcoming' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <a href="?filter=upcoming"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                   style="{% if filter_type == 'upcoming' %}background: rgba(5,150,105,0.3); color: #6ee7b7; border: 1px solid rgba(5,150,105,0.4);{% else %}background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);{% endif %}">
                     Upcoming ({{ upcoming_dividend_stocks_count }})
                 </a>
-                <a href="?filter=portfolio" 
-                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'portfolio' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <a href="?filter=portfolio"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                   style="{% if filter_type == 'portfolio' %}background: rgba(37,99,235,0.4); color: #93c5fd; border: 1px solid rgba(37,99,235,0.5);{% else %}background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);{% endif %}">
                     Portfolio ({{ portfolio_stocks_count }})
                 </a>
-                <a href="?filter=watchlist" 
-                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap {% if filter_type == 'watchlist' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                <a href="?filter=watchlist"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                   style="{% if filter_type == 'watchlist' %}background: rgba(37,99,235,0.4); color: #93c5fd; border: 1px solid rgba(37,99,235,0.5);{% else %}background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);{% endif %}">
                     Watchlist ({{ watchlist_stocks_count }})
                 </a>
             </div>
         </div>
+    </div>
 
         <!-- News Articles -->
         {% if news_items %}
@@ -215,7 +236,6 @@
             </div>
         </div>
         {% endif %}
-    </div>
 </div>
 {% endblock %}
 

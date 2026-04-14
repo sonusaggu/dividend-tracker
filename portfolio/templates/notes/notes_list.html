@@ -6,32 +6,55 @@
 {% block meta_robots %}noindex, follow{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50 py-8">
-    <div class="max-w-7xl mx-auto px-4">
-        <!-- Header -->
-        <div class="card card-body mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+<div class="max-w-7xl mx-auto py-6 px-4">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f1f3d 100%);">
+        <div class="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #8b5cf6, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-15 pointer-events-none"
+             style="background: radial-gradient(circle, #2563eb, transparent 70%); transform: translate(-40%, 40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #8b5cf6, #6366f1, #2563eb, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-7">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <p class="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">Research Journal</p>
-                    <h1 class="text-4xl font-black text-slate-900 mb-2">My Stock Notes</h1>
-                    <p class="text-slate-500">Track your research, decisions, and insights</p>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                              style="background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3);">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Research Journal
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">My Stock Notes</h1>
+                    <p class="text-sm" style="color: #94a3b8;">Track your research, decisions, and insights</p>
                 </div>
-                <div class="mt-4 md:mt-0 flex gap-3">
+                <div class="flex gap-2 flex-wrap">
                     {% if stock %}
-                    <a href="{% url 'create_stock_note' stock.symbol %}" class="btn btn-primary px-6 py-3 min-h-[44px] flex items-center justify-center">
+                    <a href="{% url 'create_stock_note' stock.symbol %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold"
+                       style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                         + Add Note for {{ stock.symbol }}
                     </a>
                     {% else %}
-                    <a href="{% url 'all_stocks' %}" class="btn btn-primary px-6 py-3 min-h-[44px] flex items-center justify-center">
+                    <a href="{% url 'all_stocks' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold"
+                       style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                         Browse Stocks
                     </a>
                     {% endif %}
-                    <a href="{% url 'export_notes' %}" class="btn btn-secondary px-6 py-3 min-h-[44px] flex items-center justify-center">
+                    <a href="{% url 'export_notes' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold"
+                       style="background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15);">
                         Export CSV
                     </a>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Filters -->
         <div class="card card-body mb-6">
@@ -193,7 +216,6 @@
             {% endif %}
         </div>
         {% endif %}
-    </div>
 </div>
 {% endblock %}
 

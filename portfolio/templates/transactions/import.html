@@ -4,10 +4,30 @@
 {% block title %}Import Transactions from Wealthsimple - StockFolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <div class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-6">Import Transactions from Wealthsimple</h1>
+<div class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #6366f1, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #6366f1, #2563eb, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-6">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                      style="background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3);">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Import CSV
+                </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white">Import Transactions from Wealthsimple</h1>
+        </div>
+    </div>
+
+    <div class="card card-body">
 
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
                 <h3 class="font-semibold text-blue-900 mb-2">How to Export from Wealthsimple:</h3>
@@ -97,7 +117,6 @@
                 </div>
             </form>
         </div>
-    </div>
 </div>
 
 <!-- Loading Overlay -->

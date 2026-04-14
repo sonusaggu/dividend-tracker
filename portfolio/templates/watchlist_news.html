@@ -7,41 +7,53 @@
 {% block meta_description %}Latest news for stocks in your watchlist{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #f59e0b, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #f59e0b, #fbbf24, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-7">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">Watchlist News</h1>
-                    <p class="text-sm sm:text-base text-gray-600">
-                        {% if show_upcoming_dividends %}
-                            Latest news for stocks with upcoming dividends (next 15 days)
-                        {% else %}
-                            Latest news for your watchlist stocks
-                        {% endif %}
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                              style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3);">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            </svg>
+                            Watchlist
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">Watchlist News</h1>
+                    <p class="text-sm" style="color: #94a3b8;">
+                        {% if show_upcoming_dividends %}Latest news for stocks with upcoming dividends (next 15 days)
+                        {% else %}Latest news for your watchlist stocks{% endif %}
                     </p>
                 </div>
-                <div class="mt-4 md:mt-0 flex gap-3">
-                    <a href="{% url 'watchlist' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                <div class="flex gap-2">
+                    <a href="{% url 'watchlist' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold"
+                       style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                         My Watchlist
                     </a>
-                    <a href="{% url 'all_news' %}" 
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition">
+                    <a href="{% url 'all_news' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold"
+                       style="background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15);">
                         All News
                     </a>
                 </div>
             </div>
-            
             {% if show_upcoming_dividends %}
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p class="text-sm text-yellow-800">
-                    <strong>Note:</strong> You don't have any stocks in your watchlist. Showing news for stocks with upcoming dividends instead.
-                </p>
+            <div class="rounded-xl p-3" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);">
+                <p class="text-sm" style="color: #fcd34d;"><strong>Note:</strong> You don't have any stocks in your watchlist. Showing news for stocks with upcoming dividends instead.</p>
             </div>
             {% endif %}
         </div>
+    </div>
 
         <!-- News Articles -->
         {% if news_items %}
@@ -178,7 +190,6 @@
             </div>
         </div>
         {% endif %}
-    </div>
 </div>
 {% endblock %}
 

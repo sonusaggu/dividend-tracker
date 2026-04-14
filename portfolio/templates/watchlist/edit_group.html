@@ -4,23 +4,32 @@
 {% block title %}Edit Group - StockFolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+<div class="max-w-2xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #f59e0b, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #f59e0b, #fbbf24, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Edit Group</h1>
-                    <p class="text-gray-600">Update group details</p>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">Edit Group</h1>
+                    <p class="text-sm" style="color: #94a3b8;">Update group details</p>
                 </div>
-                <a href="{% url 'manage_watchlist_groups' %}" class="text-gray-600 hover:text-gray-900">
+                <a href="{% url 'manage_watchlist_groups' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap"
+                   style="background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15);">
                     ← Back
                 </a>
             </div>
         </div>
+    </div>
 
         <!-- Edit Form -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="card p-6">
             <form method="post" class="space-y-4">
                 {% csrf_token %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -58,7 +67,6 @@
                 </div>
             </form>
         </div>
-    </div>
 </div>
 {% endblock %}
 

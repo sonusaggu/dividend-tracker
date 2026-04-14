@@ -646,8 +646,8 @@
 
         <!-- Stocks Table View (desktop only) -->
         <div id="table-view" class="hidden md:block card overflow-hidden">
-            <div class="overflow-x-auto md:overflow-x-visible">
-                <table class="w-full" style="table-layout: fixed; width: 100%; max-width: 100%;">
+            <div class="overflow-x-auto">
+                <table class="w-full" style="table-layout: fixed; width: 100%; min-width: 640px;">
                     <thead class="table-head">
                         <tr>
                             <th class="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap" style="width: 15%; min-width: 100px;">Symbol</th>
@@ -687,9 +687,9 @@
 
                             <!-- Company Name -->
                             <td class="px-2 sm:px-4 md:px-6 py-3 sm:py-4" style="width: 25%; min-width: 120px; max-width: 250px;">
-                                <div class="text-xs sm:text-sm font-black text-slate-800" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4;">{{ item.stock.company_name }}</div>
+                                <div class="text-xs sm:text-sm font-black text-slate-800" style="overflow-wrap: break-word; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">{{ item.stock.company_name }}</div>
                                 {% if item.stock.sector %}
-                                <div class="text-[11px] text-slate-400 mt-0.5">{{ item.stock.sector }}</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5 truncate">{{ item.stock.sector }}</div>
                                 {% endif %}
                             </td>
 
@@ -927,7 +927,7 @@
                     {% endif %}
                     {% if item.stock.sector %}
                     <div class="mt-2">
-                        <span class="badge bg-slate-100 text-slate-500 border-slate-200">{{ item.stock.sector }}</span>
+                        <span class="badge bg-slate-100 text-slate-500 border-slate-200 truncate max-w-full inline-block">{{ item.stock.sector }}</span>
                     </div>
                     {% endif %}
                 </div>

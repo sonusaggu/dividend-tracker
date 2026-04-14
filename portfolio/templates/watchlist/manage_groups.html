@@ -4,23 +4,42 @@
 {% block title %}Manage Watchlist Groups - StockFolio{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+<div class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Dark Hero Header -->
+    <div class="relative rounded-2xl overflow-hidden mb-6"
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20 pointer-events-none"
+             style="background: radial-gradient(circle, #f59e0b, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #f59e0b, #fbbf24, transparent);"></div>
+        <div class="relative z-10 p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Manage Watchlist Groups</h1>
-                    <p class="text-gray-600">Organize your watchlist into categories</p>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
+                              style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3);">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
+                            Watchlist
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1">Manage Groups</h1>
+                    <p class="text-sm" style="color: #94a3b8;">Organize your watchlist into categories</p>
                 </div>
-                <a href="{% url 'watchlist' %}" class="text-gray-600 hover:text-gray-900">
+                <a href="{% url 'watchlist' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap"
+                   style="background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15);">
                     ← Back to Watchlist
                 </a>
             </div>
         </div>
+    </div>
 
         <!-- Create New Group -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="card p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Create New Group</h2>
             <form method="post" action="{% url 'create_watchlist_group' %}" class="space-y-4">
                 {% csrf_token %}
@@ -51,7 +70,7 @@
         </div>
 
         <!-- Existing Groups -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="card p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Your Groups</h2>
             
             {% if groups %}
@@ -94,7 +113,6 @@
             </div>
             {% endif %}
         </div>
-    </div>
 </div>
 {% endblock %}
 
