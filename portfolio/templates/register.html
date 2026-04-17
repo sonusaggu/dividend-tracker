@@ -344,18 +344,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Terms -->
-                <label class="flex items-start gap-3 cursor-pointer select-none">
-                    <input id="terms" name="terms" type="checkbox" required
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded mt-0.5 flex-shrink-0">
-                    <span class="text-sm text-slate-600">
-                        I agree to the
-                        <a href="{% url 'terms_of_service' %}" target="_blank" class="text-blue-600 hover:text-blue-700 font-semibold">Terms of Service</a>
-                        and
-                        <a href="{% url 'privacy_policy' %}" target="_blank" class="text-blue-600 hover:text-blue-700 font-semibold">Privacy Policy</a>
-                    </span>
-                </label>
-
                 <!-- Submit -->
                 <button type="submit" id="submit-btn" class="auth-btn w-full text-white py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                     <span id="btn-text">Create Account</span>
