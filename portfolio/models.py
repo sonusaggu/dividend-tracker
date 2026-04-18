@@ -1,4 +1,5 @@
 import re
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -1365,3 +1366,45 @@ class InsiderTrade(models.Model):
         if self.price and self.shares:
             return f"${abs(self.shares) * self.price:,.0f}"
         return None
+
+
+class BrokerConnection(models.Model):
+    BROKER_WEALTHSIMPLE = 'wealthsimple'
+    BROKER_QUESTRADE = 'questrade'
+    BROKER_CHOICES = [
+        (BROKER_WEALTHSIMPLE, 'Wealthsimple'),
+        (BROKER_QUESTRADE, 'Questrade'),
+    ]
+    STATUS_ACTIVE = 'active'
+    STATUS_ERROR = 'error'
+    STATUS_EXPIRED = 'expired'
+    STATUS_PENDING = 'pending'
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_ERROR, 'Error'),
+        (STATUS_EXPIRED, 'Expired'),
+        (STATUS_PENDING, 'Pending'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='broker_connections')
+    broker = models.CharField(max_length=20, choices=BROKER_CHOICES)
+    access_token_enc = models.TextField(blank=True, default='')
+    refresh_token_enc = models.TextField(blank=True, default='')
+    otp_claim = models.CharField(max_length=500, blank=True, default='')  # temp during WS OTP flow
+    api_server = models.CharField(max_length=200, blank=True, default='')  # Questrade only
+    token_expiry = models.DateTimeField(null=True, blank=True)
+    account_id = models.CharField(max_length=100, blank=True, default='')
+    account_number = models.CharField(max_length=100, blank=True, default='')
+    account_type = models.CharField(max_length=50, blank=True, default='')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    last_sync = models.DateTimeField(null=True, blank=True)
+    sync_error = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'broker')
+        ordering = ['broker']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_broker_display()}"

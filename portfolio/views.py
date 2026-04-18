@@ -3099,6 +3099,11 @@ def portfolio_view(request):
         if dividend_projection:
             total_projected_income = dividend_projection[-1]['cumulative'] if dividend_projection else 0
         
+        # Broker connections
+        from .models import BrokerConnection
+        ws_connection = BrokerConnection.objects.filter(user=request.user, broker=BrokerConnection.BROKER_WEALTHSIMPLE).first()
+        qt_connection = BrokerConnection.objects.filter(user=request.user, broker=BrokerConnection.BROKER_QUESTRADE).first()
+
         return render(request, 'portfolio.html', {
             'portfolio_items': portfolio_data,
             'total_value': total_value,
@@ -3111,10 +3116,15 @@ def portfolio_view(request):
             'portfolio_yield': portfolio_yield,
             'yield_on_cost': yield_on_cost,
             'sector_allocation': sector_allocation_percent,
-            'sector_chart_data': sector_chart_data,  # For pie chart
-            'dividend_projection': dividend_projection,  # For projection chart
-            'total_projected_income': total_projected_income,  # Total projected income
-            'value_history': value_history,  # For gain/loss trend chart
+            'sector_chart_data': sector_chart_data,
+            'dividend_projection': dividend_projection,
+            'total_projected_income': total_projected_income,
+            'value_history': value_history,
+            # Broker connections
+            'ws_connection': ws_connection,
+            'ws_connected': ws_connection is not None and ws_connection.status == BrokerConnection.STATUS_ACTIVE,
+            'qt_connection': qt_connection,
+            'qt_connected': qt_connection is not None and qt_connection.status == BrokerConnection.STATUS_ACTIVE,
         })
     
     except Exception as e:
@@ -7608,3 +7618,170 @@ def t5_estimator(request):
         'provinces': provinces,
     }
     return render(request, 't5_estimator.html', context)
+
+
+# ─── Broker Connection Views ───────────────────────────────────────────────
+
+@login_required
+def broker_connect_wealthsimple(request):
+    """Step 1: email + password auth. Step 2: OTP if required."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    from .broker_services import WealthsimpleService, encrypt_token
+    from .models import BrokerConnection
+    import json
+    from datetime import timedelta
+    from django.utils import timezone
+
+    step = request.POST.get('step', 'login')
+
+    if step == 'login':
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '').strip()
+        if not email or not password:
+            return JsonResponse({'status': 'error', 'message': 'Email and password required.'})
+
+        result = WealthsimpleService().authenticate(email, password)
+
+        if result['status'] == 'otp_required':
+            # Save otp_claim temporarily on the connection object (create if needed)
+            conn, _ = BrokerConnection.objects.get_or_create(
+                user=request.user, broker=BrokerConnection.BROKER_WEALTHSIMPLE,
+                defaults={'status': BrokerConnection.STATUS_PENDING}
+            )
+            conn.otp_claim = result.get('otp_claim', '')
+            conn.status = BrokerConnection.STATUS_PENDING
+            conn.save()
+            return JsonResponse({'status': 'otp_required'})
+
+        if result['status'] == 'success':
+            conn, _ = BrokerConnection.objects.get_or_create(
+                user=request.user, broker=BrokerConnection.BROKER_WEALTHSIMPLE,
+                defaults={'status': BrokerConnection.STATUS_PENDING}
+            )
+            conn.access_token_enc = encrypt_token(result['access_token'])
+            conn.refresh_token_enc = encrypt_token(result.get('refresh_token', ''))
+            conn.token_expiry = timezone.now() + timedelta(seconds=result.get('expires_in', 3600))
+            conn.status = BrokerConnection.STATUS_ACTIVE
+            conn.otp_claim = ''
+            conn.save()
+            # Fetch accounts to get account_id
+            accounts = WealthsimpleService().get_accounts(result['access_token'])
+            if accounts:
+                acc = accounts[0]
+                conn.account_id = acc.get('id', '')
+                conn.account_number = acc.get('number', '')
+                conn.account_type = acc.get('type', '')
+                conn.save()
+            return JsonResponse({'status': 'success', 'message': 'Wealthsimple connected!'})
+
+        return JsonResponse({'status': 'error', 'message': result.get('message', 'Authentication failed.')})
+
+    elif step == 'otp':
+        otp_code = request.POST.get('otp_code', '').strip()
+        if not otp_code:
+            return JsonResponse({'status': 'error', 'message': 'OTP code required.'})
+
+        try:
+            conn = BrokerConnection.objects.get(user=request.user, broker=BrokerConnection.BROKER_WEALTHSIMPLE)
+        except BrokerConnection.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Session expired. Please start again.'})
+
+        result = WealthsimpleService().authenticate_otp(conn.otp_claim, otp_code)
+
+        if result['status'] == 'success':
+            from datetime import timedelta
+            conn.access_token_enc = encrypt_token(result['access_token'])
+            conn.refresh_token_enc = encrypt_token(result.get('refresh_token', ''))
+            conn.token_expiry = timezone.now() + timedelta(seconds=result.get('expires_in', 3600))
+            conn.status = BrokerConnection.STATUS_ACTIVE
+            conn.otp_claim = ''
+            conn.save()
+            accounts = WealthsimpleService().get_accounts(result['access_token'])
+            if accounts:
+                acc = accounts[0]
+                conn.account_id = acc.get('id', '')
+                conn.account_number = acc.get('number', '')
+                conn.account_type = acc.get('type', '')
+                conn.save()
+            return JsonResponse({'status': 'success', 'message': 'Wealthsimple connected!'})
+
+        return JsonResponse({'status': 'error', 'message': result.get('message', 'OTP verification failed.')})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid step.'})
+
+
+@login_required
+def broker_connect_questrade(request):
+    """Connect Questrade via refresh token."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    from .broker_services import QuestradeService, encrypt_token
+    from .models import BrokerConnection
+    from datetime import timedelta
+    from django.utils import timezone
+
+    refresh_token = request.POST.get('refresh_token', '').strip()
+    if not refresh_token:
+        return JsonResponse({'status': 'error', 'message': 'Refresh token required.'})
+
+    result = QuestradeService().exchange_token(refresh_token)
+    if result['status'] != 'success':
+        return JsonResponse({'status': 'error', 'message': result.get('message', 'Token exchange failed.')})
+
+    conn, _ = BrokerConnection.objects.get_or_create(
+        user=request.user, broker=BrokerConnection.BROKER_QUESTRADE,
+        defaults={'status': BrokerConnection.STATUS_PENDING}
+    )
+    conn.access_token_enc = encrypt_token(result['access_token'])
+    conn.refresh_token_enc = encrypt_token(result['refresh_token'])
+    conn.api_server = result.get('api_server', '')
+    conn.token_expiry = timezone.now() + timedelta(seconds=result.get('expires_in', 1800))
+    conn.status = BrokerConnection.STATUS_ACTIVE
+    conn.save()
+
+    accounts = QuestradeService().get_accounts(result['access_token'], result['api_server'])
+    if accounts:
+        acc = accounts[0]
+        conn.account_id = str(acc.get('id', ''))
+        conn.account_number = acc.get('number', '')
+        conn.account_type = acc.get('type', '')
+        conn.save()
+
+    return JsonResponse({'status': 'success', 'message': 'Questrade connected!'})
+
+
+@login_required
+def broker_sync(request, broker):
+    """Trigger a manual sync for a connected broker."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    from .broker_services import SyncService
+    from .models import BrokerConnection
+
+    try:
+        conn = BrokerConnection.objects.get(user=request.user, broker=broker)
+    except BrokerConnection.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Broker not connected.'})
+
+    try:
+        result = SyncService().sync_broker_holdings(conn)
+        return JsonResponse({'status': 'success', 'synced': result['synced'], 'skipped': result['skipped'], 'message': f"Synced {result['synced']} holding(s)."})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@login_required
+def broker_disconnect(request, broker):
+    """Disconnect (delete) a broker connection."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    from .models import BrokerConnection
+    deleted, _ = BrokerConnection.objects.filter(user=request.user, broker=broker).delete()
+    if deleted:
+        return JsonResponse({'status': 'success', 'message': 'Broker disconnected.'})
+    return JsonResponse({'status': 'error', 'message': 'No connection found.'})

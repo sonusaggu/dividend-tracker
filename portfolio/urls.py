@@ -169,4 +169,10 @@ urlpatterns = [
     # T5 Tax Estimator
     path('tools/t5-estimator/', views.t5_estimator, name='t5_estimator'),
 
+    # Broker Connections
+    path('broker/connect/wealthsimple/', views.broker_connect_wealthsimple, name='broker_connect_wealthsimple'),
+    path('broker/connect/questrade/', views.broker_connect_questrade, name='broker_connect_questrade'),
+    path('broker/sync/<str:broker>/', views.broker_sync, name='broker_sync'),
+    path('broker/disconnect/<str:broker>/', views.broker_disconnect, name='broker_disconnect'),
+
 ]

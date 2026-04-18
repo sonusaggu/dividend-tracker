@@ -10,784 +10,1104 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Hero Header -->
-        <div class="relative rounded-2xl overflow-hidden mb-6 p-5 sm:p-8"
-             style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 150px;">
-            <!-- Glow orbs -->
-            <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-10 pointer-events-none"
-                 style="background: radial-gradient(circle, #10b981, transparent 70%); transform: translate(30%, -40%);"></div>
-            <div class="absolute bottom-0 left-0 w-56 h-56 rounded-full opacity-10 pointer-events-none"
-                 style="background: radial-gradient(circle, #6366f1, transparent 70%); transform: translate(-30%, 40%);"></div>
-            <!-- Accent line -->
-            <div class="absolute top-0 left-0 right-0 h-0.5"
-                 style="background: linear-gradient(90deg, #10b981, #6366f1, transparent);"></div>
-            <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30"
-                              style="background: rgba(5,150,105,0.15);">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            Portfolio
-                        </span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1.5">My Portfolio</h1>
-                    <p class="text-slate-400 text-sm">Track your investments and dividend income</p>
+
+    <!-- ── Hero Header ── -->
+    <div class="relative rounded-2xl overflow-hidden mb-6 p-6 sm:p-10"
+         style="background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #1e293b 100%); min-height: 160px;">
+        <!-- Glow orbs -->
+        <div class="absolute top-0 right-0 w-80 h-80 rounded-full opacity-10 pointer-events-none"
+             style="background: radial-gradient(circle, #10b981, transparent 70%); transform: translate(30%, -40%);"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-8 pointer-events-none"
+             style="background: radial-gradient(circle, #6366f1, transparent 70%); transform: translate(-30%, 40%);"></div>
+        <!-- Accent line -->
+        <div class="absolute top-0 left-0 right-0 h-0.5"
+             style="background: linear-gradient(90deg, #10b981, #6366f1, transparent);"></div>
+
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <!-- Left: title -->
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30"
+                          style="background: rgba(5,150,105,0.15);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Portfolio
+                    </span>
                 </div>
-                <div class="flex gap-2 flex-wrap">
-                    <a href="{% url 'import_wealthsimple_csv' %}"
-                       class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition"
-                       style="background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 2px 8px rgba(37,99,235,0.4);">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Import CSV</span>
-                        <span class="sm:hidden">Import</span>
-                    </a>
-                    <a href="{% url 'transactions_list' %}"
-                       class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
-                       style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Transactions</span>
-                        <span class="sm:hidden">Txns</span>
-                    </a>
-                    <a href="{% url 'all_stocks' %}"
-                       class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
-                       style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Add
-                    </a>
-                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-white mb-1.5">My Portfolio</h1>
+                <p class="text-slate-400 text-sm">Your holdings update automatically once imported.</p>
+            </div>
+
+            <!-- Right: action buttons — Import CSV is dominant -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <!-- Primary: Import CSV -->
+                <a href="{% url 'import_wealthsimple_csv' %}"
+                   class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-white transition-all"
+                   style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 4px 16px rgba(16,185,129,0.4); font-size: 0.9375rem;">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <span>
+                        <span class="block leading-tight">Import CSV</span>
+                        <span class="block text-emerald-200 font-normal" style="font-size:0.7rem;">Sync from Wealthsimple</span>
+                    </span>
+                </a>
+
+                <!-- Ghost secondaries -->
+                <a href="{% url 'transactions_list' %}"
+                   class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
+                   style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Transactions</span>
+                    <span class="sm:hidden">Txns</span>
+                </a>
+                <a href="{% url 'all_stocks' %}"
+                   class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
+                   style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add
+                </a>
             </div>
         </div>
+    </div>
 
-        {% if portfolio_items %}
-        <!-- Portfolio Stats -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <!-- Total Value -->
-            <div class="stat-card">
+<!-- Connected Broker Accounts -->
+<div class="rounded-2xl overflow-hidden mb-6" style="border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <!-- Header -->
+    <div class="px-5 py-4 flex items-center justify-between" style="background:linear-gradient(135deg,#1e293b,#334155);">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            <span class="text-white font-black text-sm">Connected Accounts</span>
+        </div>
+        <span class="text-slate-400 text-xs">Auto-sync your holdings from your broker</span>
+    </div>
+
+    <div class="bg-white p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Wealthsimple -->
+            <div class="rounded-xl border p-4 {% if ws_connected %}border-emerald-200 bg-emerald-50/50{% else %}border-slate-200 bg-slate-50{% endif %}">
                 <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Portfolio Value</p>
-                    <div class="stat-icon bg-green-100">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#00c853,#00897b);">
+                            <span class="text-white font-black text-xs">WS</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-black text-slate-900">Wealthsimple</div>
+                            {% if ws_connected %}
+                            <div class="text-xs text-emerald-600 font-semibold">● Connected{% if ws_connection.account_number %} · {{ ws_connection.account_number }}{% endif %}</div>
+                            {% else %}
+                            <div class="text-xs text-slate-400">Not connected</div>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% if ws_connected %}
+                    <span class="text-xs px-2 py-0.5 rounded-full font-bold {% if ws_connection.status == 'active' %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">{{ ws_connection.status|title }}</span>
+                    {% endif %}
                 </div>
-                <p class="text-2xl font-black text-slate-900 mb-1">${{ total_value|floatformat:2|intcomma }}</p>
+                {% if ws_connected %}
+                <div class="text-xs text-slate-400 mb-3">Last sync: {% if ws_connection.last_sync %}{{ ws_connection.last_sync|timesince }} ago{% else %}Never{% endif %}</div>
+                <div class="flex gap-2">
+                    <button onclick="syncBroker('wealthsimple')"
+                            class="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-bold text-white transition"
+                            style="background:linear-gradient(135deg,#059669,#047857);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Sync Now
+                    </button>
+                    <button onclick="disconnectBroker('wealthsimple')"
+                            class="px-3 py-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition border border-red-100">
+                        Disconnect
+                    </button>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-500 mb-3">Connect to automatically import your positions and keep them in sync.</p>
+                <button onclick="openWealthsimpleModal()"
+                        class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white transition"
+                        style="background:linear-gradient(135deg,#059669,#047857);">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    Connect Wealthsimple
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Questrade -->
+            <div class="rounded-xl border p-4 {% if qt_connected %}border-blue-200 bg-blue-50/50{% else %}border-slate-200 bg-slate-50{% endif %}">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+                            <span class="text-white font-black text-xs">QT</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-black text-slate-900">Questrade</div>
+                            {% if qt_connected %}
+                            <div class="text-xs text-blue-600 font-semibold">● Connected{% if qt_connection.account_number %} · {{ qt_connection.account_number }}{% endif %}</div>
+                            {% else %}
+                            <div class="text-xs text-slate-400">Not connected</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if qt_connected %}
+                    <span class="text-xs px-2 py-0.5 rounded-full font-bold {% if qt_connection.status == 'active' %}bg-blue-100 text-blue-700{% else %}bg-red-100 text-red-600{% endif %}">{{ qt_connection.status|title }}</span>
+                    {% endif %}
+                </div>
+                {% if qt_connected %}
+                <div class="text-xs text-slate-400 mb-3">Last sync: {% if qt_connection.last_sync %}{{ qt_connection.last_sync|timesince }} ago{% else %}Never{% endif %}</div>
+                <div class="flex gap-2">
+                    <button onclick="syncBroker('questrade')"
+                            class="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-bold text-white transition"
+                            style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Sync Now
+                    </button>
+                    <button onclick="disconnectBroker('questrade')"
+                            class="px-3 py-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition border border-red-100">
+                        Disconnect
+                    </button>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-500 mb-3">Paste your Questrade API token to sync positions automatically.</p>
+                <button onclick="openQuestradeModal()"
+                        class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white transition"
+                        style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    Connect Questrade
+                </button>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Wealthsimple Connect Modal -->
+<div id="wsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between" style="background:linear-gradient(135deg,#064e3b,#047857);">
+            <div>
+                <div class="text-white font-black text-base">Connect Wealthsimple</div>
+                <div class="text-emerald-200 text-xs mt-0.5">Your credentials are never stored — only encrypted tokens</div>
+            </div>
+            <button onclick="closeModal('wsModal')" class="text-emerald-200 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <!-- Login step -->
+        <div id="wsLoginStep" class="px-5 py-5 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Email</label>
+                <input type="email" id="wsEmail" placeholder="you@example.com"
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50 focus:bg-white transition text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Password</label>
+                <input type="password" id="wsPassword" placeholder="••••••••"
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50 focus:bg-white transition text-sm">
+            </div>
+            <div id="wsLoginError" class="hidden text-xs text-red-600 font-semibold bg-red-50 rounded-lg px-3 py-2"></div>
+            <button onclick="wsLogin()" id="wsLoginBtn"
+                    class="w-full py-3 rounded-xl text-sm font-bold text-white transition"
+                    style="background:linear-gradient(135deg,#059669,#047857);">
+                Continue
+            </button>
+        </div>
+        <!-- OTP step -->
+        <div id="wsOtpStep" class="hidden px-5 py-5 space-y-4">
+            <p class="text-sm text-slate-600">Enter the verification code sent to your email or authenticator app.</p>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">6-Digit Code</label>
+                <input type="text" id="wsOtp" placeholder="123456" maxlength="6"
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50 focus:bg-white transition text-sm text-center text-xl tracking-widest font-bold">
+            </div>
+            <div id="wsOtpError" class="hidden text-xs text-red-600 font-semibold bg-red-50 rounded-lg px-3 py-2"></div>
+            <button onclick="wsSubmitOtp()" id="wsOtpBtn"
+                    class="w-full py-3 rounded-xl text-sm font-bold text-white transition"
+                    style="background:linear-gradient(135deg,#059669,#047857);">
+                Verify & Connect
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Questrade Connect Modal -->
+<div id="qtModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+            <div>
+                <div class="text-white font-black text-base">Connect Questrade</div>
+                <div class="text-blue-200 text-xs mt-0.5">Generate a token from Questrade API Access</div>
+            </div>
+            <button onclick="closeModal('qtModal')" class="text-blue-200 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="px-5 py-5 space-y-4">
+            <div class="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-700 space-y-1.5">
+                <div class="font-bold mb-1">How to get your token:</div>
+                <div>1. Log in to Questrade → My Account → Security → API Access</div>
+                <div>2. Click <strong>Generate new token</strong></div>
+                <div>3. Copy and paste it below</div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">API Refresh Token</label>
+                <input type="text" id="qtToken" placeholder="Paste your token here"
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 focus:bg-white transition text-sm font-mono">
+            </div>
+            <div id="qtError" class="hidden text-xs text-red-600 font-semibold bg-red-50 rounded-lg px-3 py-2"></div>
+            <button onclick="qtConnect()" id="qtConnectBtn"
+                    class="w-full py-3 rounded-xl text-sm font-bold text-white transition"
+                    style="background:linear-gradient(135deg,#1e3a8a,#2563eb);">
+                Connect Questrade
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Broker Toast Notification -->
+<div id="brokerToast" class="fixed bottom-6 right-6 z-50 hidden max-w-xs rounded-xl shadow-lg px-4 py-3 text-sm font-semibold text-white transition-all">
+    <span id="brokerToastMsg"></span>
+</div>
+
+<script>
+function openWealthsimpleModal() {
+    document.getElementById('wsLoginStep').classList.remove('hidden');
+    document.getElementById('wsOtpStep').classList.add('hidden');
+    document.getElementById('wsLoginError').classList.add('hidden');
+    document.getElementById('wsModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function openQuestradeModal() {
+    document.getElementById('qtModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function showBrokerToast(msg, isError) {
+    var t = document.getElementById('brokerToast');
+    t.textContent = msg;
+    t.style.background = isError ? '#ef4444' : '#059669';
+    t.classList.remove('hidden');
+    setTimeout(function() { t.classList.add('hidden'); }, 4000);
+}
+
+function getCsrf() {
+    var el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+}
+
+function wsLogin() {
+    var email = document.getElementById('wsEmail').value.trim();
+    var password = document.getElementById('wsPassword').value.trim();
+    var btn = document.getElementById('wsLoginBtn');
+    var errEl = document.getElementById('wsLoginError');
+    if (!email || !password) { errEl.textContent = 'Email and password required.'; errEl.classList.remove('hidden'); return; }
+    btn.textContent = 'Connecting…'; btn.disabled = true;
+    errEl.classList.add('hidden');
+    var fd = new FormData();
+    fd.append('step', 'login'); fd.append('email', email); fd.append('password', password);
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fetch('{% url "broker_connect_wealthsimple" %}', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        btn.textContent = 'Continue'; btn.disabled = false;
+        if (data.status === 'otp_required') {
+            document.getElementById('wsLoginStep').classList.add('hidden');
+            document.getElementById('wsOtpStep').classList.remove('hidden');
+        } else if (data.status === 'success') {
+            closeModal('wsModal');
+            showBrokerToast(data.message, false);
+            setTimeout(function(){ location.reload(); }, 1500);
+        } else {
+            errEl.textContent = data.message || 'Authentication failed.';
+            errEl.classList.remove('hidden');
+        }
+    }).catch(function(){ btn.textContent='Continue'; btn.disabled=false; errEl.textContent='Network error.'; errEl.classList.remove('hidden'); });
+}
+
+function wsSubmitOtp() {
+    var otp = document.getElementById('wsOtp').value.trim();
+    var btn = document.getElementById('wsOtpBtn');
+    var errEl = document.getElementById('wsOtpError');
+    if (!otp) { errEl.textContent='OTP required.'; errEl.classList.remove('hidden'); return; }
+    btn.textContent='Verifying…'; btn.disabled=true; errEl.classList.add('hidden');
+    var fd = new FormData();
+    fd.append('step','otp'); fd.append('otp_code', otp); fd.append('csrfmiddlewaretoken', getCsrf());
+    fetch('{% url "broker_connect_wealthsimple" %}', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        btn.textContent='Verify & Connect'; btn.disabled=false;
+        if (data.status==='success') {
+            closeModal('wsModal');
+            showBrokerToast(data.message, false);
+            setTimeout(function(){ location.reload(); }, 1500);
+        } else {
+            errEl.textContent = data.message || 'OTP failed.'; errEl.classList.remove('hidden');
+        }
+    }).catch(function(){ btn.textContent='Verify & Connect'; btn.disabled=false; errEl.textContent='Network error.'; errEl.classList.remove('hidden'); });
+}
+
+function qtConnect() {
+    var token = document.getElementById('qtToken').value.trim();
+    var btn = document.getElementById('qtConnectBtn');
+    var errEl = document.getElementById('qtError');
+    if (!token) { errEl.textContent='Token required.'; errEl.classList.remove('hidden'); return; }
+    btn.textContent='Connecting…'; btn.disabled=true; errEl.classList.add('hidden');
+    var fd = new FormData();
+    fd.append('refresh_token', token); fd.append('csrfmiddlewaretoken', getCsrf());
+    fetch('{% url "broker_connect_questrade" %}', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        btn.textContent='Connect Questrade'; btn.disabled=false;
+        if (data.status==='success') {
+            closeModal('qtModal');
+            showBrokerToast(data.message, false);
+            setTimeout(function(){ location.reload(); }, 1500);
+        } else {
+            errEl.textContent = data.message || 'Connection failed.'; errEl.classList.remove('hidden');
+        }
+    }).catch(function(){ btn.textContent='Connect Questrade'; btn.disabled=false; errEl.textContent='Network error.'; errEl.classList.remove('hidden'); });
+}
+
+function syncBroker(broker) {
+    showBrokerToast('Syncing ' + broker + '…', false);
+    var fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fetch('/broker/sync/' + broker + '/', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        showBrokerToast(data.message || (data.status==='success'?'Synced!':'Sync failed.'), data.status!=='success');
+        if (data.status==='success') setTimeout(function(){ location.reload(); }, 1500);
+    }).catch(function(){ showBrokerToast('Network error during sync.', true); });
+}
+
+function disconnectBroker(broker) {
+    if (!confirm('Disconnect ' + broker + '? Your portfolio holdings will remain.')) return;
+    var fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fetch('/broker/disconnect/' + broker + '/', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        showBrokerToast(data.message, data.status!=='success');
+        if (data.status==='success') setTimeout(function(){ location.reload(); }, 1000);
+    }).catch(function(){ showBrokerToast('Network error.', true); });
+}
+
+// Close modals on backdrop click
+['wsModal','qtModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', function(e){ if(e.target===el) closeModal(id); });
+});
+</script>
+
+    {% if portfolio_items %}
+
+    <!-- ── Stats Strip ── -->
+    <div class="rounded-2xl border border-slate-100 shadow-sm bg-white mb-6 overflow-hidden">
+        <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-slate-100">
+            <!-- Total Portfolio Value -->
+            <div class="p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Total Value</p>
+                <p class="text-xl font-black text-slate-900 leading-tight">${{ total_value|floatformat:2|intcomma }}</p>
                 {% if total_roi_percent %}
-                <p class="text-sm font-medium {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                    {{ total_roi_percent|floatformat:2 }}% ROI
+                <p class="text-xs font-semibold mt-1 {% if total_roi_percent >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                    {{ total_roi_percent|floatformat:2 }}% overall ROI
                 </p>
                 {% endif %}
             </div>
-            
-            <!-- Total Investment -->
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Invested</p>
-                    <div class="stat-icon bg-blue-100">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-slate-900 mb-1">${{ total_investment|floatformat:2|intcomma }}</p>
-                <p class="text-sm text-slate-500">{{ portfolio_items|length }} holding{{ portfolio_items|length|pluralize }}</p>
+            <!-- Total Invested -->
+            <div class="p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Total Invested</p>
+                <p class="text-xl font-black text-slate-900 leading-tight">${{ total_investment|floatformat:2|intcomma }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ portfolio_items|length }} holding{{ portfolio_items|length|pluralize }}</p>
             </div>
-            
             <!-- Total Gain/Loss -->
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Gain/Loss</p>
-                    <div class="stat-icon {% if total_gain_loss >= 0 %}bg-green-100{% else %}bg-red-100{% endif %}">
-                        <svg class="w-6 h-6 {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-bold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %} mb-1">
+            <div class="p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Total Gain / Loss</p>
+                <p class="text-xl font-black leading-tight {% if total_gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
                     ${{ total_gain_loss|floatformat:2|intcomma }}
                 </p>
                 {% if total_roi_percent %}
-                <p class="text-sm font-medium {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                <p class="text-xs font-semibold mt-1 {% if total_roi_percent >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
                     ({{ total_roi_percent|floatformat:2 }}%)
                 </p>
                 {% endif %}
             </div>
-            
             <!-- Annual Dividends -->
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Annual Dividends</p>
-                    <div class="stat-icon bg-purple-100">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-slate-900 mb-1">${{ annual_dividend_income|floatformat:2|intcomma }}</p>
+            <div class="p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Annual Dividends</p>
+                <p class="text-xl font-black text-slate-900 leading-tight">${{ annual_dividend_income|floatformat:2|intcomma }}</p>
                 {% if portfolio_yield %}
-                <p class="text-sm font-medium text-purple-600">{{ portfolio_yield|floatformat:2 }}% yield</p>
+                <p class="text-xs font-semibold text-purple-600 mt-1">{{ portfolio_yield|floatformat:2 }}% yield</p>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Additional Metrics & Insights -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Portfolio Yield -->
-            <div class="card card-body">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Portfolio Yield</p>
-                <p class="text-3xl font-black text-purple-600">{{ portfolio_yield|floatformat:2 }}%</p>
-                <p class="text-xs text-slate-400 mt-1">Based on current value</p>
+        <!-- Additional yield metrics as extra row -->
+        <div class="border-t border-slate-100 grid grid-cols-2 lg:grid-cols-3 divide-x divide-slate-100">
+            <div class="p-4">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Portfolio Yield</p>
+                <p class="text-xl font-black text-purple-600">{{ portfolio_yield|floatformat:2 }}%</p>
+                <p class="text-xs text-slate-400 mt-0.5">Based on current value</p>
             </div>
-
-            <!-- Yield on Cost -->
             {% if yield_on_cost %}
-            <div class="card card-body">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Yield on Cost</p>
-                <p class="text-3xl font-black text-green-600">{{ yield_on_cost|floatformat:2 }}%</p>
-                <p class="text-xs text-slate-400 mt-1">Based on invested amount</p>
+            <div class="p-4">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Yield on Cost</p>
+                <p class="text-xl font-black text-emerald-600">{{ yield_on_cost|floatformat:2 }}%</p>
+                <p class="text-xs text-slate-400 mt-0.5">Based on invested amount</p>
             </div>
             {% endif %}
-
-            <!-- Monthly Dividend Income -->
-            <div class="card card-body">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Monthly Income</p>
-                <p class="text-3xl font-black text-blue-600">${{ monthly_dividend_income|floatformat:2|intcomma }}</p>
-                <p class="text-xs text-slate-400 mt-1">Estimated monthly</p>
+            <div class="p-4">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Monthly Income</p>
+                <p class="text-xl font-black text-blue-600">${{ monthly_dividend_income|floatformat:2|intcomma }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">Estimated monthly</p>
             </div>
         </div>
+    </div>
 
-        <!-- Portfolio Insights & Recommendations -->
-        {% if portfolio_items %}
-        <div class="card card-body mb-6 border-blue-100 bg-blue-50/30">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    Portfolio Insights
-                </h2>
-                <a href="{% url 'import_wealthsimple_csv' %}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                    Import More →
-                </a>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Diversification Score -->
-                <div class="bg-white rounded-xl p-4 border border-blue-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-semibold text-slate-700">Diversification</span>
-                        <span class="text-xs font-semibold {% if sector_chart_data|length >= 5 %}text-green-600{% elif sector_chart_data|length >= 3 %}text-yellow-600{% else %}text-orange-600{% endif %}">
-                            {% if sector_chart_data|length >= 5 %}Good{% elif sector_chart_data|length >= 3 %}Fair{% else %}Low{% endif %}
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-500 mb-2">{{ sector_chart_data|length }} sector{{ sector_chart_data|length|pluralize }} represented</p>
-                    {% if sector_chart_data|length < 3 %}
-                    <p class="text-xs text-orange-600">💡 Consider diversifying across more sectors for better risk management</p>
-                    {% endif %}
+    <!-- ── Portfolio Insights ── -->
+    {% if portfolio_items %}
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 mb-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Portfolio Insights
+            </h2>
+            <a href="{% url 'import_wealthsimple_csv' %}" class="text-sm text-blue-600 hover:text-blue-700 font-semibold">Import More →</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Diversification -->
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Diversification</span>
+                    <span class="text-xs font-semibold {% if sector_chart_data|length >= 5 %}text-emerald-600{% elif sector_chart_data|length >= 3 %}text-yellow-600{% else %}text-orange-600{% endif %}">
+                        {% if sector_chart_data|length >= 5 %}Good{% elif sector_chart_data|length >= 3 %}Fair{% else %}Low{% endif %}
+                    </span>
                 </div>
-
-                <!-- Top Performer -->
-                {% if portfolio_items %}
-                {% with top_performer=portfolio_items|dictsort:"roi_percent"|last %}
-                <div class="bg-white rounded-xl p-4 border border-blue-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-slate-700">Top Performer</span>
-                        <span class="text-xs font-semibold text-green-600">{{ top_performer.roi_percent|floatformat:1 }}%</span>
-                    </div>
-                    <p class="text-xs font-semibold text-slate-900">{{ top_performer.item.stock.symbol }}</p>
-                    <p class="text-xs text-slate-600">${{ top_performer.gain_loss|floatformat:2|intcomma }} gain</p>
-                </div>
-                {% endwith %}
+                <p class="text-sm font-black text-slate-900">{{ sector_chart_data|length }} sector{{ sector_chart_data|length|pluralize }} represented</p>
+                {% if sector_chart_data|length < 3 %}
+                <p class="text-xs text-orange-600 mt-1">Consider diversifying across more sectors for better risk management</p>
                 {% endif %}
+            </div>
 
-                <!-- Dividend Growth Potential -->
-                <div class="bg-white rounded-xl p-4 border border-blue-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-slate-700">Annual Income</span>
-                        <span class="text-xs font-semibold text-purple-600">${{ annual_dividend_income|floatformat:0|intcomma }}</span>
-                    </div>
-                    <p class="text-xs text-slate-600">Projected 12-month income: ${{ total_projected_income|floatformat:0|intcomma }}</p>
-                    {% if yield_on_cost > 0 %}
-                    <p class="text-xs text-green-600 mt-1">✓ Your yield on cost is {{ yield_on_cost|floatformat:1 }}%</p>
-                    {% endif %}
+            <!-- Top Performer -->
+            {% if portfolio_items %}
+            {% with top_performer=portfolio_items|dictsort:"roi_percent"|last %}
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Top Performer</span>
+                    <span class="text-xs font-semibold text-emerald-600">{{ top_performer.roi_percent|floatformat:1 }}%</span>
                 </div>
+                <p class="text-sm font-black text-slate-900">{{ top_performer.item.stock.symbol }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">${{ top_performer.gain_loss|floatformat:2|intcomma }} gain</p>
+            </div>
+            {% endwith %}
+            {% endif %}
 
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-xl p-4 border border-blue-100">
-                    <span class="text-sm font-medium text-slate-700 block mb-2">Quick Actions</span>
-                    <div class="flex flex-wrap gap-2">
-                        <a href="{% url 'import_wealthsimple_csv' %}" class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">
-                            Import CSV
-                        </a>
-                        <a href="{% url 'export_portfolio' %}" class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition">
-                            Export
-                        </a>
-                        <a href="{% url 'dividend_calendar' %}" class="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition">
-                            Calendar
-                        </a>
-                    </div>
+            <!-- Annual Income -->
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Annual Income</span>
+                    <span class="text-xs font-semibold text-purple-600">${{ annual_dividend_income|floatformat:0|intcomma }}</span>
+                </div>
+                <p class="text-xs text-slate-500">Projected 12-month: ${{ total_projected_income|floatformat:0|intcomma }}</p>
+                {% if yield_on_cost > 0 %}
+                <p class="text-xs text-emerald-600 mt-1">Yield on cost {{ yield_on_cost|floatformat:1 }}%</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2.5">Actions</span>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'import_wealthsimple_csv' %}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition">
+                        Import CSV
+                    </a>
+                    <a href="{% url 'export_portfolio' %}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                        Export
+                    </a>
+                    <a href="{% url 'dividend_calendar' %}" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 transition">
+                        Calendar
+                    </a>
                 </div>
             </div>
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
 
-        <!-- Sector Allocation -->
-        {% if sector_allocation %}
-        <div class="card p-4 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-bold text-slate-900">Sector Allocation</h2>
-                <a href="{% url 'export_portfolio' %}"
-                   class="btn btn-secondary btn-sm">
-                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Export
-                </a>
-            </div>
-            
+    <!-- ── Sector Allocation ── -->
+    {% if sector_allocation %}
+    <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+        <!-- Dark header -->
+        <div class="flex items-center justify-between px-5 py-4"
+             style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <h2 class="text-base font-black text-white">Sector Allocation</h2>
+            <a href="{% url 'export_portfolio' %}"
+               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition"
+               style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export
+            </a>
+        </div>
+        <div class="bg-white p-5">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Compact Pie Chart -->
+                <!-- Pie -->
                 <div class="flex items-center justify-center md:col-span-1">
                     <canvas id="sectorPieChart" class="w-full max-w-full" style="max-width: 200px; height: 200px;"></canvas>
                 </div>
-                
-                <!-- Compact Sector List -->
+                <!-- Sector list -->
                 <div class="md:col-span-2 space-y-2">
                     {% for item in sector_chart_data %}
-                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-slate-900 mb-1.5 truncate">{{ item.sector }}</p>
-                            <div class="flex items-center space-x-2">
-                                <div class="flex-1 bg-slate-200 rounded-full h-1.5 max-w-32">
-                                    <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" style="width: {{ item.percent }}%"></div>
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100 transition"
+                         data-sector-index="{{ forloop.counter0 }}">
+                        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 sector-dot-{{ forloop.counter0 }}"></span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-900 truncate">{{ item.sector }}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <div class="flex-1 bg-slate-200 rounded-full h-1.5 max-w-32">
+                                        <div class="h-1.5 rounded-full transition-all duration-300 sector-bar-{{ forloop.counter0 }}" style="width: {{ item.percent }}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-700 whitespace-nowrap">{{ item.percent|floatformat:1 }}%</span>
                                 </div>
-                                <span class="text-xs font-bold text-slate-700 whitespace-nowrap">{{ item.percent|floatformat:1 }}%</span>
                             </div>
                         </div>
                         <div class="text-right ml-3 flex-shrink-0">
-                            <p class="text-sm font-bold text-slate-900">${{ item.value|floatformat:0|intcomma }}</p>
+                            <p class="text-sm font-black text-slate-900">${{ item.value|floatformat:0|intcomma }}</p>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
 
-        <!-- Portfolio Holdings Table -->
-        <div class="card mb-6">
-            <div class="section-header">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
-                    <h2 class="text-lg font-bold text-slate-900">Your Holdings</h2>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <div class="relative">
-                            <input type="text" id="portfolioSearch" placeholder="Filter holdings…"
-                                   class="pl-8 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-semibold placeholder:font-normal w-44 focus:w-56" style="transition:width 0.2s;">
-                            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            <button type="button" id="portfolioSearchClear" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition">
-                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        <select id="sectorFilter" class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
-                            <option value="">All Sectors</option>
-                            {% for item in sector_chart_data %}
-                            <option value="{{ item.sector }}">{{ item.sector }}</option>
-                            {% endfor %}
-                        </select>
-                        <button onclick="sortTable('symbol')" class="hidden md:inline-flex btn btn-secondary btn-sm">Symbol</button>
-                        <button onclick="sortTable('value')" class="hidden md:inline-flex btn btn-secondary btn-sm">Value</button>
-                    </div>
+    <!-- ── Holdings Table ── -->
+    <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+        <!-- Section header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-5 py-4"
+             style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <h2 class="text-base font-black text-white">Your Holdings</h2>
+            <div class="flex items-center gap-2 flex-wrap">
+                <div class="relative">
+                    <input type="text" id="portfolioSearch" placeholder="Filter holdings…"
+                           class="pl-8 pr-8 py-2 text-sm border border-slate-600 rounded-xl bg-slate-700 text-white placeholder-slate-400 focus:bg-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-semibold w-44 focus:w-56" style="transition:width 0.2s;">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <button type="button" id="portfolioSearchClear" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-500 hover:bg-slate-400 text-slate-200 flex items-center justify-center transition">
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Mobile holdings cards -->
-            <div class="block md:hidden divide-y divide-slate-100 portfolio-mobile-list">
-                {% for item in portfolio_items %}
-                <div class="px-4 py-3 portfolio-row"
-                     data-symbol="{{ item.item.stock.symbol }}"
-                     data-value="{{ item.current_value }}"
-                     data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
-                     data-company="{{ item.item.stock.company_name }}">
-                    <!-- Top row: avatar + symbol/company + value -->
-                    <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <span class="text-blue-700 font-black text-sm" style="white-space:nowrap;">{{ item.item.stock.symbol|slice:":2" }}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <span class="text-sm font-black text-slate-900" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ item.item.stock.symbol }}</span>
-                            <div class="text-xs text-slate-400 truncate">{{ item.item.stock.company_name }}</div>
-                        </div>
-                        <div class="flex-shrink-0 text-right">
-                            <div class="text-sm font-black text-slate-900">${{ item.current_value|floatformat:2|intcomma }}</div>
-                            <div class="text-xs font-semibold {% if item.roi_percent >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}" style="white-space:nowrap;">
-                                {{ item.roi_percent|floatformat:2 }}% ROI
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Stats row -->
-                    <div class="grid grid-cols-3 gap-2 mt-2.5">
-                        <div class="bg-slate-50 rounded-lg px-2.5 py-2">
-                            <div class="text-xs text-slate-400 mb-0.5">Shares</div>
-                            <div class="text-sm font-black text-slate-800" style="white-space:nowrap;">{{ item.item.shares_owned|intcomma }}</div>
-                        </div>
-                        <div class="bg-slate-50 rounded-lg px-2.5 py-2">
-                            <div class="text-xs text-slate-400 mb-0.5">Price</div>
-                            <div class="text-sm font-black text-slate-800" style="white-space:nowrap;">
-                                {% if item.latest_price %}${{ item.latest_price.last_price|floatformat:2 }}{% else %}—{% endif %}
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 rounded-lg px-2.5 py-2">
-                            <div class="text-xs text-slate-400 mb-0.5">Gain/Loss</div>
-                            <div class="text-sm font-black {% if item.gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}" style="white-space:nowrap;">
-                                ${{ item.gain_loss|floatformat:0|intcomma }}
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Meta row: allocation + dividend -->
-                    <div class="flex items-center gap-3 mt-2">
-                        <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                            <span class="text-xs text-slate-500" style="white-space:nowrap;">{{ item.portfolio_allocation|floatformat:1 }}%</span>
-                            <div class="flex-1 bg-slate-200 rounded-full h-1.5">
-                                <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
-                            </div>
-                        </div>
-                        {% if item.dividend_income %}
-                        <span class="text-xs font-semibold text-emerald-600 flex-shrink-0" style="white-space:nowrap;">Div ${{ item.dividend_income|floatformat:2 }}/yr</span>
-                        {% endif %}
-                    </div>
-                    <!-- Action row -->
-                    <div class="flex items-center gap-2 mt-2.5">
-                        <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}"
-                           class="flex-1 btn btn-primary btn-sm justify-center" style="min-height:0;padding-top:0.375rem;padding-bottom:0.375rem;">View</a>
-                        <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})"
-                                class="flex-1 btn btn-sm justify-center bg-emerald-50 text-emerald-700 border border-emerald-200" style="min-height:0;padding-top:0.375rem;padding-bottom:0.375rem;">Edit</button>
-                        <button onclick="window.showDeletePortfolioStockConfirm('{{ item.item.stock.symbol }}', '{{ item.item.stock.company_name|escapejs }}')"
-                                class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0" style="min-height:0;">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                {% endfor %}
-                <!-- Mobile totals footer -->
-                <div class="px-4 py-3 bg-slate-50 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-slate-500">{{ portfolio_items|length }} holdings</span>
-                    <div class="text-right">
-                        <div class="text-sm font-black text-slate-900">${{ total_value|floatformat:2|intcomma }}</div>
-                        <div class="text-xs font-semibold {% if total_gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}" style="white-space:nowrap;">
-                            ${{ total_gain_loss|floatformat:0|intcomma }} ({{ total_roi_percent|floatformat:2 }}%)
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Desktop holdings table -->
-            <div class="hidden md:block overflow-x-auto md:overflow-x-visible">
-                <table class="w-full" id="portfolioTable" style="table-layout: fixed; width: 100%; max-width: 100%;">
-                    <thead class="table-head">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 18%; min-width: 120px;">Stock</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Shares</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Avg Cost</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Price</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Value</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Allocation</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Gain/Loss</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">ROI</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Annual Div</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-slate-100">
-                        {% for item in portfolio_items %}
-                        <tr class="table-row-hover transition-colors portfolio-row"
-                            data-symbol="{{ item.item.stock.symbol }}"
-                            data-value="{{ item.current_value }}"
-                            data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
-                            data-company="{{ item.item.stock.company_name }}">
-                            <td class="px-4 py-4" style="width: 18%; min-width: 120px;">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <span class="text-blue-700 font-black text-sm">{{ item.item.stock.symbol|slice:":1" }}</span>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition block">
-                                            {{ item.item.stock.symbol }}
-                                        </a>
-                                        <div class="text-xs text-slate-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ item.item.stock.company_name }}</div>
-                                        {% if item.item.stock.sector %}
-                                        <div class="text-xs text-blue-600 mt-0.5" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto;">{{ item.item.stock.sector }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right font-medium text-sm">{{ item.item.shares_owned|intcomma }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm">${{ item.item.average_cost|floatformat:2 }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right">
-                                {% if item.latest_price %}
-                                    <div class="text-sm font-semibold text-slate-900">${{ item.latest_price.last_price|floatformat:2 }}</div>
-                                    {% if item.latest_price.price_date %}
-                                    <div class="text-xs text-slate-400">{{ item.latest_price.price_date|date:"M d" }}</div>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-sm text-slate-400">—</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right font-semibold text-slate-900">${{ item.current_value|floatformat:2|intcomma }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <span class="text-sm font-medium text-slate-700">{{ item.portfolio_allocation|floatformat:1 }}%</span>
-                                    <div class="w-16 bg-slate-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right">
-                                <div>
-                                    <span class="text-sm font-semibold {% if item.gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                        ${{ item.gain_loss|floatformat:2|intcomma }}
-                                    </span>
-                                    {% if item.roi_percent %}
-                                    <div class="text-xs {% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                        ({{ item.roi_percent|floatformat:2 }}%)
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right">
-                                <span class="text-sm font-semibold {% if item.roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                    {{ item.roi_percent|floatformat:2 }}%
-                                </span>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right">
-                                {% if item.dividend_income %}
-                                    <div>
-                                        <span class="text-sm font-semibold text-green-600">${{ item.dividend_income|floatformat:2|intcomma }}</span>
-                                        {% if item.yield_on_cost %}
-                                        <div class="text-xs text-slate-500">{{ item.yield_on_cost|floatformat:2 }}% YoC</div>
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    <span class="text-sm text-slate-400">—</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-center">
-                                <div class="flex flex-col items-center gap-1.5">
-                                    <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}"
-                                       class="btn btn-primary btn-sm w-full justify-center">View</a>
-                                    <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})"
-                                            class="btn btn-sm w-full justify-center bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">Edit</button>
-                                    <button onclick="window.showDeletePortfolioStockConfirm('{{ item.item.stock.symbol }}', '{{ item.item.stock.company_name|escapejs }}')"
-                                            class="btn btn-sm w-full justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">Remove</button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot class="bg-slate-50 border-t border-slate-100">
-                        <tr>
-                            <td class="py-4 px-4 font-bold text-slate-900">Total</td>
-                            <td class="text-right py-4 px-4 font-semibold text-slate-800">{{ portfolio_items|length }} stocks</td>
-                            <td colspan="3" class="text-right py-4 px-4 font-bold text-slate-900">${{ total_value|floatformat:2|intcomma }}</td>
-                            <td class="text-right py-4 px-4 font-semibold text-slate-800">100%</td>
-                            <td class="text-right py-4 px-4 font-semibold {% if total_gain_loss >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                ${{ total_gain_loss|floatformat:2|intcomma }}
-                            </td>
-                            <td class="text-right py-4 px-4 font-semibold {% if total_roi_percent >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                {{ total_roi_percent|floatformat:2 }}%
-                            </td>
-                            <td class="text-right py-4 px-4 font-semibold text-green-600">${{ annual_dividend_income|floatformat:2|intcomma }}</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
+                <select id="sectorFilter" class="px-3 py-2 text-sm border border-slate-600 rounded-xl bg-slate-700 text-white focus:bg-slate-600 focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="">All Sectors</option>
+                    {% for item in sector_chart_data %}
+                    <option value="{{ item.sector }}">{{ item.sector }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="sortTable('symbol')"
+                        class="hidden md:inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition"
+                        style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">Symbol</button>
+                <button onclick="sortTable('value')"
+                        class="hidden md:inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition"
+                        style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">Value</button>
             </div>
         </div>
 
-        <!-- Dividend Income Projection -->
-        {% if dividend_projection %}
-        <div class="card mb-6">
-            <div class="section-header">
-                <h2 class="text-lg font-bold text-slate-900">Dividend Income Projection (Next 12 Months)</h2>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-                <!-- Chart -->
-                <div class="bg-slate-50 rounded-xl p-4">
-                    <canvas id="portfolioDividendChart" height="250"></canvas>
-                </div>
-                
-                <!-- Monthly Breakdown -->
-                <div class="space-y-3">
-                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Projected</p>
-                        <p class="text-3xl font-black text-slate-900">${{ total_projected_income|floatformat:2|intcomma }}</p>
+        <!-- Mobile holdings cards -->
+        <div class="block md:hidden bg-white portfolio-mobile-list">
+            {% for item in portfolio_items %}
+            <div class="mx-3 my-2 p-4 rounded-xl border border-slate-100 shadow-sm bg-white portfolio-row"
+                 data-symbol="{{ item.item.stock.symbol }}"
+                 data-value="{{ item.current_value }}"
+                 data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
+                 data-company="{{ item.item.stock.company_name }}">
+                <!-- Top row -->
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <span class="text-white font-black text-sm">{{ item.item.stock.symbol|slice:":2" }}</span>
                     </div>
-                    <div class="space-y-2 max-h-80 overflow-y-auto">
-                        {% for month in dividend_projection %}
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div>
-                                <p class="font-semibold text-slate-900 text-sm">{{ month.month }}</p>
-                                <p class="text-xs text-slate-500">Cumulative: ${{ month.cumulative|floatformat:2|intcomma }}</p>
-                            </div>
-                            <p class="text-sm font-bold text-green-600">${{ month.income|floatformat:2|intcomma }}</p>
-                        </div>
-                        {% endfor %}
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm font-black text-slate-900">{{ item.item.stock.symbol }}</span>
+                        <div class="text-xs text-slate-400 truncate">{{ item.item.stock.company_name }}</div>
+                    </div>
+                    <div class="flex-shrink-0 text-right">
+                        <div class="text-sm font-black text-slate-900">${{ item.current_value|floatformat:2|intcomma }}</div>
+                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-black mt-0.5
+                            {% if item.roi_percent >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">
+                            {{ item.roi_percent|floatformat:2 }}%
+                        </span>
                     </div>
                 </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Gain/Loss Trend (90 days) -->
-        {% if value_history %}
-        <div class="card mb-6">
-            <div class="section-header flex-col items-start gap-1">
-                <h2 class="text-lg font-bold text-slate-900">Portfolio Value vs Cost (90 days)</h2>
-                <p class="text-sm text-slate-500">How your portfolio value has changed compared to what you invested</p>
-            </div>
-            <div class="p-6">
-                <div class="chart-wrapper w-full" style="height: 280px;">
-                    <canvas id="gainLossTrendChart"></canvas>
-                </div>
-                {{ value_history|json_script:"value-history-data" }}
-                <input type="hidden" id="portfolio-cost-basis" value="{{ total_investment }}">
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Upcoming Dividends -->
-        <div class="card mb-6">
-            <div class="section-header">
-                <h2 class="text-lg font-bold text-slate-900">Upcoming Dividend Payments</h2>
-                <a href="{% url 'my_alerts' %}" class="section-link">Manage Alerts →</a>
-            </div>
-            
-            {% regroup portfolio_items|dictsort:"latest_dividend.ex_dividend_date" by latest_dividend.ex_dividend_date as dividends_by_date %}
-            
-            {% if dividends_by_date %}
-            <div class="p-6 space-y-6">
-                {% for dividend_group in dividends_by_date %}
-                    {% if dividend_group.grouper %}
+                <!-- Stats grid -->
+                <div class="grid grid-cols-3 gap-2 mt-3 bg-slate-50 rounded-xl p-3">
                     <div>
-                        <h3 class="text-base font-semibold text-slate-700 mb-3">
-                            {{ dividend_group.grouper|date:"F d, Y" }}
-                            <span class="text-sm font-normal text-slate-400">
-                                ({{ dividend_group.grouper|timeuntil }})
-                            </span>
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {% for item in dividend_group.list %}
-                                {% if item.latest_dividend and item.latest_dividend.ex_dividend_date == dividend_group.grouper %}
-                                <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}" class="font-semibold text-slate-900 hover:text-blue-600 transition">
-                                            {{ item.item.stock.symbol }}
-                                        </a>
-                                        <span class="badge bg-emerald-100 text-emerald-800">
-                                            {{ item.latest_dividend.frequency }}
-                                        </span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <p class="text-2xl font-bold text-green-600 mb-1">${{ item.expected_dividend|floatformat:2 }}</p>
-                                        <p class="text-xs text-slate-600">
-                                            ${{ item.latest_dividend.amount }} per share × {{ item.item.shares_owned }} shares
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center justify-between text-xs">
-                                        <span class="text-slate-600">Yield: {{ item.latest_dividend.yield_percent|floatformat:2 }}%</span>
-                                        <span class="text-slate-600">Ex-date: {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}</span>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
+                        <div class="text-xs text-slate-400 mb-0.5">Shares</div>
+                        <div class="text-sm font-black text-slate-800">{{ item.item.shares_owned|intcomma }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 mb-0.5">Price</div>
+                        <div class="text-sm font-black text-slate-800">
+                            {% if item.latest_price %}${{ item.latest_price.last_price|floatformat:2 }}{% else %}—{% endif %}
                         </div>
                     </div>
+                    <div>
+                        <div class="text-xs text-slate-400 mb-0.5">Gain/Loss</div>
+                        <div class="text-sm font-black {% if item.gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                            ${{ item.gain_loss|floatformat:0|intcomma }}
+                        </div>
+                    </div>
+                </div>
+                <!-- Allocation -->
+                <div class="flex items-center gap-3 mt-2.5">
+                    <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span class="text-xs text-slate-500 whitespace-nowrap">{{ item.portfolio_allocation|floatformat:1 }}%</span>
+                        <div class="flex-1 bg-slate-200 rounded-full h-1.5">
+                            <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
+                        </div>
+                    </div>
+                    {% if item.dividend_income %}
+                    <span class="text-xs font-semibold text-emerald-600 flex-shrink-0 whitespace-nowrap">Div ${{ item.dividend_income|floatformat:2 }}/yr</span>
                     {% endif %}
-                {% endfor %}
+                </div>
+                <!-- Actions -->
+                <div class="flex items-center gap-2 mt-3">
+                    <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}"
+                       class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold text-white transition"
+                       style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        View
+                    </a>
+                    <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        Edit
+                    </button>
+                    <button onclick="window.showDeletePortfolioStockConfirm('{{ item.item.stock.symbol }}', '{{ item.item.stock.company_name|escapejs }}')"
+                            class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0 border border-red-100 hover:bg-red-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
             </div>
-            {% else %}
-            <div class="p-12 text-center">
-                <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <p class="text-slate-600 font-medium mb-2">No upcoming dividends</p>
-                <p class="text-sm text-slate-500">Dividends from your holdings will appear here</p>
+            {% endfor %}
+            <!-- Mobile totals footer -->
+            <div class="mx-3 mb-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500">{{ portfolio_items|length }} holdings</span>
+                <div class="text-right">
+                    <div class="text-sm font-black text-slate-900">${{ total_value|floatformat:2|intcomma }}</div>
+                    <div class="text-xs font-semibold {% if total_gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                        ${{ total_gain_loss|floatformat:0|intcomma }} ({{ total_roi_percent|floatformat:2 }}%)
+                    </div>
+                </div>
             </div>
-            {% endif %}
+        </div>
+
+        <!-- Desktop holdings table -->
+        <div class="hidden md:block overflow-x-auto bg-white">
+            <table class="w-full" id="portfolioTable" style="table-layout: fixed; width: 100%; max-width: 100%;">
+                <thead>
+                    <tr style="background: #1e293b;">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider" style="width: 18%; min-width: 120px;">Stock</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Shares</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Avg Cost</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Price</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Value</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Allocation</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Gain/Loss</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">ROI</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Annual Div</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-28">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for item in portfolio_items %}
+                    <tr class="portfolio-row transition-colors {% cycle 'bg-white' 'bg-slate-50/40' %} hover:bg-blue-50/30"
+                        data-symbol="{{ item.item.stock.symbol }}"
+                        data-value="{{ item.current_value }}"
+                        data-sector="{{ item.item.stock.sector|default:'Unknown' }}"
+                        data-company="{{ item.item.stock.company_name }}">
+                        <td class="px-4 py-4" style="width: 18%; min-width: 120px;">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                    <span class="text-white font-black text-sm">{{ item.item.stock.symbol|slice:":1" }}</span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition block">
+                                        {{ item.item.stock.symbol }}
+                                    </a>
+                                    <div class="text-xs text-slate-500" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto; line-height: 1.4; max-width: 200px;">{{ item.item.stock.company_name }}</div>
+                                    {% if item.item.stock.sector %}
+                                    <div class="text-xs text-blue-600 mt-0.5" style="word-break: break-word; overflow-wrap: break-word; hyphens: auto;">{{ item.item.stock.sector }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right font-medium text-sm text-slate-700">{{ item.item.shares_owned|intcomma }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right text-sm text-slate-600">${{ item.item.average_cost|floatformat:2 }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            {% if item.latest_price %}
+                                <div class="text-sm font-semibold text-slate-900">${{ item.latest_price.last_price|floatformat:2 }}</div>
+                                {% if item.latest_price.price_date %}
+                                <div class="text-xs text-slate-400">{{ item.latest_price.price_date|date:"M d" }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-sm text-slate-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right font-semibold text-slate-900 text-sm">${{ item.current_value|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end space-x-2">
+                                <span class="text-sm font-medium text-slate-700">{{ item.portfolio_allocation|floatformat:1 }}%</span>
+                                <div class="w-16 bg-slate-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: {{ item.portfolio_allocation }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            <span class="text-sm font-semibold {% if item.gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                                ${{ item.gain_loss|floatformat:2|intcomma }}
+                            </span>
+                            {% if item.roi_percent %}
+                            <div class="text-xs {% if item.roi_percent >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                                ({{ item.roi_percent|floatformat:2 }}%)
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-black
+                                {% if item.roi_percent >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">
+                                {{ item.roi_percent|floatformat:2 }}%
+                            </span>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            {% if item.dividend_income %}
+                                <div>
+                                    <span class="text-sm font-semibold text-emerald-600">${{ item.dividend_income|floatformat:2|intcomma }}</span>
+                                    {% if item.yield_on_cost %}
+                                    <div class="text-xs text-slate-500">{{ item.yield_on_cost|floatformat:2 }}% YoC</div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-sm text-slate-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <!-- View -->
+                                <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}"
+                                   title="View"
+                                   class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </a>
+                                <!-- Edit -->
+                                <button onclick="editPortfolioItem('{{ item.item.stock.symbol }}', {{ item.item.shares_owned }}, {{ item.item.average_cost|default:"0" }}, {% if item.item.notes %}'{{ item.item.notes|escapejs }}'{% else %}''{% endif %})"
+                                        title="Edit"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <!-- Delete -->
+                                <button onclick="window.showDeletePortfolioStockConfirm('{{ item.item.stock.symbol }}', '{{ item.item.stock.company_name|escapejs }}')"
+                                        title="Remove"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-slate-50 border-t border-slate-100">
+                    <tr>
+                        <td class="py-4 px-4 font-black text-slate-900 text-sm">Total</td>
+                        <td class="text-right py-4 px-4 font-semibold text-slate-700 text-sm">{{ portfolio_items|length }} stocks</td>
+                        <td colspan="3" class="text-right py-4 px-4 font-black text-slate-900 text-sm">${{ total_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right py-4 px-4 font-semibold text-slate-700 text-sm">100%</td>
+                        <td class="text-right py-4 px-4 font-semibold text-sm {% if total_gain_loss >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+                            ${{ total_gain_loss|floatformat:2|intcomma }}
+                        </td>
+                        <td class="text-right py-4 px-4 text-sm">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-black {% if total_roi_percent >= 0 %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-600{% endif %}">
+                                {{ total_roi_percent|floatformat:2 }}%
+                            </span>
+                        </td>
+                        <td class="text-right py-4 px-4 font-semibold text-emerald-600 text-sm">${{ annual_dividend_income|floatformat:2|intcomma }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── Dividend Income Projection ── -->
+    {% if dividend_projection %}
+    <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+        <div class="px-5 py-4 border-b border-slate-100 bg-white">
+            <h2 class="text-base font-black text-slate-900">Dividend Income Projection (Next 12 Months)</h2>
+        </div>
+        <div class="bg-white grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+            <div class="bg-slate-50 rounded-xl p-4">
+                <canvas id="portfolioDividendChart" height="250"></canvas>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Total Projected</p>
+                    <p class="text-xl font-black text-slate-900">${{ total_projected_income|floatformat:2|intcomma }}</p>
+                </div>
+                <div class="space-y-2 max-h-80 overflow-y-auto">
+                    {% for month in dividend_projection %}
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div>
+                            <p class="font-semibold text-slate-900 text-sm">{{ month.month }}</p>
+                            <p class="text-xs text-slate-500">Cumulative: ${{ month.cumulative|floatformat:2|intcomma }}</p>
+                        </div>
+                        <p class="text-sm font-black text-emerald-600">${{ month.income|floatformat:2|intcomma }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Gain/Loss Trend ── -->
+    {% if value_history %}
+    <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+        <div class="px-5 py-4 border-b border-slate-100 bg-white">
+            <h2 class="text-base font-black text-slate-900">Portfolio Value vs Cost (90 days)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">How your portfolio value has changed compared to what you invested</p>
+        </div>
+        <div class="bg-white p-6">
+            <div class="chart-wrapper w-full" style="height: 280px;">
+                <canvas id="gainLossTrendChart"></canvas>
+            </div>
+            {{ value_history|json_script:"value-history-data" }}
+            <input type="hidden" id="portfolio-cost-basis" value="{{ total_investment }}">
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Upcoming Dividends ── -->
+    <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-6">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white">
+            <h2 class="text-base font-black text-slate-900">Upcoming Dividend Payments</h2>
+            <a href="{% url 'my_alerts' %}" class="text-sm font-semibold text-blue-600 hover:text-blue-700">Manage Alerts →</a>
+        </div>
+
+        {% regroup portfolio_items|dictsort:"latest_dividend.ex_dividend_date" by latest_dividend.ex_dividend_date as dividends_by_date %}
+
+        {% if dividends_by_date %}
+        <div class="bg-white p-6 space-y-6">
+            {% for dividend_group in dividends_by_date %}
+                {% if dividend_group.grouper %}
+                <div>
+                    <h3 class="text-sm font-black text-slate-700 mb-3">
+                        {{ dividend_group.grouper|date:"F d, Y" }}
+                        <span class="text-xs font-normal text-slate-400 ml-1">({{ dividend_group.grouper|timeuntil }})</span>
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {% for item in dividend_group.list %}
+                            {% if item.latest_dividend and item.latest_dividend.ex_dividend_date == dividend_group.grouper %}
+                            <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}" class="font-black text-slate-900 hover:text-blue-600 transition text-sm">
+                                        {{ item.item.stock.symbol }}
+                                    </a>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                        {{ item.latest_dividend.frequency }}
+                                    </span>
+                                </div>
+                                <p class="text-xl font-black text-emerald-600 mb-0.5">${{ item.expected_dividend|floatformat:2 }}</p>
+                                <p class="text-xs text-slate-500 mb-2">
+                                    ${{ item.latest_dividend.amount }} per share × {{ item.item.shares_owned }} shares
+                                </p>
+                                <div class="flex items-center justify-between text-xs text-slate-500">
+                                    <span>Yield: {{ item.latest_dividend.yield_percent|floatformat:2 }}%</span>
+                                    <span>Ex: {{ item.latest_dividend.ex_dividend_date|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
         </div>
         {% else %}
-        <!-- Empty Portfolio State with Quick Import -->
-        <div class="space-y-6">
-            <!-- Quick Import Section -->
-            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
-                <div class="max-w-3xl mx-auto">
-                    <div class="flex items-center justify-center mb-4">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-bold text-center mb-3">Quick Start: Import Your Portfolio</h2>
-                    <p class="text-center text-blue-100 mb-6 max-w-2xl mx-auto">
-                        Don't want to enter stocks manually? Import your transactions from Wealthsimple, Questrade, or any CSV file. We'll automatically calculate your portfolio!
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="{% url 'import_wealthsimple_csv' %}" 
-                           class="inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 hover:bg-slate-100 rounded-lg font-semibold transition shadow-lg">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                            </svg>
-                            Import from CSV
-                        </a>
-                        <a href="{% url 'all_stocks' %}" 
-                           class="inline-flex items-center justify-center px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg font-semibold transition border-2 border-white/40">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Add Stocks Manually
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Getting Started Guide -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-                <h3 class="text-xl font-bold text-slate-900 mb-6">Getting Started</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="text-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="text-2xl font-bold text-blue-600">1</span>
-                        </div>
-                        <h4 class="font-semibold text-slate-900 mb-2">Import or Add Stocks</h4>
-                        <p class="text-sm text-slate-600">
-                            Import from CSV or manually add your holdings with shares and cost basis.
-                        </p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="text-2xl font-bold text-green-600">2</span>
-                        </div>
-                        <h4 class="font-semibold text-slate-900 mb-2">Track Performance</h4>
-                        <p class="text-sm text-slate-600">
-                            Monitor gains, losses, dividend income, and portfolio allocation automatically.
-                        </p>
-                    </div>
-                    <div class="text-center">
-                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="text-2xl font-bold text-purple-600">3</span>
-                        </div>
-                        <h4 class="font-semibold text-slate-900 mb-2">Get Insights</h4>
-                        <p class="text-sm text-slate-600">
-                            Receive alerts for upcoming dividends and analyze your portfolio health.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-                <h3 class="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <a href="{% url 'import_wealthsimple_csv' %}" 
-                       class="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-200">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                        </svg>
-                        <div>
-                            <p class="font-semibold text-slate-900 text-sm">Import CSV</p>
-                            <p class="text-xs text-slate-600">Wealthsimple, Questrade</p>
-                        </div>
-                    </a>
-                    <a href="{% url 'all_stocks' %}" 
-                       class="flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition border border-green-200">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <div>
-                            <p class="font-semibold text-slate-900 text-sm">Add Stock</p>
-                            <p class="text-xs text-slate-600">Browse 500+ stocks</p>
-                        </div>
-                    </a>
-                    <a href="{% url 'watchlist' %}" 
-                       class="flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition border border-purple-200">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                        </svg>
-                        <div>
-                            <p class="font-semibold text-slate-900 text-sm">View Watchlist</p>
-                            <p class="text-xs text-slate-600">Your saved stocks</p>
-                        </div>
-                    </a>
-                    <a href="{% url 'transactions_list' %}" 
-                       class="flex items-center space-x-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition border border-orange-200">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <div>
-                            <p class="font-semibold text-slate-900 text-sm">Transactions</p>
-                            <p class="text-xs text-slate-600">View all trades</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
+        <div class="bg-white p-12 text-center">
+            <svg class="w-12 h-12 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-slate-600 font-semibold mb-1">No upcoming dividends</p>
+            <p class="text-sm text-slate-400">Dividends from your holdings will appear here</p>
         </div>
         {% endif %}
     </div>
 
-<!-- Edit Portfolio Item Modal -->
-<div id="editPortfolioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl p-6 mx-4 w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-slate-900">Edit Portfolio Item</h3>
-            <button onclick="closeModal('editPortfolioModal')" class="text-slate-400 hover:text-slate-600 text-2xl transition">
-                &times;
-            </button>
+    {% else %}
+    <!-- ── Empty Portfolio State ── -->
+    <div class="space-y-5">
+
+        <!-- Main CTA card -->
+        <div class="relative rounded-2xl overflow-hidden p-8 sm:p-12 text-center"
+             style="background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 60%, #1a2744 100%);">
+            <!-- Glow -->
+            <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-10 pointer-events-none"
+                 style="background: radial-gradient(circle, #10b981, transparent 70%); transform: translate(30%, -40%);"></div>
+            <div class="absolute bottom-0 left-0 w-56 h-56 rounded-full opacity-8 pointer-events-none"
+                 style="background: radial-gradient(circle, #6366f1, transparent 70%); transform: translate(-30%, 40%);"></div>
+            <div class="absolute top-0 left-0 right-0 h-0.5"
+                 style="background: linear-gradient(90deg, #10b981, #6366f1, transparent);"></div>
+
+            <div class="relative z-10 max-w-lg mx-auto">
+                <!-- Cloud upload icon -->
+                <div class="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center"
+                     style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 8px 32px rgba(16,185,129,0.35);">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+
+                <h2 class="text-2xl sm:text-3xl font-black text-white mb-3">Import Your Portfolio in Seconds</h2>
+                <p class="text-slate-300 text-sm mb-8 leading-relaxed">
+                    Export a CSV from Wealthsimple, Questrade, or any broker — we'll parse it automatically.
+                </p>
+
+                <!-- Primary CTA -->
+                <a href="{% url 'import_wealthsimple_csv' %}"
+                   class="flex items-center justify-center gap-3 w-full sm:w-auto sm:inline-flex px-8 py-4 rounded-xl font-black text-white text-base transition-all mb-4"
+                   style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 4px 20px rgba(16,185,129,0.45);">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Import from CSV →
+                </a>
+
+                <div>
+                    <a href="{% url 'all_stocks' %}" class="text-sm text-slate-400 hover:text-slate-200 transition font-medium">
+                        or add stocks manually →
+                    </a>
+                </div>
+            </div>
         </div>
-        
-        <form id="editPortfolioForm" method="post">
+
+        <!-- How it works -->
+        <div class="rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100"
+                 style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                <h3 class="text-base font-black text-white">How it works</h3>
+            </div>
+            <div class="bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                <div class="p-6 text-center">
+                    <div class="w-10 h-10 rounded-xl mx-auto mb-4 flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+                        <span class="text-white font-black text-base">1</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">Export CSV from your broker</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Download your transaction history from Wealthsimple, Questrade, or any broker that exports CSV.
+                    </p>
+                </div>
+                <div class="p-6 text-center">
+                    <div class="w-10 h-10 rounded-xl mx-auto mb-4 flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #059669, #10b981);">
+                        <span class="text-white font-black text-base">2</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">Upload it here — we parse automatically</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Drop your file and we'll detect columns, calculate cost basis, and group your holdings.
+                    </p>
+                </div>
+                <div class="p-6 text-center">
+                    <div class="w-10 h-10 rounded-xl mx-auto mb-4 flex items-center justify-center"
+                         style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                        <span class="text-white font-black text-base">3</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">Your portfolio appears with live prices</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        See real-time gains, dividend income, sector allocation, and ROI — instantly.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Edit Portfolio Item Modal ── -->
+<div id="editPortfolioModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-xl mx-4 w-full max-w-md overflow-hidden">
+        <!-- Blue gradient header -->
+        <div class="px-6 py-5 relative"
+             style="background: linear-gradient(135deg, #1e3a8a, #2563eb);">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 class="text-lg font-black text-white">Edit Position</h3>
+                    <p class="text-blue-200 text-sm mt-0.5" id="editModalSymbolLabel"></p>
+                </div>
+                <button onclick="closeModal('editPortfolioModal')" class="text-blue-200 hover:text-white transition text-2xl leading-none mt-0.5">&times;</button>
+            </div>
+        </div>
+
+        <form id="editPortfolioForm" method="post" class="p-6">
             {% csrf_token %}
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Stock Symbol</label>
-                    <input type="text" id="editStockSymbol" readonly 
-                           class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-600">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Stock Symbol</label>
+                    <input type="text" id="editStockSymbol" readonly
+                           class="w-full px-3 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm font-semibold">
                 </div>
-                
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Shares Owned</label>
-                    <input type="number" name="shares_owned" id="editSharesOwned" required 
-                           class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Shares Owned</label>
+                    <input type="number" name="shares_owned" id="editSharesOwned" required
+                           class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold"
                            placeholder="Number of shares" min="1" step="1">
                 </div>
-                
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Average Cost ($)</label>
-                    <input type="number" name="average_cost" id="editAverageCost" step="0.01" required 
-                           class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Cost per share" min="0.01">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Average Cost per Share</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">$</span>
+                        <input type="number" name="average_cost" id="editAverageCost" step="0.01" required
+                               class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold"
+                               placeholder="0.00" min="0.01">
+                    </div>
                 </div>
-                
+
+                <!-- Live position value preview -->
+                <div class="rounded-xl bg-blue-50 border border-blue-100 p-3 flex items-center justify-between" id="editPositionPreview">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Position Value</span>
+                    <span class="text-base font-black text-blue-700" id="editPositionValue">—</span>
+                </div>
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Notes (Optional)</label>
-                    <textarea name="notes" id="editNotes" 
-                              class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Notes (Optional)</label>
+                    <textarea name="notes" id="editNotes"
+                              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                               placeholder="Any notes about this investment" rows="3"></textarea>
                 </div>
             </div>
-            
-            <div class="mt-6 flex space-x-3">
+
+            <div class="mt-6 flex gap-3">
                 <button type="button" onclick="closeModal('editPortfolioModal')"
-                        class="flex-1 btn btn-secondary py-2.5">
+                        class="flex-1 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition border border-slate-200">
                     Cancel
                 </button>
                 <button type="submit"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition">
+                        class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition"
+                        style="background: linear-gradient(135deg, #1e3a8a, #2563eb);">
                     Save Changes
                 </button>
             </div>
@@ -821,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('editPortfolioModal');
@@ -832,24 +1152,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function _updatePositionPreview() {
+    const shares = parseFloat(document.getElementById('editSharesOwned').value) || 0;
+    const cost   = parseFloat(document.getElementById('editAverageCost').value) || 0;
+    const el     = document.getElementById('editPositionValue');
+    if (el) {
+        el.textContent = (shares > 0 && cost > 0)
+            ? '$' + (shares * cost).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+            : '—';
+    }
+}
+
 function sortTable(sortBy) {
     const table = document.getElementById('portfolioTable');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
-    
+
     rows.sort((a, b) => {
         if (sortBy === 'symbol') {
-            const aSymbol = a.dataset.symbol;
-            const bSymbol = b.dataset.symbol;
-            return aSymbol.localeCompare(bSymbol);
+            return a.dataset.symbol.localeCompare(b.dataset.symbol);
         } else if (sortBy === 'value') {
-            const aValue = parseFloat(a.dataset.value) || 0;
-            const bValue = parseFloat(b.dataset.value) || 0;
-            return bValue - aValue;
+            return (parseFloat(b.dataset.value) || 0) - (parseFloat(a.dataset.value) || 0);
         }
         return 0;
     });
-    
+
     rows.forEach(row => tbody.appendChild(row));
 }
 
@@ -859,7 +1186,18 @@ function editPortfolioItem(symbol, shares, cost, notes) {
     document.getElementById('editAverageCost').value = cost;
     document.getElementById('editNotes').value = notes || '';
     document.getElementById('editPortfolioForm').action = `/portfolio/add/${symbol}/`;
+
+    const labelEl = document.getElementById('editModalSymbolLabel');
+    if (labelEl) labelEl.textContent = symbol;
+
+    _updatePositionPreview();
     openModal('editPortfolioModal');
+
+    // Wire live preview after modal opens
+    ['editSharesOwned', 'editAverageCost'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', _updatePositionPreview);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -867,10 +1205,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const sharesInput = this.querySelector('input[name="shares_owned"]');
             const costInput = this.querySelector('input[name="average_cost"]');
-            
+
             if (!sharesInput.value || Number(sharesInput.value) < 1) {
                 alert('Shares Owned must be at least 1.');
                 sharesInput.focus();
@@ -881,10 +1219,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 costInput.focus();
                 return;
             }
-            
+
             const formData = new FormData(this);
             const action = this.action;
-            
+
             fetch(action, {
                 method: 'POST',
                 body: formData,
@@ -909,8 +1247,21 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     {% if sector_chart_data %}
+    const sectorColors = [
+        '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
+        '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#6366F1'
+    ];
+
+    // Colour the sector dots and bars in the sector list
+    sectorColors.forEach(function(color, i) {
+        const dot = document.querySelector('.sector-dot-' + i);
+        const bar = document.querySelector('.sector-bar-' + i);
+        if (dot) dot.style.backgroundColor = color;
+        if (bar) bar.style.backgroundColor = color;
+    });
+
     const sectorData = [
         {% for item in sector_chart_data %}
         {sector: "{{ item.sector|escapejs }}", value: {{ item.value }}, percent: {{ item.percent }}}{% if not forloop.last %},{% endif %}
@@ -918,80 +1269,69 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     const ctx = document.getElementById('sectorPieChart');
     if (ctx) {
-        // Fixed compact size
         const chartSize = 200;
         ctx.width = chartSize;
         ctx.height = chartSize;
-        
-        const colors = [
-            '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
-            '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#6366F1'
-        ];
-        
+
         const total = sectorData.reduce((sum, item) => sum + item.value, 0);
         let currentAngle = -Math.PI / 2;
         const canvas = ctx.getContext('2d');
         const centerX = chartSize / 2;
         const centerY = chartSize / 2;
-        const radius = centerX - 15; // Compact padding
-        
+        const radius = centerX - 15;
+
         sectorData.forEach((item, index) => {
             const sliceAngle = (item.value / total) * 2 * Math.PI;
-            
+
             canvas.beginPath();
             canvas.moveTo(centerX, centerY);
             canvas.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
             canvas.closePath();
-            canvas.fillStyle = colors[index % colors.length];
+            canvas.fillStyle = sectorColors[index % sectorColors.length];
             canvas.fill();
             canvas.strokeStyle = '#ffffff';
             canvas.lineWidth = 2;
             canvas.stroke();
-            
-            // Only show labels for slices >= 10% to keep it clean
+
             if (sliceAngle > 0.3 && item.percent >= 10) {
                 const labelAngle = currentAngle + sliceAngle / 2;
                 const labelX = centerX + Math.cos(labelAngle) * (radius * 0.65);
                 const labelY = centerY + Math.sin(labelAngle) * (radius * 0.65);
-                
+
                 canvas.fillStyle = '#1F2937';
                 canvas.font = 'bold 11px Arial';
                 canvas.textAlign = 'center';
                 canvas.textBaseline = 'middle';
                 canvas.fillText(item.percent.toFixed(0) + '%', labelX, labelY);
             }
-            
+
             currentAngle += sliceAngle;
         });
     }
     {% endif %}
-    
+
     const searchInput = document.getElementById('portfolioSearch');
     const sectorFilter = document.getElementById('sectorFilter');
     const portfolioRows = document.querySelectorAll('.portfolio-row');
-    
+
     function filterPortfolio() {
         const searchTerm = (searchInput?.value || '').toLowerCase();
         const selectedSector = sectorFilter?.value || '';
-        
+
         portfolioRows.forEach(row => {
             const symbol = (row.dataset.symbol || '').toLowerCase();
             const company = (row.dataset.company || '').toLowerCase();
             const sector = row.dataset.sector || '';
-            
-            const matchesSearch = !searchTerm || 
-                symbol.includes(searchTerm) || 
+
+            const matchesSearch = !searchTerm ||
+                symbol.includes(searchTerm) ||
                 company.includes(searchTerm);
             const matchesSector = !selectedSector || sector === selectedSector;
-            
-            if (matchesSearch && matchesSector) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+
+            row.style.display = (matchesSearch && matchesSector) ? '' : 'none';
         });
     }
-    
+
     const portfolioSearchClear = document.getElementById('portfolioSearchClear');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -1010,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sectorFilter) {
         sectorFilter.addEventListener('change', filterPortfolio);
     }
-    
+
     {% if dividend_projection %}
     const dividendCtx = document.getElementById('portfolioDividendChart');
     if (dividendCtx) {
@@ -1018,16 +1358,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const containerWidth = container.clientWidth || 600;
         const aspectRatio = 2.5;
         const canvasHeight = Math.max(200, containerWidth / aspectRatio);
-        
+
         dividendCtx.width = containerWidth;
         dividendCtx.height = canvasHeight;
-        
+
         const dividendData = [
             {% for month in dividend_projection %}
             {month: "{{ month.month }}", income: {{ month.income }}, cumulative: {{ month.cumulative }}}{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-        
+
         const maxIncome = Math.max(...dividendData.map(d => d.income), 1);
         const canvas = dividendCtx.getContext('2d');
         const width = dividendCtx.width;
@@ -1035,18 +1375,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const padding = Math.max(25, width * 0.04);
         const chartWidth = width - (padding * 2);
         const chartHeight = height - (padding * 2);
-        
+
         const barWidth = chartWidth / dividendData.length * 0.7;
         const spacing = chartWidth / dividendData.length;
-        
+
         dividendData.forEach((data, index) => {
             const x = padding + (spacing * index) + (spacing - barWidth) / 2;
             const barHeight = (data.income / maxIncome) * chartHeight;
             const y = padding + chartHeight - barHeight;
-            
+
             canvas.fillStyle = '#10B981';
             canvas.fillRect(x, y, barWidth, barHeight);
-            
+
             const fontSize = Math.max(8, width / 70);
             if (barHeight > 15) {
                 canvas.fillStyle = '#1F2937';
@@ -1054,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas.textAlign = 'center';
                 canvas.fillText('$' + data.income.toFixed(0), x + barWidth/2, y - 3);
             }
-            
+
             canvas.save();
             canvas.translate(x + barWidth/2, height - 5);
             if (width < 640) {
@@ -1077,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('deletePortfolioStockModal');
         const modalText = document.getElementById('deletePortfolioStockModalText');
         const form = document.getElementById('deletePortfolioStockForm');
-        
+
         if (modal && modalText && form) {
             modalText.textContent = `Are you sure you want to remove ${symbol}${companyName ? ' - ' + companyName : ''} from your portfolio? This action cannot be undone.`;
             form.action = `/portfolio/${symbol}/delete/`;
@@ -1152,23 +1492,25 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {% endif %}
 
-<!-- Delete Portfolio Stock Confirmation Modal -->
-<div id="deletePortfolioStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<!-- ── Delete Portfolio Stock Confirmation Modal ── -->
+<div id="deletePortfolioStockModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="px-6 py-5" style="background: linear-gradient(135deg, #7f1d1d, #dc2626);">
+            <h3 class="text-lg font-black text-white">Remove from Portfolio?</h3>
+        </div>
         <div class="p-6">
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Remove from Portfolio?</h3>
             <p class="text-sm text-slate-600 mb-6" id="deletePortfolioStockModalText">
                 Are you sure you want to remove this stock from your portfolio?
             </p>
             <div class="flex gap-3">
-                <button onclick="window.closeDeletePortfolioStockModal()" 
-                        class="btn btn-secondary flex-1 px-4 py-2">
+                <button onclick="window.closeDeletePortfolioStockModal()"
+                        class="flex-1 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition border border-slate-200">
                     Cancel
                 </button>
                 <form id="deletePortfolioStockForm" method="post" action="" class="flex-1">
                     {% csrf_token %}
-                    <button type="submit" 
-                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                    <button type="submit"
+                            class="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition">
                         Remove
                     </button>
                 </form>
@@ -1184,14 +1526,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (deleteForm) {
         deleteForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const form = this;
             const formData = new FormData(form);
             const deleteUrl = form.action;
-            
+
             // Close modal
             window.closeDeletePortfolioStockModal();
-            
+
             fetch(deleteUrl, {
                 method: 'POST',
                 body: formData,
@@ -1205,7 +1547,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = response.url;
                 } else if (response.ok) {
                     return response.json().catch(() => {
-                        // If not JSON, just reload
                         window.location.reload();
                     });
                 } else {
@@ -1230,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     // Close modal when clicking outside
     const deleteModal = document.getElementById('deletePortfolioStockModal');
     if (deleteModal) {
@@ -1240,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
