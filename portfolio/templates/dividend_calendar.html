@@ -309,7 +309,7 @@
                     {% for dividend in day_data.dividends %}
                     <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}"
                        class="flex items-center gap-3 px-4 py-2.5 active:bg-slate-50">
-                        <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs
+                        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs
                             {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-100 text-red-700
                             {% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
                             {% else %}bg-emerald-100 text-emerald-700{% endif %}">

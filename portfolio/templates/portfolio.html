@@ -740,7 +740,7 @@ function disconnectBroker(broker) {
                             <div class="flex items-center space-x-3">
                                 <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
                                      style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                                    <span class="text-white font-black text-sm">{{ item.item.stock.symbol|slice:":1" }}</span>
+                                    <span class="text-white font-black text-xs">{{ item.item.stock.symbol|slice:":2" }}</span>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <a href="{% url 'stock_detail' item.item.stock.symbol item.item.stock.get_seo_slug %}" class="text-sm font-semibold text-slate-900 hover:text-blue-600 transition block">

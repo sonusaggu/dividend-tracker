@@ -1159,11 +1159,11 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
     <div class="card p-5">
         <h2 class="text-base font-black text-slate-800 mb-4">Stocks Like This</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {% for sim in similar_stocks %}
             <a href="{% url 'stock_detail' sim.stock.symbol sim.stock.get_seo_slug %}"
                class="block rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-md transition p-3 text-center">
-                <span class="w-10 h-10 mx-auto mb-2 rounded-xl flex items-center justify-center font-black text-sm
+                <span class="w-10 h-10 mx-auto mb-2 rounded-xl flex items-center justify-center font-black text-xs
                     {% if sim.dividend and sim.dividend.yield_percent %}
                         {% if sim.dividend.yield_percent >= 4 %}bg-emerald-100 text-emerald-700
                         {% elif sim.dividend.yield_percent >= 2 %}bg-amber-100 text-amber-700
@@ -1171,12 +1171,12 @@
                     {% else %}bg-slate-200 text-slate-600{% endif %}">
                     {{ sim.stock.symbol|slice:":2" }}
                 </span>
-                <p class="text-xs font-black text-slate-800">{{ sim.stock.symbol }}</p>
+                <p class="text-[11px] font-black text-slate-800 truncate">{{ sim.stock.symbol }}</p>
                 {% if sim.dividend and sim.dividend.yield_percent %}
-                <p class="text-xs text-emerald-600 font-semibold">{{ sim.dividend.yield_percent|floatformat:1 }}%</p>
+                <p class="text-[11px] text-emerald-600 font-semibold">{{ sim.dividend.yield_percent|floatformat:1 }}%</p>
                 {% endif %}
                 {% if sim.latest_price %}
-                <p class="text-xs text-slate-500">${{ sim.latest_price|floatformat:2 }}</p>
+                <p class="text-[11px] text-slate-500">${{ sim.latest_price|floatformat:2 }}</p>
                 {% endif %}
             </a>
             {% endfor %}
