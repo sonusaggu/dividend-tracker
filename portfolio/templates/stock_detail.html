@@ -89,6 +89,70 @@
   ]
 }
 </script>
+
+<!-- FAQPage schema — renders as expandable Q&A in Google search results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% if dividend and dividend.yield_percent %}
+    {
+      "@type": "Question",
+      "name": "What is {{ stock.company_name }} ({{ stock.symbol }}) dividend yield?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ stock.company_name }} ({{ stock.symbol }}) currently has a dividend yield of {{ dividend.yield_percent|floatformat:2 }}%, paying ${{ dividend.amount }} per share {% if dividend.frequency %}on a {{ dividend.frequency|lower }} basis{% endif %}."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When is {{ stock.symbol }} next ex-dividend date?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{% if dividend.ex_dividend_date %}The next ex-dividend date for {{ stock.symbol }} is {{ dividend.ex_dividend_date|date:'F j, Y' }}. You must own shares before this date to receive the dividend.{% else %}The next ex-dividend date for {{ stock.symbol }} has not been announced yet.{% endif %}"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When does {{ stock.symbol }} pay its dividend?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{% if dividend.payment_date %}{{ stock.company_name }} pays its dividend on {{ dividend.payment_date|date:'F j, Y' }}.{% else %}The payment date for {{ stock.symbol }}'s next dividend has not been confirmed yet.{% endif %}"
+      }
+    },
+    {% endif %}
+    {% if latest_price and latest_price.last_price %}
+    {
+      "@type": "Question",
+      "name": "What is {{ stock.symbol }} stock price today?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ stock.company_name }} ({{ stock.symbol }}) is currently trading at ${{ latest_price.last_price|floatformat:2 }} CAD{% if latest_price.fiftytwo_week_low and latest_price.fiftytwo_week_high %}, with a 52-week range of ${{ latest_price.fiftytwo_week_low|floatformat:2 }} to ${{ latest_price.fiftytwo_week_high|floatformat:2 }}{% endif %}."
+      }
+    },
+    {% endif %}
+    {% if valuation and valuation.pe_ratio %}
+    {
+      "@type": "Question",
+      "name": "What is {{ stock.symbol }} P/E ratio?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ stock.company_name }} ({{ stock.symbol }}) has a price-to-earnings (P/E) ratio of {{ valuation.pe_ratio|floatformat:2 }}{% if valuation.eps %}, with earnings per share (EPS) of ${{ valuation.eps|floatformat:2 }}{% endif %}."
+      }
+    },
+    {% endif %}
+    {
+      "@type": "Question",
+      "name": "Is {{ stock.symbol }} a good dividend stock?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ stock.company_name }} ({{ stock.symbol }}) is a {% if stock.sector %}{{ stock.sector }}{% else %}Canadian{% endif %} stock listed on the TSX{% if dividend and dividend.yield_percent %} with a {{ dividend.yield_percent|floatformat:2 }}% dividend yield{% endif %}{% if dividend_safety_score is not None %} and a dividend safety score of {{ dividend_safety_score }}/100{% endif %}. Always review financials and consult a financial advisor before investing."
+      }
+    }
+  ]
+}
+</script>
 {% endblock %}
 
 {% block extra_css %}
@@ -128,7 +192,7 @@
     .range-dot { position:absolute; top:50%; width:14px; height:14px; border-radius:50%; background:#fff; border:2.5px solid #3b82f6; transform:translate(-50%,-50%); box-shadow:0 1px 4px rgba(37,99,235,0.3); }
 
     /* Misc */
-    #priceHistoryChart { max-height: 240px; }
+    #priceHistoryChart { max-height: 100%; }
     .card, .stat-card { overflow-wrap:break-word; word-break:break-word; }
     .card .text-xl, .card .text-2xl, .card .text-3xl { min-width:0; }
     @media (max-width:639px) { .metrics-strip > div:nth-child(odd) { border-right:1px solid #f1f5f9; } }
@@ -199,14 +263,14 @@
                             <div class="flex flex-wrap gap-1.5">
                                 {% if stock.sector %}
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold"
-                                      style="background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.25); color: #93c5fd; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                      style="background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.25); color: #93c5fd;">
                                     <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                                     {{ stock.sector }}
                                 </span>
                                 {% endif %}
                                 {% if stock.industry %}
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold"
-                                      style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #64748b; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                      style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #64748b;">
                                     {{ stock.industry }}
                                 </span>
                                 {% endif %}
@@ -367,6 +431,34 @@
             </div>
         </div>
         
+        <!-- SEO text summary — unique readable content per stock, indexed by Google -->
+        <div class="mb-5 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3.5 sm:px-5">
+            <p class="text-sm text-slate-500 leading-relaxed">
+                <strong class="text-slate-700">{{ stock.company_name }} ({{ stock.symbol }})</strong>
+                is a {% if stock.sector %}{{ stock.sector }}{% else %}Canadian{% endif %} company
+                {% if stock.industry %}in the {{ stock.industry }} industry{% endif %}
+                listed on the Toronto Stock Exchange (TSX).
+                {% if latest_price and latest_price.last_price %}
+                The stock is currently trading at <strong class="text-slate-700">${{ latest_price.last_price|floatformat:2 }} CAD</strong>{% if latest_price.fiftytwo_week_low and latest_price.fiftytwo_week_high %},
+                with a 52-week range of ${{ latest_price.fiftytwo_week_low|floatformat:2 }}–${{ latest_price.fiftytwo_week_high|floatformat:2 }}{% endif %}.
+                {% endif %}
+                {% if dividend and dividend.yield_percent %}
+                {{ stock.symbol }} pays a <strong class="text-slate-700">{{ dividend.yield_percent|floatformat:2 }}% dividend yield</strong>
+                of ${{ dividend.amount }} per share {% if dividend.frequency %}on a {{ dividend.frequency|lower }} basis{% endif %}{% if dividend.ex_dividend_date %},
+                with the next ex-dividend date on <strong class="text-slate-700">{{ dividend.ex_dividend_date|date:"F j, Y" }}</strong>{% endif %}.
+                {% if dividend_safety_score is not None %}
+                The dividend safety score is {{ dividend_safety_score }}/100{% if dividend_growth_rate is not None %} and the 2-year dividend growth rate is {% if dividend_growth_rate >= 0 %}+{% endif %}{{ dividend_growth_rate|floatformat:1 }}%{% endif %}.
+                {% endif %}
+                {% endif %}
+                {% if valuation and valuation.pe_ratio %}
+                The P/E ratio is {{ valuation.pe_ratio|floatformat:2 }}{% if valuation.eps %} and EPS is ${{ valuation.eps|floatformat:2 }}{% endif %}.
+                {% endif %}
+                {% if analyst_rating and analyst_rating.analyst_rating %}
+                Analyst consensus rating is <strong class="text-slate-700">{{ analyst_rating.analyst_rating }}</strong>.
+                {% endif %}
+            </p>
+        </div>
+
         <!-- Key Metrics Strip -->
         <div class="card mb-5 overflow-hidden">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y sm:divide-y-0 divide-slate-100">
@@ -468,7 +560,7 @@
             </div>
           </div>
           {% if stock_news_summary %}
-          <p class="text-sm text-gray-700 mb-3 pl-10">{{ stock_news_summary }}</p>
+          <p class="text-sm text-gray-700 mb-3 pl-4 sm:pl-10">{{ stock_news_summary }}</p>
           {% endif %}
           {% if stock_ai_insights %}
           <ul class="space-y-2">
@@ -620,7 +712,7 @@
                 </div>
                 <!-- Canvas -->
                 <div class="bg-white px-2 pb-4 pt-2">
-                    <div style="height:240px; position:relative;">
+                    <div style="height:200px; position:relative;" class="sm:!h-[240px]">
                         <canvas id="priceHistoryChart"></canvas>
                     </div>
                 </div>
@@ -701,7 +793,27 @@
                 </div>
                 {% endif %}
                 {% if recent_earnings %}
-                <div class="overflow-x-auto">
+                <!-- Mobile: stacked cards -->
+                <div class="space-y-2 sm:hidden">
+                    {% for item in recent_earnings|slice:":5" %}
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-bold text-slate-700">{{ item.earning.earnings_date|date:"M d, Y" }}</span>
+                            {% if item.eps_surprise is not None %}
+                            {% if item.eps_surprise > 0 %}<span class="text-xs font-bold text-emerald-600">+{{ item.eps_surprise|floatformat:1 }}% beat</span>
+                            {% elif item.eps_surprise < 0 %}<span class="text-xs font-bold text-red-500">{{ item.eps_surprise|floatformat:1 }}% miss</span>
+                            {% else %}<span class="text-xs text-slate-400">0% inline</span>{% endif %}
+                            {% else %}<span class="text-xs text-slate-300">—</span>{% endif %}
+                        </div>
+                        <div class="flex gap-4 text-xs text-slate-500">
+                            <span>EPS <strong class="text-slate-700">{% if item.earning.eps_actual %}${{ item.earning.eps_actual|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                            <span>Rev <strong class="text-slate-700">{% if item.earning.revenue_actual %}${{ item.earning.revenue_actual|intcomma }}{% else %}—{% endif %}</strong></span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <!-- Desktop: table -->
+                <div class="hidden sm:block overflow-x-auto">
                     <table class="w-full">
                         <thead><tr class="border-b border-slate-100">
                             <th class="earnings-th">Date</th><th class="earnings-th">EPS</th><th class="earnings-th">Revenue</th><th class="earnings-th">Surprise</th>

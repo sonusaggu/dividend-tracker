@@ -53,10 +53,17 @@ class StaticViewSitemap(Sitemap):
 class StockSitemap(Sitemap):
     """Stock detail pages: /stocks/<symbol>/<slug>/ (SEO-friendly)"""
     changefreq = 'daily'
-    priority = 0.7
 
     def items(self):
-        return Stock.objects.filter(show_in_listing=True).order_by('symbol')
+        return Stock.objects.filter(show_in_listing=True).prefetch_related('dividends').order_by('symbol')
+
+    def priority(self, obj):
+        # TSX 60 members and dividend stocks get higher priority
+        if obj.tsx60_member:
+            return 0.9
+        if obj.dividends.exists():
+            return 0.8
+        return 0.6
 
     def location(self, obj):
         return reverse('stock_detail', kwargs={'symbol': obj.symbol, 'slug': obj.get_seo_slug()})
