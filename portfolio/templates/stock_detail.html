@@ -484,6 +484,148 @@
                     {{ price_history_data|json_script:"price-history-data" }}
                 </div>
                 {% endif %}
+
+                <!-- Support & Resistance Levels -->
+                {% if latest_price and latest_price.fiftytwo_week_high and latest_price.fiftytwo_week_low and latest_price.last_price %}
+                <div class="card p-5">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900">Support & Resistance</h2>
+                                <p class="text-[10px] text-slate-400">Pivot point method · 52-week range</p>
+                            </div>
+                        </div>
+                        <!-- Pivot badge -->
+                        <span id="sr-pivot-badge" class="text-xs font-black px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100"></span>
+                    </div>
+
+                    <!-- Price position bar -->
+                    <div class="mb-5">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-semibold mb-1.5">
+                            <span>52W Low &nbsp;<span class="text-slate-600 font-black">${{ latest_price.fiftytwo_week_low|floatformat:2 }}</span></span>
+                            <span class="font-black text-slate-700">${{ latest_price.last_price|floatformat:2 }} <span class="font-normal text-slate-400">current</span></span>
+                            <span>52W High &nbsp;<span class="text-slate-600 font-black">${{ latest_price.fiftytwo_week_high|floatformat:2 }}</span></span>
+                        </div>
+                        <div class="relative h-2.5 bg-slate-100 rounded-full overflow-visible">
+                            <div class="absolute inset-0 rounded-full" style="background: linear-gradient(90deg, #3b82f6 0%, #10b981 50%, #ef4444 100%);"></div>
+                            <div class="absolute top-1/2 w-4 h-4 rounded-full bg-white border-2 border-blue-600 shadow-lg" style="left:{{ price_52w_percent }}%; transform:translate(-50%,-50%);"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-300 mt-1">
+                            <span>Support zone</span>
+                            <span>{{ price_52w_percent|floatformat:0 }}% of range</span>
+                            <span>Resistance zone</span>
+                        </div>
+                    </div>
+
+                    <!-- Levels grid: Resistance | Support -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Resistance column -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-2 px-1">
+                                <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-wide">Resistance</span>
+                            </div>
+                            <div id="sr-resistance" class="space-y-1.5"></div>
+                        </div>
+                        <!-- Support column -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-2 px-1">
+                                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-wide">Support</span>
+                            </div>
+                            <div id="sr-support" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pivot row spanning full width -->
+                    <div id="sr-pivot-row" class="mt-3 flex items-center justify-between rounded-xl px-4 py-2.5 border border-indigo-200" style="background:#eef2ff;"></div>
+
+                    <p class="text-[10px] text-slate-300 mt-3 text-right">R4–R5 / S4–S5 use Fibonacci 1.618× / 2.618× extensions</p>
+                </div>
+
+                <script>
+                (function() {
+                    var high  = {{ latest_price.fiftytwo_week_high|floatformat:2 }};
+                    var low   = {{ latest_price.fiftytwo_week_low|floatformat:2 }};
+                    var close = {{ latest_price.last_price|floatformat:2 }};
+                    var range = high - low;
+                    var pivot = (high + low + close) / 3;
+
+                    var r1 = 2 * pivot - low;
+                    var r2 = pivot + range;
+                    var r3 = high + 2 * (pivot - low);
+                    var r4 = pivot + 1.618 * range;
+                    var r5 = pivot + 2.618 * range;
+
+                    var s1 = 2 * pivot - high;
+                    var s2 = pivot - range;
+                    var s3 = low - 2 * (high - pivot);
+                    var s4 = pivot - 1.618 * range;
+                    var s5 = pivot - 2.618 * range;
+
+                    function fmt(v) { return '$' + v.toFixed(2); }
+                    function isNear(v) { return Math.abs(v - close) / close < 0.025; }
+
+                    // Pivot badge
+                    var badge = document.getElementById('sr-pivot-badge');
+                    if (badge) badge.textContent = 'PP ' + fmt(pivot);
+
+                    // Pivot row
+                    var pivotRow = document.getElementById('sr-pivot-row');
+                    if (pivotRow) {
+                        pivotRow.innerHTML =
+                            '<div class="flex items-center gap-2">' +
+                                '<span class="text-xs font-black text-indigo-600">PP</span>' +
+                                '<span class="text-xs text-slate-500">Pivot point</span>' +
+                                (isNear(pivot) ? '<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">near</span>' : '') +
+                            '</div>' +
+                            '<span class="text-sm font-black text-indigo-700">' + fmt(pivot) + '</span>';
+                    }
+
+                    var resistance = [
+                        { label:'R1', value:r1, desc:'Minor',   bg:'#fff8f0', border:'#fed7aa', text:'#c2410c' },
+                        { label:'R2', value:r2, desc:'Standard',bg:'#fff7ed', border:'#fdba74', text:'#ea580c' },
+                        { label:'R3', value:r3, desc:'Strong',  bg:'#fef2f2', border:'#fca5a5', text:'#dc2626' },
+                        { label:'R4', value:r4, desc:'Major',   bg:'#fef2f2', border:'#f87171', text:'#b91c1c' },
+                        { label:'R5', value:r5, desc:'Extreme', bg:'#fff1f2', border:'#fda4af', text:'#9f1239' },
+                    ];
+                    var support = [
+                        { label:'S1', value:s1, desc:'Minor',   bg:'#f0fdf4', border:'#86efac', text:'#15803d' },
+                        { label:'S2', value:s2, desc:'Standard',bg:'#f0f9ff', border:'#7dd3fc', text:'#0284c7' },
+                        { label:'S3', value:s3, desc:'Strong',  bg:'#e0f2fe', border:'#38bdf8', text:'#0369a1' },
+                        { label:'S4', value:s4, desc:'Major',   bg:'#eff6ff', border:'#93c5fd', text:'#1d4ed8' },
+                        { label:'S5', value:s5, desc:'Extreme', bg:'#eef2ff', border:'#a5b4fc', text:'#1e3a8a' },
+                    ];
+
+                    function buildRow(lvl) {
+                        var near = isNear(lvl.value);
+                        var el = document.createElement('div');
+                        el.className = 'flex items-center justify-between rounded-lg px-2.5 py-1.5 border';
+                        el.style.cssText = 'background:' + lvl.bg + ';border-color:' + lvl.border + ';' + (near ? 'box-shadow:0 0 0 2px #3b82f6;' : '');
+                        el.innerHTML =
+                            '<div class="flex items-center gap-1.5 min-w-0">' +
+                                '<span class="text-[10px] font-black w-6 flex-shrink-0" style="color:' + lvl.text + ';">' + lvl.label + '</span>' +
+                                '<span class="text-[10px] text-slate-400 truncate">' + lvl.desc + '</span>' +
+                                (near ? '<span class="text-[8px] font-black px-1 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">●</span>' : '') +
+                            '</div>' +
+                            '<span class="text-xs font-black ml-2 flex-shrink-0" style="color:' + lvl.text + ';">' + fmt(lvl.value) + '</span>';
+                        return el;
+                    }
+
+                    var rContainer = document.getElementById('sr-resistance');
+                    var sContainer = document.getElementById('sr-support');
+                    resistance.forEach(function(l) { rContainer && rContainer.appendChild(buildRow(l)); });
+                    support.forEach(function(l)    { sContainer && sContainer.appendChild(buildRow(l)); });
+                })();
+                </script>
+                {% endif %}
+
                 <!-- Dividend Information - Compact -->
                 {% if dividend %}
                 <div class="card p-5">
