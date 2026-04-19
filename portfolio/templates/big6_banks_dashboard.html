@@ -2,9 +2,66 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Big 6 Canadian Banks - Dividend Comparison | StockFolio{% endblock %}
-{% block meta_title %}Big 6 Canadian Banks Dividend Dashboard{% endblock %}
-{% block meta_description %}Compare dividend yields, growth rates, and metrics for Canada's Big 6 banks: RY, TD, BNS, BMO, CM, and NA.{% endblock %}
+{% block title %}Big 6 Canadian Banks - Dividend Yield, P/E & Growth Comparison | StockFolio{% endblock %}
+{% block meta_title %}Big 6 Canadian Banks Dividend Dashboard - RY TD BNS BMO CM NA Comparison{% endblock %}
+{% block meta_description %}Compare Canada's Big 6 bank stocks side-by-side: Royal Bank (RY), TD Bank (TD), Scotiabank (BNS), Bank of Montreal (BMO), CIBC (CM), and National Bank (NA). Track dividend yields, payout ratios, P/E ratios, and 5-year dividend growth.{% endblock %}
+{% block meta_keywords %}Canadian bank stocks, Big 6 banks Canada, RY dividend, TD dividend yield, BNS dividend, BMO dividend, CM dividend, NA dividend, Royal Bank dividend, TD Bank dividend, Scotiabank dividend, Bank of Montreal dividend, CIBC dividend, National Bank dividend, Canadian bank ETF, bank stocks TSX, Canadian bank comparison, best Canadian bank stock dividend, bank dividend yield Canada 2024{% endblock %}
+
+{% block og_title %}Big 6 Canadian Bank Stocks - Dividend & Metrics Comparison | StockFolio{% endblock %}
+{% block og_description %}Compare RY, TD, BNS, BMO, CM, and NA side-by-side. Dividend yields, payout ratios, P/E, and 5-year dividend growth for Canada's top bank stocks.{% endblock %}
+{% block twitter_title %}Big 6 Canadian Banks Dividend Comparison | StockFolio{% endblock %}
+{% block twitter_description %}Compare RY, TD, BNS, BMO, CM, and NA — dividend yields, payout ratios, and P/E for Canada's top bank stocks.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Big 6 Canadian Banks - Dividend & Metrics Dashboard",
+  "description": "Compare dividend yields, payout ratios, P/E ratios, and 5-year dividend growth for Canada's Big 6 bank stocks: RY, TD, BNS, BMO, CM, and NA.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'big6_banks_dashboard' %}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "Big 6 Banks", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'big6_banks_dashboard' %}" }
+    ]
+  },
+  "about": {
+    "@type": "ItemList",
+    "name": "Canada's Big 6 Bank Stocks",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Royal Bank of Canada (RY)" },
+      { "@type": "ListItem", "position": 2, "name": "Toronto-Dominion Bank (TD)" },
+      { "@type": "ListItem", "position": 3, "name": "Bank of Nova Scotia / Scotiabank (BNS)" },
+      { "@type": "ListItem", "position": 4, "name": "Bank of Montreal (BMO)" },
+      { "@type": "ListItem", "position": 5, "name": "Canadian Imperial Bank of Commerce / CIBC (CM)" },
+      { "@type": "ListItem", "position": 6, "name": "National Bank of Canada (NA)" }
+    ]
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Which Canadian bank stock has the highest dividend yield?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Scotiabank (BNS) and CIBC (CM) have historically offered the highest dividend yields among the Big 6, often in the 5–7% range. However, yield should be evaluated alongside payout ratio and earnings stability to assess dividend safety." }
+      },
+      {
+        "@type": "Question",
+        "name": "Are Canadian bank stocks safe for dividend income?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Canadian banks are among the safest dividend payers in the world. Regulated by OSFI and backed by an oligopoly market structure, the Big 6 have paid uninterrupted dividends for over 100 years, including through the 2008 financial crisis." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the best Canadian bank stock to buy in 2024?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The best Canadian bank stock depends on your goals. Royal Bank (RY) has the largest market cap and most consistent growth. TD Bank (TD) has strong US exposure. BNS offers international diversification and high yield. Use our comparison tool to evaluate current metrics." }
+      }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

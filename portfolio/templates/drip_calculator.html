@@ -2,9 +2,58 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}DRIP Calculator - Dividend Reinvestment Plan | StockFolio{% endblock %}
-{% block meta_title %}DRIP Calculator - See Your Portfolio Growth with Dividend Reinvestment{% endblock %}
-{% block meta_description %}Calculate how much your portfolio could grow with a Dividend Reinvestment Plan (DRIP). Compare scenarios with and without reinvesting dividends.{% endblock %}
+{% block title %}DRIP Calculator - Dividend Reinvestment Plan Growth Calculator Canada | StockFolio{% endblock %}
+{% block meta_title %}DRIP Calculator - See How Dividend Reinvestment Compounds Your Wealth{% endblock %}
+{% block meta_description %}Free DRIP calculator for Canadian investors. See how reinvesting dividends from TSX stocks compounds your portfolio over 5, 10, or 20 years. Compare DRIP vs cash dividends with real growth projections.{% endblock %}
+{% block meta_keywords %}DRIP calculator, dividend reinvestment plan calculator, DRIP calculator Canada, dividend compounding calculator, reinvest dividends calculator, TSX DRIP, Canadian DRIP, dividend growth calculator, compound dividend calculator, TFSA DRIP, RRSP DRIP, dividend reinvestment Canada, portfolio growth calculator{% endblock %}
+
+{% block og_title %}DRIP Calculator - How Much Can Dividend Reinvestment Grow Your Portfolio? | StockFolio{% endblock %}
+{% block og_description %}Free DRIP calculator for Canadian investors. See how reinvesting dividends from TSX stocks compounds your portfolio over time.{% endblock %}
+{% block twitter_title %}DRIP Calculator - Dividend Reinvestment Growth | StockFolio{% endblock %}
+{% block twitter_description %}Free DRIP calculator for Canadian investors. See how reinvesting dividends from TSX stocks compounds your portfolio over time.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DRIP Calculator — Dividend Reinvestment Plan",
+  "description": "Calculate how much your portfolio could grow by reinvesting dividends. Compare DRIP vs non-DRIP scenarios for Canadian TSX stocks over any time horizon.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'drip_calculator' %}",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "DRIP Calculator", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'drip_calculator' %}" }
+    ]
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a DRIP (Dividend Reinvestment Plan)?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A DRIP automatically reinvests dividend payments into additional shares of the same stock instead of paying cash. This compounds your returns over time since more shares generate more dividends." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is DRIP available in TFSA and RRSP accounts in Canada?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, most Canadian brokerages offer DRIP in both TFSA and RRSP accounts. Since dividends inside a TFSA are tax-free and RRSP defers tax, DRIP in registered accounts is extremely powerful for long-term growth." }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does DRIP improve long-term returns?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Over 20 years, a 4% dividend yield reinvested via DRIP can produce 2–3x more wealth than taking dividends as cash, thanks to compounding. The longer the time horizon and the higher the yield, the greater the impact." }
+      }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

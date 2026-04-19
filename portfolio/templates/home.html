@@ -5,7 +5,7 @@
 {% block title %}Dividend Tracker - Find High-Yield Dividend Stocks | StockFolio{% endblock %}
 {% block meta_title %}Find High-Yield Dividend Stocks - StockFolio{% endblock %}
 {% block meta_description %}Discover the best dividend stocks on TSX. Track dividend yields, ex-dividend dates, and build a profitable dividend portfolio. Get alerts for upcoming dividend payments.{% endblock %}
-{% block meta_keywords %}high yield dividend stocks, TSX dividend stocks, dividend investing, dividend tracker, Canadian dividend stocks, dividend portfolio{% endblock %}
+{% block meta_keywords %}high yield dividend stocks Canada, TSX dividend stocks, dividend investing Canada, Canadian dividend tracker, Canadian dividend stocks, dividend portfolio tracker, best dividend stocks Canada 2024, dividend income Canada, passive income stocks Canada, TSX stock tracker, TFSA dividend investing, RRSP dividend stocks, dividend yield Canada, ex-dividend date tracker, dividend alerts Canada, Canadian dividend aristocrats, monthly dividend stocks Canada, dividend reinvestment Canada, stock portfolio manager Canada, TSX stock screener{% endblock %}
 {% block og_title %}Find High-Yield Dividend Stocks - StockFolio{% endblock %}
 {% block og_description %}Discover the best dividend stocks on TSX. Track dividend yields, ex-dividend dates, and build a profitable dividend portfolio.{% endblock %}
 {% block twitter_title %}Find High-Yield Dividend Stocks - StockFolio{% endblock %}
@@ -27,6 +27,51 @@
     "contactType": "customer support",
     "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'contact_us' %}"
   }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "StockFolio",
+  "url": "{{ request.scheme }}://{{ request.get_host }}/",
+  "description": "Free Canadian dividend stock tracker, portfolio manager, and TSX stock screener. Track yields, ex-dividend dates, earnings, and build your passive income portfolio.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}?search={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is StockFolio?",
+      "acceptedAnswer": { "@type": "Answer", "text": "StockFolio is a free dividend stock tracker and portfolio manager built for Canadian investors. It tracks TSX-listed dividend stocks, shows ex-dividend dates, dividend yields, price history, and lets you build a portfolio to monitor your income." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which Canadian stocks pay the highest dividends?",
+      "acceptedAnswer": { "@type": "Answer", "text": "High-yield dividend stocks on the TSX often include REITs, utilities, pipelines, and bank stocks. Popular high-yield payers include Enbridge (ENB), BCE (BCE), Scotiabank (BNS), and various Canadian REITs. Use our stock screener to filter by yield." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I find the best dividend stocks in Canada?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The best Canadian dividend stocks combine a sustainable yield (payout ratio under 75%), consistent dividend growth, and a strong business. Use StockFolio's screener to filter TSX stocks by dividend yield, sector, and safety score." }
+    },
+    {
+      "@type": "Question",
+      "name": "Are Canadian dividends tax-free in a TFSA?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — dividends earned inside a TFSA are completely tax-free, including the reinvestment of those dividends. This makes a TFSA the ideal account to hold high-yield Canadian dividend stocks for tax-free passive income." }
+    }
+  ]
 }
 </script>
 {% endblock %}

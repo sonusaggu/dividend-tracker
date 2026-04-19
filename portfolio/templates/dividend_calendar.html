@@ -2,10 +2,54 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Dividend Calendar - {{ month_name }} {{ year }} | StockFolio{% endblock %}
-{% block meta_title %}Dividend Calendar - View Upcoming Dividends{% endblock %}
-{% block meta_description %}View all upcoming dividend payments in a calendar format. Filter by portfolio, watchlist, or all stocks. Never miss a dividend payment.{% endblock %}
-{% block meta_keywords %}dividend calendar, upcoming dividends, dividend schedule, ex-dividend dates, dividend tracker{% endblock %}
+{% block title %}Dividend Calendar {{ month_name }} {{ year }} - TSX Ex-Dividend Dates & Payment Dates | StockFolio{% endblock %}
+{% block meta_title %}TSX Dividend Calendar - Ex-Dividend Dates & Upcoming Dividend Payments{% endblock %}
+{% block meta_description %}Track upcoming ex-dividend dates and dividend payment dates for all TSX-listed Canadian stocks. Never miss a dividend — filter by your portfolio or watchlist and plan your stock purchases around key dates.{% endblock %}
+{% block meta_keywords %}dividend calendar, ex-dividend dates Canada, TSX dividend schedule, upcoming dividends TSX, dividend payment dates, Canadian dividend calendar, ex-dividend date tracker, dividend investor calendar, TSX dividend dates {{ year }}, when is next dividend, dividend calendar Canada, monthly dividend stocks TSX, dividend schedule Canada{% endblock %}
+
+{% block og_title %}TSX Dividend Calendar - Ex-Dividend & Payment Dates | StockFolio{% endblock %}
+{% block og_description %}Track upcoming ex-dividend dates and dividend payment dates for all TSX Canadian stocks. Filter by your portfolio or watchlist.{% endblock %}
+{% block twitter_title %}TSX Dividend Calendar {{ month_name }} {{ year }} | StockFolio{% endblock %}
+{% block twitter_description %}Never miss an ex-dividend date. Track upcoming dividend payments for all TSX stocks.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "TSX Dividend Calendar - {{ month_name }} {{ year }}",
+  "description": "Track upcoming ex-dividend dates and dividend payment dates for all TSX-listed Canadian stocks in {{ month_name }} {{ year }}.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'dividend_calendar' %}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "Dividend Calendar", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'dividend_calendar' %}" }
+    ]
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is an ex-dividend date?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The ex-dividend date is the cutoff date to own shares and qualify for the next dividend payment. If you buy on or after the ex-date, you will not receive that dividend. You must purchase shares at least one business day before the ex-dividend date." }
+      },
+      {
+        "@type": "Question",
+        "name": "How long after the ex-dividend date is the dividend paid?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Most Canadian TSX-listed companies pay dividends 2–4 weeks after the ex-dividend date. The exact payment date is listed alongside the ex-date on this calendar." }
+      },
+      {
+        "@type": "Question",
+        "name": "Which TSX stocks pay monthly dividends?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Many Canadian REITs, income trusts, and some dividend ETFs pay monthly dividends. Popular monthly payers on the TSX include Granite REIT, RioCan REIT, and various income-focused closed-end funds. Check the dividend frequency column on each stock's detail page." }
+      }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

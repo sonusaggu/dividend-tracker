@@ -2,7 +2,40 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Earnings Calendar - StockFolio{% endblock %}
+{% block title %}Earnings Calendar - TSX Stocks Earnings Dates & EPS Results | StockFolio{% endblock %}
+{% block meta_title %}TSX Earnings Calendar - Upcoming Earnings Dates & EPS Estimates{% endblock %}
+{% block meta_description %}Track upcoming earnings announcements for Canadian TSX stocks. See EPS estimates, revenue forecasts, and past earnings surprises. Never be caught off guard by an earnings report again.{% endblock %}
+{% block meta_keywords %}earnings calendar, TSX earnings, Canadian stock earnings, earnings dates, EPS estimates, earnings announcements, earnings surprises, quarterly earnings Canada, TSX earnings calendar, stock earnings tracker, Canadian stocks earnings report, EPS beat miss, revenue earnings TSX{% endblock %}
+
+{% block og_title %}TSX Earnings Calendar - Upcoming Earnings Dates | StockFolio{% endblock %}
+{% block og_description %}Track upcoming earnings announcements for Canadian TSX stocks. See EPS estimates, revenue forecasts, and past earnings surprises.{% endblock %}
+{% block twitter_title %}TSX Earnings Calendar - Upcoming Earnings Dates | StockFolio{% endblock %}
+{% block twitter_description %}Track upcoming earnings announcements for Canadian TSX stocks. See EPS estimates, revenue forecasts, and past earnings surprises.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "TSX Earnings Calendar",
+  "description": "Track upcoming earnings announcements for Canadian TSX-listed stocks. View EPS estimates, revenue forecasts, and historical earnings surprises.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'earnings_calendar' %}",
+  "isPartOf": { "@type": "WebSite", "name": "StockFolio", "url": "{{ request.scheme }}://{{ request.get_host }}" },
+  "about": {
+    "@type": "Thing",
+    "name": "Stock Earnings Calendar",
+    "description": "Calendar of upcoming and past earnings releases for TSX-listed Canadian stocks"
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "Earnings Calendar", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'earnings_calendar' %}" }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-8">

@@ -5,7 +5,12 @@
 {% block title %}{% if page_obj.number > 1 %}Page {{ page_obj.number }} — {% endif %}All Stocks - Browse TSX Dividend Stocks | StockFolio{% endblock %}
 {% block meta_title %}Browse All TSX Dividend Stocks - Dividend Screener & Filter{% endblock %}
 {% block meta_description %}{% if page_obj.number > 1 %}Page {{ page_obj.number }} of TSX dividend stocks. {% endif %}Browse and search all TSX dividend stocks. Filter by sector, dividend yield, price, and frequency. Find high-yield Canadian dividend stocks and build your portfolio.{% endblock %}
-{% block meta_keywords %}all stocks, TSX stocks, dividend stocks list, stock screener, TSX dividend stocks, Canadian dividend stocks, high yield dividend stocks, dividend filter, filter by sector, dividend yield filter, stock search, TSX dividend list, Canadian stocks, dividend investing, stock screener Canada{% endblock %}
+{% block meta_keywords %}all stocks, TSX stocks, dividend stocks list, stock screener, TSX dividend stocks, Canadian dividend stocks, high yield dividend stocks Canada, dividend filter, filter by sector, dividend yield filter, stock search Canada, TSX dividend list, Canadian stocks, dividend investing Canada, stock screener Canada, best dividend stocks TSX, TFSA dividend stocks, RRSP dividend stocks, Canadian income stocks, dividend yield 5 percent Canada, dividend aristocrats Canada, monthly dividend TSX, top TSX stocks, financial sector Canada, energy dividend stocks Canada, utility dividend stocks Canada, real estate dividend stocks REIT{% endblock %}
+
+{% block og_title %}Browse All TSX Dividend Stocks - Stock Screener | StockFolio{% endblock %}
+{% block og_description %}Search and filter {{ dividend_stocks_count|intcomma }}+ TSX dividend stocks by yield, sector, and frequency. Find the best Canadian dividend stocks for your portfolio.{% endblock %}
+{% block twitter_title %}TSX Dividend Stock Screener | StockFolio{% endblock %}
+{% block twitter_description %}Search and filter {{ dividend_stocks_count|intcomma }}+ TSX dividend stocks by yield, sector, and frequency.{% endblock %}
 
 {# Canonical: always points to page 1 (or no page param) for paginated results #}
 {% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_stocks' %}{% if search_query %}?search={{ search_query }}{% endif %}{% endblock %}

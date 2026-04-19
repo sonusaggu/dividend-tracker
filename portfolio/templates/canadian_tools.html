@@ -1,9 +1,55 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Canadian Tax & Investment Tools - StockFolio{% endblock %}
+{% block title %}Canadian Tax & Investment Tools - Dividend Tax Credit, Capital Gains, RRSP TFSA | StockFolio{% endblock %}
+{% block meta_title %}Free Canadian Investment Tax Calculators - Dividend Tax Credit, Capital Gains, RRSP & TFSA{% endblock %}
+{% block meta_description %}Free Canadian tax calculators for dividend tax credits, capital gains tax, RRSP contribution room, and TFSA limits. Built for TSX stock investors to maximize after-tax income from Canadian dividend stocks.{% endblock %}
+{% block meta_keywords %}Canadian dividend tax credit calculator, capital gains tax Canada, RRSP contribution room calculator, TFSA contribution limit 2024, Canadian investment tax tools, eligible dividends tax Canada, dividend tax credit Ontario, marginal tax rate Canada, Canadian stock tax calculator, TSX tax tools, RRSP vs TFSA calculator, after-tax dividend income Canada, non-eligible dividends Canada{% endblock %}
 
-{% block meta_description %}Free Canadian tax calculators for dividend tax credits, capital gains, RRSP, and TFSA contribution limits. Perfect for TSX stock investors.{% endblock %}
+{% block og_title %}Canadian Investment Tax Calculators - Dividend Tax Credit, Capital Gains, RRSP & TFSA | StockFolio{% endblock %}
+{% block og_description %}Free Canadian tax calculators for TSX investors. Calculate dividend tax credits, capital gains, RRSP room, and TFSA limits by province.{% endblock %}
+{% block twitter_title %}Canadian Investment Tax Calculators | StockFolio{% endblock %}
+{% block twitter_description %}Free Canadian tax calculators for TSX investors. Calculate dividend tax credits, capital gains, RRSP room, and TFSA limits.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Canadian Tax & Investment Tools",
+  "description": "Free calculators for Canadian investors: dividend tax credits by province, capital gains tax, RRSP contribution room, and TFSA limits.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'canadian_tools' %}",
+  "isPartOf": { "@type": "WebSite", "name": "StockFolio", "url": "{{ request.scheme }}://{{ request.get_host }}" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "Canadian Tools", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'canadian_tools' %}" }
+    ]
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is the Canadian dividend tax credit calculated?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Eligible dividends from Canadian corporations are grossed up by 38% and then a federal tax credit of 15.02% applies, plus a provincial credit that varies by province. The net result is that eligible dividends are taxed at a much lower effective rate than employment income." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the TFSA contribution limit for 2024?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The TFSA annual contribution limit for 2024 is $7,000. The cumulative lifetime limit for a Canadian resident who was 18+ in 2009 is $95,000 as of 2024. Unused room carries forward indefinitely." }
+      },
+      {
+        "@type": "Question",
+        "name": "How much of capital gains is taxable in Canada?",
+        "acceptedAnswer": { "@type": "Answer", "text": "For individuals, 50% of capital gains are included in taxable income for gains up to $250,000 annually. Above $250,000, the inclusion rate increases to 66.67% as of 2024 under proposed federal changes." }
+      }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

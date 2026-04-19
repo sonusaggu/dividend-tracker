@@ -2,9 +2,38 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Stock Comparison Tool - Compare Stocks Side-by-Side | StockFolio{% endblock %}
-{% block meta_title %}Stock Comparison Tool - Compare Dividend Stocks{% endblock %}
-{% block meta_description %}Compare up to 3 stocks side-by-side. Compare dividend yield, P/E ratio, growth, price, and more. Make informed investment decisions.{% endblock %}
+{% block title %}Stock Comparison Tool - Compare TSX Stocks Side-by-Side | StockFolio{% endblock %}
+{% block meta_title %}Compare TSX Stocks Side-by-Side - Dividend Yield, P/E, EPS & More{% endblock %}
+{% block meta_description %}Free TSX stock comparison tool. Compare up to 3 Canadian stocks side-by-side on dividend yield, payout ratio, P/E ratio, EPS, 52-week range, and analyst ratings. Find the best dividend stock for your portfolio.{% endblock %}
+{% block meta_keywords %}compare TSX stocks, stock comparison Canada, compare dividend stocks, TSX stock comparison tool, compare Canadian stocks, best dividend stock Canada, dividend yield comparison, stock P/E comparison, Canadian stock analysis, compare RY TD BNS, compare bank stocks Canada, stock screener comparison, TSX stock picker{% endblock %}
+
+{% block og_title %}TSX Stock Comparison Tool - Compare Up to 3 Stocks | StockFolio{% endblock %}
+{% block og_description %}Free tool to compare TSX stocks side-by-side on dividend yield, P/E, EPS, payout ratio, and more. Find the best Canadian dividend stock.{% endblock %}
+{% block twitter_title %}TSX Stock Comparison Tool | StockFolio{% endblock %}
+{% block twitter_description %}Compare up to 3 Canadian stocks side-by-side on dividend yield, P/E, EPS, and analyst ratings.{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "TSX Stock Comparison Tool",
+  "description": "Compare up to 3 TSX-listed stocks side-by-side on dividend yield, payout ratio, P/E ratio, EPS, 52-week price range, and analyst ratings.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'stock_comparison' %}",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
+      { "@type": "ListItem", "position": 2, "name": "Stock Comparison", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'stock_comparison' %}" }
+    ]
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
