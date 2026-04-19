@@ -6092,6 +6092,266 @@ def big6_banks_dashboard(request):
     return render(request, 'big6_banks_dashboard.html', context)
 
 
+@cache_control(max_age=1800)
+def recommendations_view(request):
+    """Stock recommendations by risk profile: Low Risk, Balanced, High Risk.
+    Separated into individual Stocks vs ETFs tabs.
+    ETFs are identified by 'ETF', 'Fund', or 'Index' in the company name.
+    """
+    from django.db.models import Subquery, OuterRef
+
+    # Use the proven StockService base (show_in_listing=True + known-good annotations)
+    # then layer on the extra fields we need for scoring.
+    base_qs = StockService.get_stocks_with_annotations().filter(has_dividend=True).annotate(
+        fiftytwo_high=Subquery(
+            StockPrice.objects.filter(stock=OuterRef('pk'))
+            .order_by('-price_date').values('fiftytwo_week_high')[:1]
+        ),
+        fiftytwo_low=Subquery(
+            StockPrice.objects.filter(stock=OuterRef('pk'))
+            .order_by('-price_date').values('fiftytwo_week_low')[:1]
+        ),
+        latest_eps=Subquery(
+            ValuationMetric.objects.filter(stock=OuterRef('pk'))
+            .order_by('-metric_date').values('eps')[:1]
+        ),
+        buy_count=Subquery(
+            AnalystRating.objects.filter(stock=OuterRef('pk'))
+            .order_by('-rating_date').values('buy_count')[:1]
+        ),
+        hold_count=Subquery(
+            AnalystRating.objects.filter(stock=OuterRef('pk'))
+            .order_by('-rating_date').values('hold_count')[:1]
+        ),
+        sell_count=Subquery(
+            AnalystRating.objects.filter(stock=OuterRef('pk'))
+            .order_by('-rating_date').values('sell_count')[:1]
+        ),
+    )
+
+    # Split into individual stocks vs ETFs by company name
+    ETF_PATTERN = r'ETF|Fund|Index'
+    stocks_qs = base_qs.exclude(company_name__iregex=ETF_PATTERN)
+    etfs_qs = base_qs.filter(company_name__iregex=ETF_PATTERN)
+
+    # ----- Scoring helpers ----- #
+    SAFE_SECTORS = {'Financials', 'Utilities', 'Consumer Staples', 'Real Estate'}
+    RISKY_SECTORS = {'Technology', 'Energy', 'Materials', 'Communication Services'}
+
+    FREQUENCY_MULTIPLIER = {
+        'Monthly': 12, 'Quarterly': 4, 'Semi-Annual': 2,
+        'Semi-annual': 2, 'Annual': 1, 'annually': 1,
+    }
+
+    def _parse_market_cap(raw):
+        """Convert '$12.5B' / '$850M' style strings to a float in billions."""
+        if not raw:
+            return None
+        raw = str(raw).replace(',', '').replace('$', '').strip().upper()
+        try:
+            if raw.endswith('T'):
+                return float(raw[:-1]) * 1000
+            if raw.endswith('B'):
+                return float(raw[:-1])
+            if raw.endswith('M'):
+                return float(raw[:-1]) / 1000
+            return float(raw) / 1e9
+        except (ValueError, TypeError):
+            return None
+
+    def compute_risk_score(s):
+        score = 50  # neutral baseline
+        adjustments = []
+
+        # 1. Yield component
+        y = float(s.latest_dividend_yield or 0)
+        if y >= 8:
+            adj = +20
+        elif y >= 6:
+            adj = +10
+        elif y >= 2:
+            adj = -10
+        elif y > 0:
+            adj = 0
+        else:
+            adj = +5
+        score += adj
+        adjustments.append(('yield', adj))
+
+        # 2. 52-week volatility
+        try:
+            hi = float(s.fiftytwo_high or 0)
+            lo = float(s.fiftytwo_low or 0)
+            if hi > 0 and lo > 0 and lo > 0:
+                vol = (hi - lo) / lo * 100
+                if vol >= 60:
+                    adj = +20
+                elif vol >= 40:
+                    adj = +10
+                elif vol >= 20:
+                    adj = +5
+                elif vol < 10:
+                    adj = -10
+                else:
+                    adj = 0
+                score += adj
+                adjustments.append(('volatility', adj))
+        except (ValueError, TypeError):
+            pass
+
+        # 3. Payout ratio (dynamic)
+        try:
+            freq_mult = FREQUENCY_MULTIPLIER.get(s.latest_dividend_frequency, 4)
+            annual_div = float(s.latest_dividend_amount or 0) * freq_mult
+            eps = float(s.latest_eps or 0)
+            if eps > 0 and annual_div > 0:
+                payout = annual_div / eps
+                if payout > 1.0:
+                    adj = +15
+                elif payout > 0.80:
+                    adj = +8
+                elif payout > 0.60:
+                    adj = +3
+                elif payout < 0.40:
+                    adj = -8
+                else:
+                    adj = 0
+                score += adj
+                adjustments.append(('payout', adj))
+        except (ValueError, TypeError):
+            pass
+
+        # 4. Sector
+        sector = s.sector or ''
+        if sector in SAFE_SECTORS:
+            score -= 12
+            adjustments.append(('sector', -12))
+        elif sector in RISKY_SECTORS:
+            score += 10
+            adjustments.append(('sector', +10))
+
+        # 5. Analyst consensus
+        try:
+            buys = int(s.buy_count or 0)
+            holds = int(s.hold_count or 0)
+            sells = int(s.sell_count or 0)
+            total = buys + holds + sells
+            if total >= 3:
+                sell_pct = sells / total
+                buy_pct = buys / total
+                if sell_pct > 0.5:
+                    adj = +10
+                elif buy_pct > 0.6:
+                    adj = -10
+                elif buy_pct > 0.4:
+                    adj = -5
+                else:
+                    adj = 0
+                score += adj
+                adjustments.append(('analysts', adj))
+        except (ValueError, TypeError):
+            pass
+
+        # 6. Market cap (large cap = safer)
+        cap_b = _parse_market_cap(s.market_cap_value)
+        if cap_b:
+            if cap_b >= 50:
+                score -= 12
+            elif cap_b >= 10:
+                score -= 6
+            elif cap_b < 1:
+                score += 12
+
+        # 7. TSX 60 member bonus
+        if getattr(s, 'tsx60_member', False):
+            score -= 8
+
+        return max(0, min(100, round(score)))
+
+    # ----- Score helper: run for a queryset ----- #
+    def _score_qs(qs):
+        result = []
+        for s in qs:
+            risk = compute_risk_score(s)
+            result.append((risk, s))
+        result.sort(key=lambda x: x[0])
+        return result
+
+    scored_stocks = _score_qs(stocks_qs)
+    scored_etfs = _score_qs(etfs_qs)
+
+    # ----- Build card dict ----- #
+    def _build_card(risk, s):
+        freq_mult = FREQUENCY_MULTIPLIER.get(s.latest_dividend_frequency, 4)
+        annual_div = float(s.latest_dividend_amount or 0) * freq_mult
+        eps = float(s.latest_eps or 0)
+        payout = round((annual_div / eps * 100), 1) if eps > 0 and annual_div > 0 else None
+        buys = int(s.buy_count or 0)
+        holds = int(s.hold_count or 0)
+        sells = int(s.sell_count or 0)
+        total_ratings = buys + holds + sells
+        if total_ratings > 0:
+            if buys / total_ratings > 0.55:
+                consensus = 'Buy'
+            elif sells / total_ratings > 0.40:
+                consensus = 'Sell'
+            else:
+                consensus = 'Hold'
+        else:
+            consensus = None
+        return {
+            'stock': s,
+            'risk_score': risk,
+            'yield': round(float(s.latest_dividend_yield or 0), 2),
+            'pe': round(float(s.pe_ratio_value or 0), 1) if s.pe_ratio_value else None,
+            'payout': payout,
+            'price': float(s.latest_price_value or 0),
+            'sector': s.sector or '',
+            'consensus': consensus,
+            'market_cap': s.market_cap_value or '',
+        }
+
+    # Rank-based bucketing: bottom third = Low Risk, middle = Balanced, top = High Risk.
+    # Pick 9 evenly-spaced entries per bucket for variety.
+    def _bucket(scored):
+        n = len(scored)
+        if n == 0:
+            return [], [], []
+        third = max(n // 3, 1)
+        low_slice = scored[:third]
+        mid_slice = scored[third: n - third]
+        high_slice = scored[n - third:]
+
+        def _pick(items, count=9):
+            if not items:
+                return []
+            if len(items) <= count:
+                return [_build_card(r, s) for r, s in items]
+            step = len(items) / count
+            return [_build_card(*items[int(i * step)]) for i in range(count)]
+
+        return _pick(low_slice), _pick(mid_slice), _pick(list(reversed(high_slice)))
+
+    stock_low, stock_balanced, stock_high = _bucket(scored_stocks)
+    etf_low, etf_balanced, etf_high = _bucket(scored_etfs)
+
+    context = {
+        'stock_low': stock_low,
+        'stock_balanced': stock_balanced,
+        'stock_high': stock_high,
+        'etf_low': etf_low,
+        'etf_balanced': etf_balanced,
+        'etf_high': etf_high,
+        'meta_title': 'Stock Recommendations by Risk Profile | StockFolio',
+        'meta_description': (
+            'Discover Canadian dividend stocks ranked by risk profile. '
+            'Find low-risk income stocks, balanced dividend growers, or '
+            'high-yield growth picks — all tailored to your investment style.'
+        ),
+    }
+    return render(request, 'recommendations.html', context)
+
+
 def canadian_tools(request):
     """Canadian tax and investment tools page - accessible to all users"""
     context = {

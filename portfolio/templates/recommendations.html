@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Stock Recommendations by Risk Profile | StockFolio{% endblock %}
+{% block meta_title %}{{ meta_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block meta_keywords %}stock recommendations Canada, low risk dividend stocks, balanced dividend stocks, high yield stocks Canada, ETF recommendations Canada, risk profile investing, TSX dividend recommendations, safe dividend stocks Canada, dividend income investing, best Canadian dividend stocks, conservative stocks TSX, growth stocks Canada, dividend ETF Canada{% endblock %}
+
+{% block og_title %}Stock Recommendations by Risk Profile | StockFolio{% endblock %}
+{% block og_description %}{{ meta_description }}{% endblock %}
+{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'recommendations' %}{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Stock Recommendations by Risk Profile",
+  "description": "{{ meta_description }}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'recommendations' %}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}/"},
+      {"@type": "ListItem", "position": 2, "name": "Recommendations", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'recommendations' %}"}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+
+  <!-- ── Hero ── -->
+  <div class="relative rounded-2xl overflow-hidden mb-6"
+       style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f1f3d 100%);">
+    <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10"
+         style="background: radial-gradient(circle, #6366f1 0%, transparent 70%);"></div>
+    <div class="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-10"
+         style="background: radial-gradient(circle, #22d3ee 0%, transparent 70%);"></div>
+    <div class="relative z-10 px-6 py-8 sm:px-10 sm:py-12">
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300 border border-indigo-500/30 mb-3">
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+        Smart Picks
+      </span>
+      <h1 class="text-2xl sm:text-4xl font-bold text-white mb-2">Stock Recommendations</h1>
+      <p class="text-slate-300 text-sm sm:text-base max-w-2xl">
+        TSX dividend picks ranked by risk — scored on yield, 52-week volatility, payout ratio, sector, analyst consensus, and market cap.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Tabs: Stocks / ETFs ── -->
+  <div class="mb-6 flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+    <button id="tab-stocks" onclick="switchTab('stocks')"
+            class="tab-btn px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-slate-900 shadow-sm">
+      Individual Stocks
+    </button>
+    <button id="tab-etfs" onclick="switchTab('etfs')"
+            class="tab-btn px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-500 hover:text-slate-700">
+      ETFs &amp; Funds
+    </button>
+  </div>
+
+  <!-- ── Info card ── -->
+  <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+    <div class="flex gap-3">
+      <svg class="w-5 h-5 shrink-0 mt-0.5 text-indigo-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+      <p class="text-sm text-slate-600">
+        Risk score (0–100) uses: yield extremes, 52-week volatility, estimated payout ratio, sector defensiveness, analyst consensus, and market cap.
+        <span class="text-emerald-700 font-medium">Low Risk</span> = bottom third by score &mdash;
+        <span class="text-blue-700 font-medium">Balanced</span> = middle third &mdash;
+        <span class="text-rose-700 font-medium">High Risk</span> = top third. Not financial advice.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ STOCKS PANEL ══════════════════════ -->
+  <div id="panel-stocks">
+    {% include 'recommendations_panel.html' with low=stock_low balanced=stock_balanced high=stock_high label="Stock" %}
+  </div>
+
+  <!-- ══════════════════════ ETFs PANEL ══════════════════════ -->
+  <div id="panel-etfs" class="hidden">
+    {% include 'recommendations_panel.html' with low=etf_low balanced=etf_balanced high=etf_high label="ETF" %}
+  </div>
+
+  <!-- ── Disclaimer ── -->
+  <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3.5 mt-4">
+    <div class="flex gap-3">
+      <svg class="w-5 h-5 shrink-0 mt-0.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+      <p class="text-sm text-amber-800">
+        <strong>Not financial advice.</strong> Risk scores are computed algorithmically from public market data. Always consult a qualified financial advisor before making investment decisions.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(tab) {
+  const stocksPanel = document.getElementById('panel-stocks');
+  const etfsPanel = document.getElementById('panel-etfs');
+  const stocksBtn = document.getElementById('tab-stocks');
+  const etfsBtn = document.getElementById('tab-etfs');
+
+  if (tab === 'stocks') {
+    stocksPanel.classList.remove('hidden');
+    etfsPanel.classList.add('hidden');
+    stocksBtn.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+    stocksBtn.classList.remove('text-slate-500');
+    etfsBtn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+    etfsBtn.classList.add('text-slate-500');
+  } else {
+    etfsPanel.classList.remove('hidden');
+    stocksPanel.classList.add('hidden');
+    etfsBtn.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+    etfsBtn.classList.remove('text-slate-500');
+    stocksBtn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+    stocksBtn.classList.add('text-slate-500');
+  }
+}
+</script>
+{% endblock %}

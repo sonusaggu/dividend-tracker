@@ -160,6 +160,9 @@ urlpatterns = [
     # Analyst Rating Updates
     path('stock/<str:symbol>/update-rating-from-news/', views.update_rating_from_news, name='update_rating_from_news'),
 
+    # Stock Recommendations by Risk Profile
+    path('recommendations/', views.recommendations_view, name='recommendations'),
+
     # DRIP Calculator
     path('drip-calculator/', views.drip_calculator, name='drip_calculator'),
 
