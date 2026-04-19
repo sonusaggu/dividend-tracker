@@ -171,217 +171,30 @@
 <section class="hero-section">
     <div class="hero-glow"></div>
     <div class="hero-glow-2"></div>
-
-    <div class="relative max-w-7xl mx-auto px-4 py-24 sm:py-32 md:py-40">
-        <div class="text-center max-w-4xl mx-auto">
-
-            <!-- Badge -->
-            <div class="inline-flex items-center px-4 py-1.5 rounded-full hero-badge text-xs font-semibold mb-8 sm:mb-10">
-                <span class="w-1.5 h-1.5 rounded-full mr-2" style="background:#60a5fa; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></span>
+    <div class="relative max-w-7xl mx-auto px-4 py-16 sm:py-20">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="inline-flex items-center px-4 py-1.5 rounded-full hero-badge text-xs font-semibold mb-6">
+                <span class="w-1.5 h-1.5 rounded-full mr-2" style="background:#60a5fa;"></span>
                 Free dividend tracker for Canadian investors
             </div>
-
-            <!-- Headline -->
-            <h1 class="text-5xl sm:text-6xl md:text-7xl font-black text-white leading-tight tracking-tight mb-6">
-                Track dividends.<br>
-                <span class="gradient-text">Grow your wealth.</span>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-tight tracking-tight mb-5">
+                Track dividends.<br><span class="gradient-text">Grow your wealth.</span>
             </h1>
-
-            <!-- Subheadline -->
-            <p class="text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto" style="color: #94a3b8;">
-                The all-in-one platform for dividend investors. Track transactions, manage your portfolio, calculate cost basis, and get alerts for upcoming dividends.
+            <p class="text-base sm:text-lg leading-relaxed mb-8 max-w-xl mx-auto" style="color: #94a3b8;">
+                Portfolio tracker, dividend alerts, ex-date calendar, and stock screener — built for Canadian investors. Free forever.
             </p>
-
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row justify-center gap-3 mb-12">
-                <a href="{% url 'register' %}"
-                   class="hero-btn-primary inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold text-base text-white">
+            <div class="flex flex-col sm:flex-row justify-center gap-3 mb-6">
+                <a href="{% url 'register' %}" class="hero-btn-primary inline-flex items-center justify-center px-7 py-3 rounded-xl font-semibold text-sm text-white">
                     Get Started Free
-                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                 </a>
-                <a href="{% url 'demo_mode' %}"
-                   class="hero-btn-ghost inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold text-base">
-                    View Demo
-                </a>
-                <a href="#dividend-stocks"
-                   class="hero-btn-ghost inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold text-base">
-                    Explore Stocks
-                </a>
+                <a href="{% url 'demo_mode' %}" class="hero-btn-ghost inline-flex items-center justify-center px-7 py-3 rounded-xl font-semibold text-sm">View Demo</a>
+                <a href="#dividend-stocks" class="hero-btn-ghost inline-flex items-center justify-center px-7 py-3 rounded-xl font-semibold text-sm">Explore Stocks</a>
             </div>
-
-            <!-- Trust signals -->
-            <div class="flex flex-wrap justify-center items-center gap-6 text-sm" style="color: #475569;">
-                <span class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Free Forever
-                </span>
-                <span class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    No Credit Card
-                </span>
-                <span class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Instant Access
-                </span>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ═══════════════════════════════════════ STATS ══════════════════════════════════════ -->
-<section class="bg-white border-b border-slate-100 py-14">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 stagger-children">
-            <div class="text-center">
-                <div class="text-4xl md:text-5xl font-black text-slate-900 mb-2">500+</div>
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Stocks Tracked</div>
-                <div class="w-10 h-0.5 stat-accent-blue mx-auto rounded-full"></div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl md:text-5xl font-black text-slate-900 mb-2">100%</div>
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Free Forever</div>
-                <div class="w-10 h-0.5 stat-accent-green mx-auto rounded-full"></div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl md:text-5xl font-black text-slate-900 mb-2">24/7</div>
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Real-time Updates</div>
-                <div class="w-10 h-0.5 stat-accent-purple mx-auto rounded-full"></div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl md:text-5xl font-black text-slate-900 mb-2">AI</div>
-                <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Smart Analytics</div>
-                <div class="w-10 h-0.5 stat-accent-amber mx-auto rounded-full"></div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════════════════════════════════ FEATURES ═══════════════════════════════════ -->
-<section class="bg-slate-50 py-20 sm:py-24">
-    <div class="max-w-7xl mx-auto px-4">
-
-        <!-- Section heading -->
-        <div class="text-center mb-14 fade-in-up">
-            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">
-                Everything you need to invest smarter
-            </h2>
-            <p class="text-lg text-slate-500 max-w-2xl mx-auto">
-                Powerful tools built for dividend investors who want to stay organized and informed.
-            </p>
-        </div>
-
-        <!-- Primary features — 4 column grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5 stagger-children">
-
-            <!-- Stock Comparison -->
-            <div class="feature-card bg-white rounded-2xl p-6 shadow-sm">
-                <div class="w-12 h-12 feature-icon-blue rounded-xl flex items-center justify-center mb-5">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">Stock Comparison</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-5">Compare multiple stocks side-by-side with price change indicators and comprehensive metrics.</p>
-                <a href="{% url 'stock_comparison' %}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold text-sm transition">
-                    Try it now
-                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-
-            <!-- Stock Tags -->
-            <div class="feature-card bg-white rounded-2xl p-6 shadow-sm">
-                <div class="w-12 h-12 feature-icon-violet rounded-xl flex items-center justify-center mb-5">
-                    <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">Stock Tags</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-5">Organize stocks with custom labels like "High Yield", "Growth", or "Dividend Aristocrat".</p>
-                <span class="inline-flex items-center text-violet-600 font-semibold text-sm">Organize smarter</span>
-            </div>
-
-            <!-- Watchlist Groups -->
-            <div class="feature-card bg-white rounded-2xl p-6 shadow-sm">
-                <div class="w-12 h-12 feature-icon-green rounded-xl flex items-center justify-center mb-5">
-                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">Watchlist Groups</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-5">Group watchlist stocks by sector, strategy, or any custom category you define.</p>
-                <span class="inline-flex items-center text-emerald-600 font-semibold text-sm">Better organization</span>
-            </div>
-
-            <!-- DRIP Calculator -->
-            <div class="feature-card bg-white rounded-2xl p-6 shadow-sm">
-                <div class="w-12 h-12 feature-icon-amber rounded-xl flex items-center justify-center mb-5">
-                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                    </svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">DRIP Calculator</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-5">See how your portfolio grows with automatic dividend reinvestment over time.</p>
-                <a href="{% url 'drip_calculator' %}" class="inline-flex items-center text-amber-600 hover:text-amber-700 font-semibold text-sm transition">
-                    Calculate now
-                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Secondary features — 3 column -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div class="card card-hover p-5">
-                <div class="flex items-start space-x-4">
-                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm mb-1">Social Sharing</h4>
-                        <p class="text-sm text-slate-500 leading-relaxed">Share stocks with friends via WhatsApp, Twitter, Facebook, and more.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card card-hover p-5">
-                <div class="flex items-start space-x-4">
-                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm mb-1">Enhanced Dashboard</h4>
-                        <p class="text-sm text-slate-500 leading-relaxed">Performance metrics, sector allocation charts, and full transaction history.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card card-hover p-5">
-                <div class="flex items-start space-x-4">
-                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm mb-1">AI Rating Updates</h4>
-                        <p class="text-sm text-slate-500 leading-relaxed">Analyst ratings automatically updated based on positive news sentiment.</p>
-                    </div>
-                </div>
+            <div class="flex flex-wrap justify-center items-center gap-5 text-xs" style="color: #475569;">
+                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Free Forever</span>
+                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>No Credit Card</span>
+                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Instant Access</span>
             </div>
         </div>
     </div>
@@ -427,101 +240,107 @@
         {% include 'components/sponsored_content.html' %}
 
         {% if upcoming_dividends %}
-        <!-- Table -->
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-10">
-            <div class="overflow-x-auto md:overflow-x-visible">
-                <table class="w-full" style="table-layout: fixed; width: 100%;">
-                    <thead>
-                        <tr class="border-b border-slate-100" style="background: #f8fafc;">
-                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider" style="width: 18%; min-width: 110px;">Symbol</th>
-                            <th class="px-4 md:px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider" style="width: 25%; min-width: 120px; max-width: 240px;">Company</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell" style="width: 10%;">Price</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider" style="width: 10%;">Dividend</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell" style="width: 9%;">Yield</th>
-                            <th class="px-4 md:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider" style="width: 16%;">Ex-Date</th>
-                            <th class="px-4 md:px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider" style="width: 12%;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for stock in upcoming_dividends %}
-                        <tr class="stock-row transition-colors duration-150">
-                            <!-- Symbol -->
-                            <td class="px-4 md:px-6 py-4" style="min-width: 110px;">
-                                <div class="flex items-center space-x-2.5">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm"
-                                         style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
-                                        {{ stock.symbol|slice:":2" }}
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="font-bold text-slate-900 text-sm">{{ stock.symbol }}</span>
-                                            <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">Div</span>
-                                        </div>
-                                        <div class="text-xs text-slate-400 mt-0.5">{{ stock.frequency|default:"N/A" }}</div>
-                                    </div>
+
+        <!-- ── Mobile cards (hidden on sm+) ── -->
+        <div class="sm:hidden space-y-3 mb-8">
+            {% for stock in upcoming_dividends %}
+            <a href="{% url 'stock_detail' stock.symbol stock.seo_slug %}"
+               class="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 active:scale-[0.99] transition-transform">
+                <!-- Avatar -->
+                <div class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-black text-xs text-white"
+                     style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                    {{ stock.symbol|slice:":2" }}
+                </div>
+                <!-- Identity -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                        <span class="font-black text-slate-900 text-sm">{{ stock.symbol }}</span>
+                        {% if stock.dividend_yield %}
+                        <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">{{ stock.dividend_yield|floatformat:1 }}%</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-400 truncate">{{ stock.company_name }}</p>
+                </div>
+                <!-- Right: ex-date + dividend -->
+                <div class="flex-shrink-0 text-right">
+                    {% if stock.ex_dividend_date %}
+                    <div class="text-xs font-black text-blue-600">{{ stock.ex_dividend_date|date:"M d" }}</div>
+                    <div class="text-[10px] font-semibold {% if stock.days_until is not None and stock.days_until <= 3 %}text-red-500{% elif stock.days_until is not None and stock.days_until <= 7 %}text-orange-500{% else %}text-slate-400{% endif %}">
+                        {% if stock.days_until == 0 %}Today
+                        {% elif stock.days_until is not None and stock.days_until < 0 %}Passed
+                        {% elif stock.days_until is not None %}{{ stock.days_until }}d{% else %}TBD{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-xs text-slate-300">TBD</div>
+                    {% endif %}
+                    <div class="text-[10px] text-slate-500 mt-0.5">${{ stock.dividend_amount|floatformat:2 }}/sh</div>
+                </div>
+                <!-- Chevron -->
+                <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- ── Desktop table (hidden on mobile) ── -->
+        <div class="hidden sm:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-10">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-slate-100" style="background: #f8fafc;">
+                        <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Symbol</th>
+                        <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Company</th>
+                        <th class="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Price</th>
+                        <th class="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Dividend</th>
+                        <th class="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Yield</th>
+                        <th class="px-5 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ex-Date</th>
+                        <th class="px-5 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for stock in upcoming_dividends %}
+                    <tr class="stock-row transition-colors duration-150">
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xs"
+                                     style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                                    {{ stock.symbol|slice:":2" }}
                                 </div>
-                            </td>
-
-                            <!-- Company -->
-                            <td class="px-4 md:px-6 py-4" style="min-width: 120px; max-width: 240px;">
-                                <div class="text-sm font-semibold text-slate-700" style="word-break: break-word; line-height: 1.4;">{{ stock.company_name }}</div>
-                            </td>
-
-                            <!-- Price -->
-                            <td class="px-4 md:px-6 py-4 text-right hidden sm:table-cell">
-                                {% if stock.last_price != 'N/A' %}
-                                <span class="text-sm font-bold text-slate-900">${{ stock.last_price|floatformat:2 }}</span>
-                                {% else %}
-                                <span class="text-sm text-slate-300">—</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- Dividend -->
-                            <td class="px-4 md:px-6 py-4 text-right">
-                                <span class="text-sm font-bold text-slate-900">${{ stock.dividend_amount|floatformat:4 }}</span>
-                            </td>
-
-                            <!-- Yield -->
-                            <td class="px-4 md:px-6 py-4 text-right hidden md:table-cell">
-                                {% if stock.dividend_yield %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                    {{ stock.dividend_yield|floatformat:2 }}%
-                                </span>
-                                {% else %}
-                                <span class="text-sm text-slate-300">—</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- Ex-Date -->
-                            <td class="px-4 md:px-6 py-4 text-right">
-                                {% if stock.ex_dividend_date %}
                                 <div>
-                                    <div class="text-sm font-bold text-blue-600 whitespace-nowrap">{{ stock.ex_dividend_date|date:"M d, Y" }}</div>
-                                    {% if stock.days_until is not None %}
-                                    <div class="text-xs font-semibold mt-0.5 {% if stock.days_until <= 3 %}text-red-500{% elif stock.days_until <= 7 %}text-orange-500{% else %}text-slate-400{% endif %}">
-                                        {% if stock.days_until == 0 %}Today
-                                        {% elif stock.days_until < 0 %}Passed
-                                        {% else %}{{ stock.days_until }}d away{% endif %}
-                                    </div>
-                                    {% endif %}
+                                    <div class="font-bold text-slate-900 text-sm">{{ stock.symbol }}</div>
+                                    <div class="text-xs text-slate-400">{{ stock.frequency|default:"N/A" }}</div>
                                 </div>
-                                {% else %}
-                                <span class="text-sm text-slate-300">TBD</span>
-                                {% endif %}
-                            </td>
-
-                            <!-- Action -->
-                            <td class="px-4 md:px-6 py-4 text-center">
-                                <a href="{% url 'stock_detail' stock.symbol stock.seo_slug %}"
-                                   class="btn btn-primary btn-sm whitespace-nowrap">
-                                    View
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 max-w-[200px]">
+                            <div class="text-sm text-slate-700 truncate">{{ stock.company_name }}</div>
+                        </td>
+                        <td class="px-5 py-4 text-right hidden lg:table-cell">
+                            {% if stock.last_price != 'N/A' %}<span class="text-sm font-bold text-slate-900">${{ stock.last_price|floatformat:2 }}</span>
+                            {% else %}<span class="text-slate-300">—</span>{% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            <span class="text-sm font-bold text-slate-900">${{ stock.dividend_amount|floatformat:4 }}</span>
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            {% if stock.dividend_yield %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">{{ stock.dividend_yield|floatformat:2 }}%</span>
+                            {% else %}<span class="text-slate-300">—</span>{% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            {% if stock.ex_dividend_date %}
+                            <div class="text-sm font-bold text-blue-600 whitespace-nowrap">{{ stock.ex_dividend_date|date:"M d, Y" }}</div>
+                            {% if stock.days_until is not None %}
+                            <div class="text-xs mt-0.5 {% if stock.days_until <= 3 %}text-red-500 font-semibold{% elif stock.days_until <= 7 %}text-orange-500 font-semibold{% else %}text-slate-400{% endif %}">
+                                {% if stock.days_until == 0 %}Today{% elif stock.days_until < 0 %}Passed{% else %}{{ stock.days_until }}d away{% endif %}
+                            </div>{% endif %}
+                            {% else %}<span class="text-slate-300 text-sm">TBD</span>{% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-center">
+                            <a href="{% url 'stock_detail' stock.symbol stock.seo_slug %}" class="btn btn-primary btn-sm whitespace-nowrap">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
         <!-- View all button -->
@@ -558,28 +377,63 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════ CTA BAND ═══════════════════════════════════ -->
+<!-- ══════════════════════ WHAT YOU GET (logged-out only) ══════════════════════ -->
 {% if not user.is_authenticated %}
-<section class="cta-band py-16 sm:py-20">
-    <div class="max-w-3xl mx-auto px-4 text-center">
-        <h2 class="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">
-            Start tracking dividends today
-        </h2>
-        <p class="text-lg mb-10" style="color: #94a3b8;">
-            Join thousands of Canadian investors who use StockFolio to manage their dividend portfolios — completely free.
-        </p>
-        <div class="flex flex-col sm:flex-row justify-center gap-3">
+<section class="py-10 border-t border-slate-100" style="background: #f8fafc;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Free account unlocks</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">Portfolio Tracker</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">P&amp;L + income</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">Dividend Alerts</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Before ex-dates</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">Watchlist</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Track any stock</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">Income Goal</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">$1k/mo tracker</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">Full Screener</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ dividend_stocks_count|intcomma }}+ stocks</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-100 p-3.5 text-center shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <p class="text-xs font-black text-slate-800">DRIP + Tax Tools</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Canadian calculators</p>
+            </div>
+        </div>
+        <div class="text-center">
             <a href="{% url 'register' %}"
-               class="hero-btn-primary inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold text-base text-white">
-                Create Free Account
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
+               class="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-black text-white text-sm shadow-lg transition-all active:scale-95"
+               style="background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 4px 16px rgba(37,99,235,0.35);">
+                Create Free Account — Takes 30 Seconds
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
             </a>
-            <a href="{% url 'demo_mode' %}"
-               class="hero-btn-ghost inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold text-base">
-                Explore the Demo
-            </a>
+            <p class="text-[11px] text-slate-400 mt-2">No credit card · No trial</p>
         </div>
     </div>
 </section>
