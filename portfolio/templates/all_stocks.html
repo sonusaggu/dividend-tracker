@@ -266,314 +266,200 @@
             </div>
         </div>
 
-        <!-- Search and Filters -->
-        <div class="card p-4 sm:p-6 mb-4 sm:mb-6">
-            <form method="get" class="space-y-4">
-                <!-- Basic Filters Row -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
-                    <!-- Search Input -->
-                    <div class="md:col-span-2 relative" id="search-container">
-                        <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Search</label>
-                        <div class="relative">
-                            <input
-                                type="text"
-                                id="stock-search-input"
-                                name="search"
-                                placeholder="Symbol or company name… e.g. TD, Royal Bank"
-                                value="{{ search_query }}"
-                                autocomplete="off"
-                                class="w-full pl-10 pr-9 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-semibold placeholder:font-normal"
-                            >
-                            <svg id="stocks-search-icon" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" style="width:1rem;height:1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            <svg id="stocks-search-spinner" class="hidden absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-blue-500 pointer-events-none" style="width:1rem;height:1rem;" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            <button type="button" id="stocks-search-clear"
-                                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 flex items-center justify-center transition">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden"></div>
-                        <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
-                            <div class="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <h4 class="text-xs font-black text-slate-600 uppercase tracking-wide">Recent Searches</h4>
-                            </div>
-                            <div id="recent-searches-list" class="p-1.5">
-                                {% for search in recent_searches %}
-                                <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl text-sm font-semibold text-slate-700 recent-search-item flex items-center gap-2" data-search="{{ search }}">
-                                    <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    {{ search }}
-                                </button>
-                                {% empty %}
-                                <p class="px-4 py-3 text-sm text-slate-400">No recent searches</p>
-                                {% endfor %}
-                            </div>
-                        </div>
+        <!-- ── Search & Filter ── -->
+        <form method="get" id="screener-form">
+
+            <!-- Search bar -->
+            <div class="relative mb-3" id="search-container">
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <svg id="stocks-search-spinner" class="hidden absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-blue-500 pointer-events-none" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <input type="text" id="stock-search-input" name="search"
+                       value="{{ search_query }}" autocomplete="off"
+                       placeholder="Search by symbol or company name… e.g. TD, Royal Bank"
+                       class="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-slate-200 bg-white text-base font-medium placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+                {% if search_query %}
+                <a href="{% url 'all_stocks' %}" class="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </a>
+                {% endif %}
+                <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden"></div>
+                <div id="recent-searches" class="hidden absolute top-full left-0 right-0 z-50 mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Recent Searches</span>
                     </div>
-                    
-                    <!-- Sector Filter -->
-                    <div>
-                        <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Sector</label>
-                        <select 
-                            name="sector" 
-                            class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                        >
+                    <div id="recent-searches-list" class="p-1.5">
+                        {% for s in recent_searches %}
+                        <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl text-sm text-slate-700 recent-search-item flex items-center gap-2" data-search="{{ s }}">
+                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {{ s }}
+                        </button>
+                        {% empty %}
+                        <p class="px-4 py-3 text-sm text-slate-400">No recent searches</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick preset chips -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <span class="text-xs font-semibold text-slate-400 self-center mr-1">Quick:</span>
+                <a href="?min_yield=3&sort_by=yield" class="preset-chip {% if min_yield == '3' and sort_by == 'yield' %}active{% endif %}">📈 High Yield 3%+</a>
+                <a href="?sort_by=dividend_date" class="preset-chip {% if not search_query and not sector_filter and not min_yield and sort_by == 'dividend_date' %}active{% endif %}">📅 Upcoming Ex-Dates</a>
+                <a href="?tsx60=on" class="preset-chip {% if tsx60_only and not search_query and not sector_filter %}active{% endif %}">⭐ TSX 60 Only</a>
+                <a href="?sort_by=market_cap" class="preset-chip {% if sort_by == 'market_cap' and not min_yield %}active{% endif %}">🏦 Large Cap</a>
+                <a href="?frequency=Monthly&sort_by=yield" class="preset-chip {% if dividend_frequency == 'Monthly' %}active{% endif %}">📆 Monthly Payers</a>
+            </div>
+
+            <!-- Filter row -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+                <!-- Main filters -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-100">
+                    <!-- Sector -->
+                    <div class="px-4 py-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Sector</label>
+                        <select name="sector" onchange="this.form.submit()"
+                                class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none cursor-pointer">
                             <option value="">All Sectors</option>
                             {% for sector in sectors %}
                             <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>{{ sector }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    
                     <!-- Sort -->
-                    <div>
-                        <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Sort By</label>
-                        <select 
-                            name="sort_by" 
-                            class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                        >
-                            <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Dividend</option>
+                    <div class="px-4 py-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Sort By</label>
+                        <select name="sort_by" onchange="this.form.submit()"
+                                class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none cursor-pointer">
+                            <option value="dividend_date" {% if sort_by == 'dividend_date' %}selected{% endif %}>Upcoming Ex-Date</option>
+                            <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Highest Yield</option>
                             <option value="dividend_amount" {% if sort_by == 'dividend_amount' %}selected{% endif %}>Dividend Amount</option>
-                            <option value="yield" {% if sort_by == 'yield' %}selected{% endif %}>Dividend Yield</option>
-                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price (High to Low)</option>
                             <option value="market_cap" {% if sort_by == 'market_cap' %}selected{% endif %}>Market Cap</option>
+                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
                             <option value="pe_ratio" {% if sort_by == 'pe_ratio' %}selected{% endif %}>P/E Ratio</option>
-                            <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol (A-Z)</option>
-                            <option value="sector" {% if sort_by == 'sector' %}selected{% endif %}>Sector</option>
+                            <option value="symbol" {% if sort_by == 'symbol' %}selected{% endif %}>Symbol A–Z</option>
                         </select>
                     </div>
+                    <!-- Min Yield -->
+                    <div class="px-4 py-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Min Yield %</label>
+                        <input type="number" name="min_yield" value="{{ min_yield }}" min="0" max="100" step="0.5"
+                               placeholder="e.g. 3"
+                               class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none placeholder:text-slate-300">
+                    </div>
+                    <!-- Max Yield -->
+                    <div class="px-4 py-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Max Yield %</label>
+                        <input type="number" name="max_yield" value="{{ max_yield }}" min="0" max="100" step="0.5"
+                               placeholder="e.g. 10"
+                               class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none placeholder:text-slate-300">
+                    </div>
                 </div>
-                
-                <!-- Advanced Filters (Collapsible) -->
-                <details class="group">
-                    <summary class="cursor-pointer text-sm font-medium text-slate-700 hover:text-blue-600 transition flex items-center gap-2">
-                        <svg class="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                        Advanced Filters
+
+                <!-- More filters toggle -->
+                <details class="group border-t border-slate-100">
+                    <summary class="flex items-center justify-between px-4 py-2.5 cursor-pointer text-xs font-semibold text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition select-none list-none">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                            More filters
+                            {% if min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter %}
+                            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold">
+                                {{ min_price|yesno:"1,0"|add:max_price|yesno:"1,0" }}•
+                            </span>
+                            {% endif %}
+                        </span>
+                        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <!-- Yield Range -->
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Min Yield (%)</label>
-                            <input 
-                                type="number" 
-                                name="min_yield" 
-                                step="0.1" 
-                                min="0" 
-                                max="100"
-                                value="{{ min_yield }}"
-                                placeholder="0.0"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
+                    <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-100 border-t border-slate-100">
+                        <div class="px-4 py-3">
+                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Min Price $</label>
+                            <input type="number" name="min_price" value="{{ min_price }}" min="0" step="1" placeholder="e.g. 10"
+                                   class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none placeholder:text-slate-300">
                         </div>
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Max Yield (%)</label>
-                            <input 
-                                type="number" 
-                                name="max_yield" 
-                                step="0.1" 
-                                min="0" 
-                                max="100"
-                                value="{{ max_yield }}"
-                                placeholder="100.0"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
+                        <div class="px-4 py-3">
+                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Max Price $</label>
+                            <input type="number" name="max_price" value="{{ max_price }}" min="0" step="1" placeholder="e.g. 100"
+                                   class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none placeholder:text-slate-300">
                         </div>
-                        
-                        <!-- Price Range -->
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Min Price ($)</label>
-                            <input 
-                                type="number" 
-                                name="min_price" 
-                                step="0.01" 
-                                min="0"
-                                value="{{ min_price }}"
-                                placeholder="0.00"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Max Price ($)</label>
-                            <input 
-                                type="number" 
-                                name="max_price" 
-                                step="0.01" 
-                                min="0"
-                                value="{{ max_price }}"
-                                placeholder="9999.99"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                        </div>
-                        
-                        <!-- Dividend Frequency -->
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Frequency</label>
-                            <select 
-                                name="frequency" 
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                                <option value="">All Frequencies</option>
+                        <div class="px-4 py-3">
+                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Frequency</label>
+                            <select name="frequency" class="w-full text-sm font-medium text-slate-700 bg-transparent border-none outline-none cursor-pointer">
+                                <option value="">Any</option>
                                 {% for freq in frequencies %}
                                 <option value="{{ freq }}" {% if dividend_frequency == freq %}selected{% endif %}>{{ freq }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
-                        <!-- Has Dividend -->
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-slate-700 mb-1 sm:mb-2">Dividend Status</label>
-                            <select 
-                                name="has_dividend" 
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                                <option value="">All Stocks</option>
-                                <option value="yes" {% if has_dividend_filter == 'yes' %}selected{% endif %}>Has Dividends</option>
-                                <option value="no" {% if has_dividend_filter == 'no' %}selected{% endif %}>No Dividends</option>
-                            </select>
-                        </div>
-                        
-                        <!-- TSX 60 & ETF Checkboxes -->
-                        <div class="flex items-center gap-4">
+                        <div class="px-4 py-3 flex flex-col gap-2 justify-center">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    name="tsx60" 
-                                    {% if tsx60_only %}checked{% endif %}
-                                    class="w-4 h-4 text-blue-600 border-slate-200 rounded focus:ring-blue-500"
-                                >
-                                <span class="text-sm text-slate-700">TSX 60 Only</span>
+                                <input type="checkbox" name="tsx60" {% if tsx60_only %}checked{% endif %}
+                                       class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+                                <span class="text-sm text-slate-700">TSX 60 only</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    name="etf" 
-                                    {% if etf_only %}checked{% endif %}
-                                    class="w-4 h-4 text-blue-600 border-slate-200 rounded focus:ring-blue-500"
-                                >
-                                <span class="text-sm text-slate-700">ETF Only</span>
+                                <input type="checkbox" name="etf" {% if etf_only %}checked{% endif %}
+                                       class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+                                <span class="text-sm text-slate-700">ETF only</span>
                             </label>
                         </div>
                     </div>
                 </details>
-                
-                <!-- Active Filter Chips -->
-                {% if search_query or sector_filter or min_yield or max_yield or min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter %}
-                <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                    <span class="text-xs font-medium text-slate-600">Active Filters:</span>
-                    {% if search_query %}
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        Search: {{ search_query }}
-                        <a href="?{% if sector_filter %}sector={{ sector_filter }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}{% if max_yield %}max_yield={{ max_yield }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if dividend_frequency %}frequency={{ dividend_frequency }}&{% endif %}{% if tsx60_only %}tsx60=on&{% endif %}{% if etf_only %}etf=on&{% endif %}{% if has_dividend_filter %}has_dividend={{ has_dividend_filter }}&{% endif %}sort_by={{ sort_by }}" class="hover:text-blue-900">×</a>
-                    </span>
-                    {% endif %}
-                    {% if sector_filter %}
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                        Sector: {{ sector_filter }}
-                        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}{% if max_yield %}max_yield={{ max_yield }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if dividend_frequency %}frequency={{ dividend_frequency }}&{% endif %}{% if tsx60_only %}tsx60=on&{% endif %}{% if etf_only %}etf=on&{% endif %}{% if has_dividend_filter %}has_dividend={{ has_dividend_filter }}&{% endif %}sort_by={{ sort_by }}" class="hover:text-green-900">×</a>
-                    </span>
-                    {% endif %}
-                    {% if min_yield or max_yield %}
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                        Yield: {% if min_yield %}{{ min_yield }}{% else %}0{% endif %}% - {% if max_yield %}{{ max_yield }}{% else %}100{% endif %}%
-                        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if dividend_frequency %}frequency={{ dividend_frequency }}&{% endif %}{% if tsx60_only %}tsx60=on&{% endif %}{% if etf_only %}etf=on&{% endif %}{% if has_dividend_filter %}has_dividend={{ has_dividend_filter }}&{% endif %}sort_by={{ sort_by }}" class="hover:text-purple-900">×</a>
-                    </span>
-                    {% endif %}
-                    {% if tsx60_only %}
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                        TSX 60
-                        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}{% if max_yield %}max_yield={{ max_yield }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if dividend_frequency %}frequency={{ dividend_frequency }}&{% endif %}{% if etf_only %}etf=on&{% endif %}{% if has_dividend_filter %}has_dividend={{ has_dividend_filter }}&{% endif %}sort_by={{ sort_by }}" class="hover:text-yellow-900">×</a>
-                    </span>
-                    {% endif %}
-                    {% if etf_only %}
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium">
-                        ETF
-                        <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}{% if max_yield %}max_yield={{ max_yield }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if dividend_frequency %}frequency={{ dividend_frequency }}&{% endif %}{% if tsx60_only %}tsx60=on&{% endif %}{% if has_dividend_filter %}has_dividend={{ has_dividend_filter }}&{% endif %}sort_by={{ sort_by }}" class="hover:text-indigo-900">×</a>
-                    </span>
-                    {% endif %}
-                </div>
-                {% endif %}
-                
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-2">
-                    <button type="submit" class="btn btn-primary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"></path>
-                        </svg>
-                        Apply Filters
-                    </button>
-                    {% if search_query or sector_filter or min_yield or max_yield or min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter or sort_by != 'dividend_date' %}
-                    <a href="{% url 'all_stocks' %}" class="btn btn-secondary">
-                        Clear All
-                    </a>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
 
-        <!-- Quick Filter Presets -->
-        <div class="mb-4 sm:mb-6">
-            <div class="flex items-center gap-2 mb-2.5">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quick Filters</span>
+                <!-- Action bar -->
+                <div class="flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 border-t border-slate-100">
+                    <div class="flex flex-wrap gap-1.5">
+                        {% if search_query %}
+                        <span class="active-chip">{{ search_query }} <a href="?{% if sector_filter %}sector={{ sector_filter }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}{% if max_yield %}max_yield={{ max_yield }}&{% endif %}sort_by={{ sort_by }}">×</a></span>
+                        {% endif %}
+                        {% if sector_filter %}
+                        <span class="active-chip">{{ sector_filter }} <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if min_yield %}min_yield={{ min_yield }}&{% endif %}sort_by={{ sort_by }}">×</a></span>
+                        {% endif %}
+                        {% if min_yield or max_yield %}
+                        <span class="active-chip">Yield {% if min_yield %}{{ min_yield }}{% else %}0{% endif %}–{% if max_yield %}{{ max_yield }}{% else %}∞{% endif %}% <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}sort_by={{ sort_by }}">×</a></span>
+                        {% endif %}
+                        {% if tsx60_only %}<span class="active-chip">TSX 60 <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
+                        {% if etf_only %}<span class="active-chip">ETF <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
+                        {% if dividend_frequency %}<span class="active-chip">{{ dividend_frequency }} <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        {% if search_query or sector_filter or min_yield or max_yield or min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter %}
+                        <a href="{% url 'all_stocks' %}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">Clear all</a>
+                        {% endif %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <a href="?min_yield=3&sort_by=yield"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border: 1px solid #6ee7b7;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                    </svg>
-                    High Yield 3%+
-                </a>
-                <a href="?sort_by=dividend_date"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; border: 1px solid #93c5fd;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    Upcoming Ex-Dates
-                </a>
-                <a href="?tsx60=on"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; border: 1px solid #fcd34d;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                    </svg>
-                    TSX 60 Blue Chips
-                </a>
-                <a href="?min_yield=1&max_yield=5&sort_by=yield"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #5b21b6; border: 1px solid #c4b5fd;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    Balanced 1–5%
-                </a>
-                <a href="?sort_by=market_cap"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #9d174d; border: 1px solid #f9a8d4;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                    Large Cap
-                </a>
-                {% if user.is_authenticated %}
-                <a href="?has_dividend=yes&sort_by=dividend_date"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                   style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0c4a6e; border: 1px solid #7dd3fc;">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    All Dividend Payers
-                </a>
-                {% endif %}
-            </div>
-        </div>
+
+        </form>
+
+        <style>
+        .preset-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 6px 12px; border-radius: 999px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .preset-chip:hover, .preset-chip.active {
+            background: #1d4ed8; color: #fff; border-color: #1d4ed8;
+        }
+        .active-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 999px;
+            font-size: 11px; font-weight: 600;
+            background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+        }
+        .active-chip a { color: inherit; text-decoration: none; opacity: 0.7; }
+        .active-chip a:hover { opacity: 1; }
+        </style>
 
         <!-- ── Mobile Card List (visible only on mobile) ── -->
         <div class="block md:hidden space-y-2.5 mb-4">
