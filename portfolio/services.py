@@ -220,62 +220,47 @@ class PortfolioService:
     
     @staticmethod
     def get_portfolio_with_annotations(user):
-        """Get portfolio items with optimized annotations"""
+        """Get portfolio items with optimized annotations.
+        Subquery base objects are defined once and reused to avoid repeating
+        identical filter+order_by expressions for each annotated field.
+        """
+        _latest_price = StockPrice.objects.filter(
+            stock=OuterRef('stock_id')
+        ).order_by('-price_date')
+
+        _latest_div = Dividend.objects.filter(
+            stock=OuterRef('stock_id')
+        ).order_by('-ex_dividend_date')
+
         return UserPortfolio.objects.filter(user=user).select_related('stock').annotate(
-            latest_price_value=Subquery(
-                StockPrice.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-price_date').values('last_price')[:1]
-            ),
-            latest_price_date=Subquery(
-                StockPrice.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-price_date').values('price_date')[:1]
-            ),
-            latest_dividend_amount=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('amount')[:1]
-            ),
-            latest_dividend_yield=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('yield_percent')[:1]
-            ),
-            latest_dividend_frequency=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('frequency')[:1]
-            ),
-            latest_dividend_date=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('ex_dividend_date')[:1]
-            ),
+            latest_price_value=Subquery(_latest_price.values('last_price')[:1]),
+            latest_price_date=Subquery(_latest_price.values('price_date')[:1]),
+            latest_dividend_amount=Subquery(_latest_div.values('amount')[:1]),
+            latest_dividend_yield=Subquery(_latest_div.values('yield_percent')[:1]),
+            latest_dividend_frequency=Subquery(_latest_div.values('frequency')[:1]),
+            latest_dividend_date=Subquery(_latest_div.values('ex_dividend_date')[:1]),
         )
     
     @staticmethod
     def get_watchlist_with_annotations(user):
-        """Get watchlist items with optimized annotations"""
+        """Get watchlist items with optimized annotations.
+        Subquery base objects reused to avoid repeating identical filter+order_by.
+        """
+        _latest_price = StockPrice.objects.filter(
+            stock=OuterRef('stock_id')
+        ).order_by('-price_date')
+
+        _latest_div = Dividend.objects.filter(
+            stock=OuterRef('stock_id')
+        ).order_by('-ex_dividend_date')
+
         return Watchlist.objects.filter(user=user).select_related('stock').annotate(
-            latest_price_value=Subquery(
-                StockPrice.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-price_date').values('last_price')[:1]
-            ),
-            latest_price_date=Subquery(
-                StockPrice.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-price_date').values('price_date')[:1]
-            ),
-            latest_dividend_amount=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('amount')[:1]
-            ),
-            latest_dividend_yield=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('yield_percent')[:1]
-            ),
-            latest_dividend_date=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('ex_dividend_date')[:1]
-            ),
-            latest_dividend_frequency=Subquery(
-                Dividend.objects.filter(stock=OuterRef('stock_id'))
-                .order_by('-ex_dividend_date').values('frequency')[:1]
-            ),
+            latest_price_value=Subquery(_latest_price.values('last_price')[:1]),
+            latest_price_date=Subquery(_latest_price.values('price_date')[:1]),
+            latest_dividend_amount=Subquery(_latest_div.values('amount')[:1]),
+            latest_dividend_yield=Subquery(_latest_div.values('yield_percent')[:1]),
+            latest_dividend_date=Subquery(_latest_div.values('ex_dividend_date')[:1]),
+            latest_dividend_frequency=Subquery(_latest_div.values('frequency')[:1]),
         )
 
 

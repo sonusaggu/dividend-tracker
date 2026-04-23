@@ -391,18 +391,19 @@ def demo_mode(request):
     from portfolio.models import Stock, StockPrice, Dividend
     from django.db.models import Q
     
-    # Get some sample stocks for demo
-    demo_stocks = Stock.objects.filter(
+    # Get some sample stocks for demo — prefetch prices+dividends in 3 queries total (not 12)
+    demo_stocks = list(Stock.objects.filter(
         Q(symbol__in=['RY', 'TD', 'BNS', 'ENB', 'TRP', 'CM']) |
         Q(tsx60_member=True)
-    )[:6].select_related()
-    
-    # Get prices for demo stocks
+    ).prefetch_related(
+        Prefetch('prices', queryset=StockPrice.objects.order_by('-price_date'), to_attr='_demo_prices'),
+        Prefetch('dividends', queryset=Dividend.objects.order_by('-ex_dividend_date'), to_attr='_demo_dividends'),
+    )[:6])
+
     demo_data = []
     for stock in demo_stocks:
-        latest_price = StockPrice.objects.filter(stock=stock).order_by('-price_date').first()
-        latest_dividend = Dividend.objects.filter(stock=stock).order_by('-ex_dividend_date').first()
-        
+        latest_price = stock._demo_prices[0] if stock._demo_prices else None
+        latest_dividend = stock._demo_dividends[0] if stock._demo_dividends else None
         demo_data.append({
             'stock': stock,
             'price': latest_price.last_price if latest_price else None,
@@ -840,20 +841,28 @@ def home_view(request):
     
     affiliate_links = AffiliateLink.objects.filter(is_active=True).order_by('display_order')[:6]
     
-    # Get all active sponsored content and randomly select 2-3
-    all_sponsored = SponsoredContent.objects.filter(is_active=True).order_by('display_order')
-    sponsored_content = [c for c in all_sponsored if c.is_currently_active()]
-    
-    # Randomly select 2-3 sponsored items (or all if less than 3)
-    if len(sponsored_content) > 3:
-        sponsored_content = random.sample(sponsored_content, 3)
-    elif len(sponsored_content) > 2:
-        sponsored_content = random.sample(sponsored_content, 2)
-    # If 2 or less, show all
-    
-    # Track views for sponsored content
-    for content in sponsored_content:
-        content.track_view()
+    # Filter active sponsored content in the DB (avoid Python-side loop + per-row save)
+    now = timezone.now()
+    all_sponsored = list(SponsoredContent.objects.filter(
+        is_active=True,
+    ).filter(
+        Q(start_date__isnull=True) | Q(start_date__lte=now)
+    ).filter(
+        Q(end_date__isnull=True) | Q(end_date__gte=now)
+    ).order_by('display_order')[:10])
+
+    if len(all_sponsored) > 3:
+        sponsored_content = random.sample(all_sponsored, 3)
+    elif len(all_sponsored) > 2:
+        sponsored_content = random.sample(all_sponsored, 2)
+    else:
+        sponsored_content = all_sponsored
+
+    # Batch-increment view counts in a single UPDATE instead of one save() per row
+    if sponsored_content:
+        SponsoredContent.objects.filter(
+            id__in=[c.id for c in sponsored_content]
+        ).update(view_count=F('view_count') + 1)
     
     context = {
         'upcoming_dividends': upcoming_dividends,
@@ -2423,27 +2432,15 @@ def dividend_calendar(request):
         ex_dividend_date__lte=calendar_end
     ).select_related('stock').order_by('ex_dividend_date', 'stock__symbol')
     
-    # Apply filters
+    # Apply filters — use subquery traversal instead of fetching ID lists into Python
     if filter_type == 'portfolio' and request.user.is_authenticated:
-        # Get user's portfolio stock IDs first, then filter dividends
-        portfolio_stock_ids = list(UserPortfolio.objects.filter(
-            user=request.user
-        ).values_list('stock_id', flat=True))
-        if portfolio_stock_ids:
-            dividend_query = dividend_query.filter(stock_id__in=portfolio_stock_ids)
-        else:
-            # No stocks in portfolio, return empty queryset
-            dividend_query = dividend_query.none()
+        dividend_query = dividend_query.filter(
+            stock__userportfolio__user=request.user
+        ).distinct()
     elif filter_type == 'watchlist' and request.user.is_authenticated:
-        # Get user's watchlist stock IDs first, then filter dividends
-        watchlist_stock_ids = list(Watchlist.objects.filter(
-            user=request.user
-        ).values_list('stock_id', flat=True))
-        if watchlist_stock_ids:
-            dividend_query = dividend_query.filter(stock_id__in=watchlist_stock_ids)
-        else:
-            # No stocks in watchlist, return empty queryset
-            dividend_query = dividend_query.none()
+        dividend_query = dividend_query.filter(
+            stock__watchlist__user=request.user
+        ).distinct()
     
     # Apply advanced filters
     if sector_filter:
@@ -2747,28 +2744,31 @@ def watchlist_view(request):
             )
         )
 
+        # Evaluate queryset ONCE — reuse the list for all subsequent operations
+        watchlist_items = list(watchlist_items)
+        watchlist_stock_ids = [item.stock_id for item in watchlist_items]
+
         # Prepare data efficiently with price changes
         watchlist_data = []
         watchlist_by_group = {}  # Group watchlist items by group
         ungrouped_items = []  # Items without a group
         dividend_stocks_count = 0
         sectors = set()
-        
-        # Get upcoming dividends for watchlist stocks
+
+        # Get upcoming dividends for watchlist stocks — use stock_id__in (no queryset re-eval)
         upcoming_dividends = Dividend.objects.filter(
-            stock__in=[item.stock for item in watchlist_items],
+            stock_id__in=watchlist_stock_ids,
             ex_dividend_date__gte=today,
             ex_dividend_date__lte=today + timedelta(days=30)
         ).select_related('stock').order_by('ex_dividend_date')[:5]
-        
+
         # Get recent news for watchlist stocks
         from portfolio.models import StockNews
         recent_news = StockNews.objects.filter(
-            stock__in=[item.stock for item in watchlist_items]
+            stock_id__in=watchlist_stock_ids
         ).select_related('stock').order_by('-published_at')[:5]
-        
+
         # Get tags for all watchlist stocks
-        watchlist_stock_ids = [item.stock_id for item in watchlist_items]
         tagged_stocks = TaggedStock.objects.filter(
             tag__user=request.user,
             stock_id__in=watchlist_stock_ids
