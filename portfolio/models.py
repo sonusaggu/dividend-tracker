@@ -100,6 +100,9 @@ class ValuationMetric(models.Model):
     class Meta:
         unique_together = ['stock', 'metric_date']
         ordering = ['-metric_date']
+        indexes = [
+            models.Index(fields=['stock', '-metric_date']),
+        ]
 
 class AnalystRating(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='analyst_ratings')
@@ -114,6 +117,9 @@ class AnalystRating(models.Model):
     class Meta:
         unique_together = ['stock', 'rating_date']
         ordering = ['-rating_date']
+        indexes = [
+            models.Index(fields=['stock', '-rating_date']),
+        ]
 
 class Earnings(models.Model):
     """Store earnings calendar and earnings data"""

@@ -13,7 +13,9 @@ from datetime import date
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import Stock
+from django.db.models import Exists, OuterRef
+
+from .models import Stock, Dividend
 
 
 class StaticViewSitemap(Sitemap):
@@ -29,6 +31,7 @@ class StaticViewSitemap(Sitemap):
             ('big6_banks_dashboard',   0.8, 'daily'),
             ('canadian_tools',         0.8, 'weekly'),
             ('posts_feed',             0.7, 'daily'),
+            ('recommendations',         0.8, 'daily'),
             ('drip_calculator',        0.7, 'weekly'),
             ('contact_us',             0.5, 'monthly'),
             ('donations',              0.5, 'monthly'),
@@ -55,13 +58,15 @@ class StockSitemap(Sitemap):
     changefreq = 'daily'
 
     def items(self):
-        return Stock.objects.filter(show_in_listing=True).prefetch_related('dividends').order_by('symbol')
+        # Annotate with has_dividends flag so priority() needs no extra query per stock
+        return Stock.objects.filter(show_in_listing=True).annotate(
+            has_dividends=Exists(Dividend.objects.filter(stock=OuterRef('pk')))
+        ).only('id', 'symbol', 'tsx60_member', 'updated_at').order_by('symbol')
 
     def priority(self, obj):
-        # TSX 60 members and dividend stocks get higher priority
         if obj.tsx60_member:
             return 0.9
-        if obj.dividends.exists():
+        if obj.has_dividends:
             return 0.8
         return 0.6
 

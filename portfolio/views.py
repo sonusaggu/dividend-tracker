@@ -6092,6 +6092,7 @@ def big6_banks_dashboard(request):
     return render(request, 'big6_banks_dashboard.html', context)
 
 
+@cache_page(1800)  # Server-side cache: score 2000+ stocks once per 30 min, not on every request
 @cache_control(max_age=1800)
 def recommendations_view(request):
     """Stock recommendations by risk profile: Low Risk, Balanced, High Risk.
