@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load static %}
 
 {% block meta_description %}Create a free StockFolio account to start tracking dividend stocks, building your portfolio, and managing your investments.{% endblock %}
 {% block meta_robots %}index, follow{% endblock %}
@@ -60,18 +59,27 @@
     .auth-btn:active { transform: translateY(0); }
     .auth-btn:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
     .benefit-item { transition: all 0.2s; }
+    .step-dot {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 700;
+        flex-shrink: 0;
+    }
+    .step-dot.active { background: #2563eb; color: #fff; }
+    .step-dot.pending { background: #e2e8f0; color: #94a3b8; }
+    .step-connector { flex: 1; height: 2px; background: #e2e8f0; margin: 0 4px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="min-h-screen flex">
 
-    <!-- ── Left Panel: Benefits ──────────────────────────────── -->
+    <!-- ── Left Panel ─────────────────────────────────────────── -->
     <div class="hidden lg:flex lg:w-[46%] auth-left flex-col justify-between p-10 xl:p-14">
         <div class="auth-glow"></div>
         <div class="auth-glow-2"></div>
 
-        <!-- Logo -->
         <div class="relative z-10">
             <a href="{% url 'home' %}" class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -84,7 +92,6 @@
             </a>
         </div>
 
-        <!-- Benefits -->
         <div class="relative z-10 space-y-8">
             <div>
                 <h2 class="text-3xl xl:text-4xl font-black text-white leading-tight mb-3">
@@ -94,79 +101,19 @@
                 <p class="text-slate-400 text-sm">Join thousands of Canadian investors — it's completely free.</p>
             </div>
             <div class="space-y-3.5">
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">Track Unlimited Stocks</p>
-                        <p class="text-slate-400 text-xs">Monitor all your dividend payments</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">CSV Import (Wealthsimple)</p>
-                        <p class="text-slate-400 text-xs">Import transactions in seconds</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">Cost Basis Tracking</p>
-                        <p class="text-slate-400 text-xs">Automatic FIFO/LIFO calculations</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">Dividend Alerts</p>
-                        <p class="text-slate-400 text-xs">Never miss a payment</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">Portfolio Analytics</p>
-                        <p class="text-slate-400 text-xs">Performance tracking & ROI</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3 benefit-item">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-white text-sm font-semibold">Community Access</p>
-                        <p class="text-slate-400 text-xs">Connect with other investors</p>
-                    </div>
-                </div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">Track Unlimited Stocks</p><p class="text-slate-400 text-xs">Monitor all your dividend payments</p></div></div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">CSV Import (Wealthsimple)</p><p class="text-slate-400 text-xs">Import transactions in seconds</p></div></div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">Cost Basis Tracking</p><p class="text-slate-400 text-xs">Automatic FIFO/LIFO calculations</p></div></div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">Dividend Alerts</p><p class="text-slate-400 text-xs">Never miss a payment</p></div></div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">Portfolio Analytics</p><p class="text-slate-400 text-xs">Performance tracking &amp; ROI</p></div></div>
+                <div class="flex items-start gap-3 benefit-item"><div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style="background:rgba(16,185,129,0.2);"><svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></div><div><p class="text-white text-sm font-semibold">Community Access</p><p class="text-slate-400 text-xs">Connect with other investors</p></div></div>
             </div>
         </div>
 
         <p class="relative z-10 text-xs" style="color:#1e293b;">© {% now "Y" %} StockFolio — Free for Canadian investors</p>
     </div>
 
-    <!-- ── Right Panel: Form ──────────────────────────────────── -->
+    <!-- ── Right Panel ────────────────────────────────────────── -->
     <div class="flex-1 flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 xl:px-20 bg-white overflow-y-auto">
 
         <!-- Mobile logo -->
@@ -183,20 +130,24 @@
         </div>
 
         <div class="max-w-sm w-full mx-auto">
+
+            <!-- Step indicator -->
+            <div class="flex items-center mb-7">
+                <div class="step-dot active">1</div>
+                <div class="step-connector"></div>
+                <div class="step-dot pending">2</div>
+                <div class="step-connector"></div>
+                <div class="step-dot pending">3</div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 mb-7 -mt-5">
+                <span class="font-semibold text-blue-600">Email</span>
+                <span class="ml-1">Verify</span>
+                <span>Password</span>
+            </div>
+
             <div class="mb-6">
                 <h1 class="text-2xl font-black text-slate-900 mb-1 tracking-tight">Create your account</h1>
                 <p class="text-slate-500 text-sm">Free forever. No credit card required.</p>
-            </div>
-
-            <!-- Progress bar -->
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-bold text-blue-600">Step 1 of 2</span>
-                    <span class="text-xs text-slate-400">Account Setup</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5">
-                    <div id="progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" style="width:50%"></div>
-                </div>
             </div>
 
             <!-- Google OAuth -->
@@ -219,7 +170,7 @@
                 </div>
             </div>
 
-            <form method="post" id="registration-form" class="space-y-4">
+            <form method="post" id="reg-form" class="space-y-4">
                 {% csrf_token %}
 
                 {% if messages %}
@@ -235,43 +186,16 @@
 
                 {% if form.errors %}
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                    <p class="font-bold mb-1">Please fix the errors below:</p>
-                    <ul class="list-disc list-inside space-y-0.5">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                {{ error }}
+                            </p>
                         {% endfor %}
-                    </ul>
+                    {% endfor %}
                 </div>
                 {% endif %}
-
-                <!-- Username -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
-                        Username <span class="text-slate-400 font-normal normal-case">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <input type="text" name="username"
-                               class="auth-input {% if form.username.errors %}auth-input-error{% endif %} w-full pl-10 pr-4 py-3 rounded-xl text-sm"
-                               placeholder="Leave blank to auto-generate"
-                               value="{{ form.username.value|default:'' }}"
-                               autocomplete="username">
-                    </div>
-                    {% if form.username.errors %}
-                        <p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ form.username.errors.0 }}
-                        </p>
-                    {% else %}
-                        <p class="text-xs text-slate-400 mt-1.5">We'll generate one from your email if left blank</p>
-                    {% endif %}
-                </div>
 
                 <!-- Email -->
                 <div>
@@ -284,69 +208,21 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
                         </div>
-                        <input type="email" name="email" required
+                        <input type="email" name="email" id="email-input" required autofocus
                                class="auth-input {% if form.email.errors %}auth-input-error{% endif %} w-full pl-10 pr-4 py-3 rounded-xl text-sm"
                                placeholder="your.email@example.com"
                                value="{{ form.email.value|default:'' }}"
                                autocomplete="email">
                     </div>
-                    {% if form.email.errors %}
-                        <p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ form.email.errors.0 }}
-                        </p>
-                    {% else %}
-                        <p class="text-xs text-slate-400 mt-1.5">Gmail, Outlook, Yahoo, iCloud accepted</p>
-                    {% endif %}
+                    <p class="text-xs text-slate-400 mt-1.5">We'll send a verification link to this address</p>
                 </div>
 
-                <!-- Password -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Password</label>
-                    <div class="relative">
-                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                        </div>
-                        <input type="password" name="password1" required
-                               class="auth-input {% if form.password1.errors %}auth-input-error{% endif %} w-full pl-10 pr-4 py-3 rounded-xl text-sm"
-                               placeholder="Create a strong password"
-                               autocomplete="new-password">
-                    </div>
-                    {% if form.password1.errors %}
-                        <p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ form.password1.errors.0 }}
-                        </p>
-                    {% endif %}
-                </div>
-
-                <!-- Confirm Password -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Confirm Password</label>
-                    <div class="relative">
-                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                        </div>
-                        <input type="password" name="password2" required
-                               class="auth-input {% if form.password2.errors %}auth-input-error{% endif %} w-full pl-10 pr-4 py-3 rounded-xl text-sm"
-                               placeholder="Confirm your password"
-                               autocomplete="new-password">
-                    </div>
-                    {% if form.password2.errors %}
-                        <p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ form.password2.errors.0 }}
-                        </p>
-                    {% endif %}
-                </div>
-
-                <!-- Submit -->
-                <button type="submit" id="submit-btn" class="auth-btn w-full text-white py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                    <span id="btn-text">Create Account</span>
+                <button type="submit" id="submit-btn"
+                        class="auth-btn w-full text-white py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 mt-2">
+                    <span id="btn-text">Continue</span>
+                    <svg id="btn-arrow" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
                     <svg id="btn-loader" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -354,7 +230,6 @@
                 </button>
             </form>
 
-            <!-- Switch to login -->
             <div class="relative my-5">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
                 <div class="relative flex justify-center">
@@ -366,22 +241,15 @@
                 Sign In to Your Account
             </a>
 
-            <!-- Trust badges -->
             <div class="flex flex-wrap justify-center gap-5 mt-6">
                 <span class="flex items-center gap-1.5 text-xs text-slate-400">
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>Free Forever
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Free Forever
                 </span>
                 <span class="flex items-center gap-1.5 text-xs text-slate-400">
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>Secure & Private
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Secure &amp; Private
                 </span>
                 <span class="flex items-center gap-1.5 text-xs text-slate-400">
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>No Credit Card
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>No Credit Card
                 </span>
             </div>
         </div>
@@ -389,28 +257,15 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registration-form');
-    const progressBar = document.getElementById('progress-bar');
-    const submitBtn = document.getElementById('submit-btn');
-    const btnText = document.getElementById('btn-text');
-    const btnLoader = document.getElementById('btn-loader');
-
-    const inputs = form.querySelectorAll('input[required]');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            let filled = 0;
-            inputs.forEach(inp => { if (inp.value.trim() || inp.checked) filled++; });
-            progressBar.style.width = Math.max(20, (filled / inputs.length) * 90) + '%';
-        });
-    });
-
-    form.addEventListener('submit', function() {
-        submitBtn.disabled = true;
-        btnText.textContent = 'Creating Account...';
-        btnLoader.classList.remove('hidden');
-        progressBar.style.width = '100%';
-    });
+document.getElementById('reg-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    const text = document.getElementById('btn-text');
+    const arrow = document.getElementById('btn-arrow');
+    const loader = document.getElementById('btn-loader');
+    btn.disabled = true;
+    text.textContent = 'Sending link…';
+    arrow.classList.add('hidden');
+    loader.classList.remove('hidden');
 });
 </script>
 {% endblock %}

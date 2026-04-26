@@ -23,7 +23,7 @@ import logging
 import os
 import re
 
-from .forms import RegistrationForm
+from .forms import RegistrationForm, EmailRegistrationForm, SetPasswordForm
 from .models import Stock, Dividend, StockPrice, ValuationMetric, AnalystRating
 from .models import UserPortfolio, UserAlert, Watchlist, DividendAlert, NewsletterSubscription, StockNews, StockNote, Transaction
 from .models import WatchlistGroup, StockTag, TaggedStock, Earnings, DividendGoal
@@ -282,101 +282,70 @@ def login_view(request):
 
 @csrf_protect
 def register_view(request):
-    """User registration view with CSRF protection and email verification"""
-    # If user is already authenticated, redirect to dashboard
+    """Step 1 of email-first registration: collect email, create inactive user, send verification."""
     if request.user.is_authenticated:
         return redirect('dashboard')
-    
+
     if request.method == 'POST':
-        form = RegistrationForm(request.POST)
+        form = EmailRegistrationForm(request.POST)
         if form.is_valid():
-            try:
-                # Email validation is now handled in the form's clean_email method
-                # Additional checks are done there (format, domain, disposable, etc.)
-                # Username is auto-generated if not provided
-                user = form.save()
-                
-                # Create email verification token
-                email_sent = False
+            email = form.cleaned_data['email']
+            from portfolio.utils.email_verification import create_verification_token, send_verification_email
+
+            # Inactive account already exists — resend verification rather than create duplicate
+            existing_user = User.objects.filter(email=email, is_active=False).first()
+            if existing_user:
                 try:
-                    from portfolio.utils.email_verification import create_verification_token, send_verification_email
-                    from portfolio.models import EmailVerification
-                    from django.db import connection
-                    
-                    # Check if EmailVerification table exists (works for both PostgreSQL and SQLite)
-                    table_name = EmailVerification._meta.db_table
-                    table_exists = False
-                    
-                    try:
-                        if connection.vendor == 'postgresql':
-                            with connection.cursor() as cursor:
-                                cursor.execute(
-                                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)",
-                                    [table_name]
-                                )
-                                table_exists = cursor.fetchone()[0]
-                        elif connection.vendor == 'sqlite':
-                            with connection.cursor() as cursor:
-                                cursor.execute(
-                                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                                    [table_name]
-                                )
-                                table_exists = cursor.fetchone() is not None
-                        else:
-                            # For other databases, try to query the table
-                            EmailVerification.objects.first()
-                            table_exists = True
-                    except Exception as e:
-                        logger.warning(f"Could not check if EmailVerification table exists: {e}")
-                        table_exists = False
-                    
-                    if table_exists:
-                        verification = create_verification_token(user)
-                        email_sent = send_verification_email(user, verification.token)
-                        if email_sent:
-                            logger.info(f"Verification email sent successfully to {user.email}")
-                        else:
-                            logger.error(f"Failed to send verification email to {user.email}")
-                    else:
-                        email_sent = False
-                        logger.warning("EmailVerification table doesn't exist yet. Skipping email verification.")
+                    verification = create_verification_token(existing_user)
+                    send_verification_email(existing_user, verification.token)
                 except Exception as e:
-                    logger.error(f"Error creating verification token for {user.email}: {e}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    email_sent = False
-                
-                if email_sent:
-                    messages.success(
-                        request, 
-                        f'Registration successful! Please check your email ({user.email}) to verify your account. You can log in after verification.'
-                    )
-                else:
-                    error_msg = f'Account created, but we couldn\'t send the verification email to {user.email}. Please check email configuration or contact support.'
-                    messages.warning(request, error_msg)
-                    logger.error(f"Registration succeeded but email sending failed for {user.email}")
-                
-                # Don't auto-login - user must verify email first
+                    logger.error(f"Error resending verification for {email}: {e}")
                 return redirect('verify_email_sent')
+
+            try:
+                # Auto-generate unique username from email prefix
+                base = ''.join(c for c in email.split('@')[0] if c.isalnum() or c == '_')
+                if len(base) < 3:
+                    base += '123'
+                base = base[:27]
+                username = base
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    suffix = str(counter)
+                    username = base[:30 - len(suffix)] + suffix
+                    counter += 1
+                    if counter > 999:
+                        import random
+                        username = base[:20] + str(random.randint(1000, 9999))
+                        break
+
+                user = User.objects.create(username=username, email=email, is_active=False)
+                user.set_unusable_password()
+                user.save()
+
+                verification = create_verification_token(user)
+                email_sent = send_verification_email(user, verification.token)
+
+                if not email_sent:
+                    user.delete()
+                    messages.error(request, 'Could not send verification email. Please try again or use a different address.')
+                    return render(request, 'register.html', {'form': form})
+
+                logger.info(f"Verification email sent to {email}")
+                return redirect('verify_email_sent')
+
             except Exception as e:
-                logger.error(f"Error during user registration: {e}")
-                messages.error(request, 'An error occurred during registration. Please try again.')
+                logger.error(f"Error during registration for {email}: {e}")
+                messages.error(request, 'An error occurred. Please try again.')
         else:
-            # Log form errors for debugging (not shown to user)
             logger.debug(f"Registration form errors: {form.errors}")
-            # Show user-friendly error messages
-            if 'username' in form.errors:
-                for error in form.errors['username']:
-                    if 'already exists' in str(error).lower():
-                        messages.error(request, 'This username is already taken. Please choose another.')
     else:
-        # Pre-fill email if provided in URL parameter
-        initial_data = {}
-        email = request.GET.get('email', '').strip()
-        if email:
-            initial_data['email'] = email
-        form = RegistrationForm(initial=initial_data)
-    
+        initial = {}
+        prefill = request.GET.get('email', '').strip()
+        if prefill:
+            initial['email'] = prefill
+        form = EmailRegistrationForm(initial=initial)
+
     return render(request, 'register.html', {'form': form})
 
 def logout_view(request):
@@ -689,9 +658,9 @@ def verify_email(request, token):
         verification.is_verified = True
         verification.verified_at = timezone.now()
         verification.save()
-        
-        messages.success(request, 'Email verified successfully! You can now log in to your account.')
-        return redirect('login')
+
+        # Redirect to set-password step (email-first flow)
+        return redirect('set_password', token=token)
         
     except EmailVerification.DoesNotExist:
         messages.error(request, 'Invalid or already used verification link.')
@@ -705,6 +674,51 @@ def verify_email(request, token):
 def verify_email_sent(request):
     """Show page after registration or when verification email is sent"""
     return render(request, 'verify_email_sent.html')
+
+
+def set_password_view(request, token):
+    """Step 3 of email-first registration: set password after email is verified."""
+    from portfolio.models import EmailVerification
+
+    try:
+        verification = EmailVerification.objects.select_related('user').get(
+            token=token, is_verified=True
+        )
+    except EmailVerification.DoesNotExist:
+        messages.error(request, 'Invalid or expired link. Please register again.')
+        return redirect('register')
+
+    user = verification.user
+
+    # Already activated — someone revisiting this page
+    if user.is_active:
+        messages.info(request, 'Your account is already set up. Please log in.')
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = SetPasswordForm(request.POST)
+        if form.is_valid():
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            password = form.cleaned_data['password1']
+            try:
+                validate_password(password, user=user)
+            except DjangoValidationError as e:
+                for msg in e.messages:
+                    form.add_error('password1', msg)
+                return render(request, 'set_password.html', {'form': form, 'email': user.email})
+
+            user.set_password(password)
+            user.is_active = True
+            user.save()
+
+            login(request, user)
+            messages.success(request, 'Welcome to StockFolio! Your account is ready.')
+            return redirect('dashboard')
+    else:
+        form = SetPasswordForm()
+
+    return render(request, 'set_password.html', {'form': form, 'email': user.email})
 
 
 def resend_verification_email(request):

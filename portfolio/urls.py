@@ -50,6 +50,7 @@ urlpatterns = [
     # Email verification URLs
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
     path('verify-email-sent/', views.verify_email_sent, name='verify_email_sent'),
+    path('set-password/<str:token>/', views.set_password_view, name='set_password'),
     path('resend-verification/', views.resend_verification_email, name='resend_verification'),
     
     path('dashboard/', views.dashboard, name='dashboard'),
