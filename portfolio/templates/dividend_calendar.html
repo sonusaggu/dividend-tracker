@@ -2,15 +2,9 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Dividend Calendar {{ month_name }} {{ year }} - TSX Ex-Dividend Dates & Payment Dates | StockFolio{% endblock %}
-{% block meta_title %}TSX Dividend Calendar - Ex-Dividend Dates & Upcoming Dividend Payments{% endblock %}
-{% block meta_description %}Track upcoming ex-dividend dates and dividend payment dates for all TSX-listed Canadian stocks. Never miss a dividend — filter by your portfolio or watchlist and plan your stock purchases around key dates.{% endblock %}
-{% block meta_keywords %}dividend calendar, ex-dividend dates Canada, TSX dividend schedule, upcoming dividends TSX, dividend payment dates, Canadian dividend calendar, ex-dividend date tracker, dividend investor calendar, TSX dividend dates {{ year }}, when is next dividend, dividend calendar Canada, monthly dividend stocks TSX, dividend schedule Canada{% endblock %}
-
-{% block og_title %}TSX Dividend Calendar - Ex-Dividend & Payment Dates | StockFolio{% endblock %}
-{% block og_description %}Track upcoming ex-dividend dates and dividend payment dates for all TSX Canadian stocks. Filter by your portfolio or watchlist.{% endblock %}
-{% block twitter_title %}TSX Dividend Calendar {{ month_name }} {{ year }} | StockFolio{% endblock %}
-{% block twitter_description %}Never miss an ex-dividend date. Track upcoming dividend payments for all TSX stocks.{% endblock %}
+{% block title %}Dividend Calendar {{ month_name }} {{ year }} - TSX Ex-Dividend Dates | StockFolio{% endblock %}
+{% block meta_description %}Track upcoming ex-dividend dates and dividend payment dates for all TSX-listed Canadian stocks. Never miss a dividend — filter by your portfolio or watchlist.{% endblock %}
+{% block meta_robots %}index, follow{% endblock %}
 
 {% block extra_schema %}
 <script type="application/ld+json">
@@ -19,606 +13,475 @@
   "@type": "WebPage",
   "name": "TSX Dividend Calendar - {{ month_name }} {{ year }}",
   "description": "Track upcoming ex-dividend dates and dividend payment dates for all TSX-listed Canadian stocks in {{ month_name }} {{ year }}.",
-  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'dividend_calendar' %}",
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" },
-      { "@type": "ListItem", "position": 2, "name": "Dividend Calendar", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'dividend_calendar' %}" }
-    ]
-  },
-  "mainEntity": {
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is an ex-dividend date?",
-        "acceptedAnswer": { "@type": "Answer", "text": "The ex-dividend date is the cutoff date to own shares and qualify for the next dividend payment. If you buy on or after the ex-date, you will not receive that dividend. You must purchase shares at least one business day before the ex-dividend date." }
-      },
-      {
-        "@type": "Question",
-        "name": "How long after the ex-dividend date is the dividend paid?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Most Canadian TSX-listed companies pay dividends 2–4 weeks after the ex-dividend date. The exact payment date is listed alongside the ex-date on this calendar." }
-      },
-      {
-        "@type": "Question",
-        "name": "Which TSX stocks pay monthly dividends?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Many Canadian REITs, income trusts, and some dividend ETFs pay monthly dividends. Popular monthly payers on the TSX include Granite REIT, RioCan REIT, and various income-focused closed-end funds. Check the dividend frequency column on each stock's detail page." }
-      }
-    ]
-  }
+  "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'dividend_calendar' %}"
 }
 </script>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ── Calendar grid ───────────────────────────────────────── */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .cal-head-cell {
+        padding: 0.6rem 0; text-align: center;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .cal-cell {
+        min-height: 120px; padding: 8px; position: relative;
+        border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;
+        background: #fff; transition: background 0.12s;
+    }
+    .cal-cell:hover { background: #f8faff; }
+    .cal-cell.other-month { background: #f8fafc; }
+    .cal-cell.other-month .cal-day-num { color: #cbd5e1; }
+    .cal-cell.is-weekend { background: #fafbfc; }
+    .cal-cell.is-today { background: #eff6ff; }
+    .cal-grid > .cal-cell:nth-child(7n) { border-right: none; }
+
+    .cal-day-num {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border-radius: 50%;
+        font-size: 0.78rem; font-weight: 700; color: #334155;
+    }
+    .cal-cell.is-today .cal-day-num {
+        background: #2563eb; color: #fff;
+    }
+    .cal-count {
+        position: absolute; top: 8px; right: 8px;
+        min-width: 20px; height: 20px; padding: 0 5px;
+        border-radius: 10px; background: #dbeafe; color: #1d4ed8;
+        font-size: 0.62rem; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Dividend chips inside cells */
+    .div-chip {
+        display: flex; align-items: center; gap: 4px;
+        padding: 3px 6px; border-radius: 6px; margin-top: 3px;
+        font-size: 0.62rem; font-weight: 700;
+        cursor: pointer; transition: opacity 0.1s;
+        text-decoration: none;
+        white-space: nowrap; overflow: hidden;
+    }
+    .div-chip:hover { opacity: 0.8; }
+    .div-chip.yld-high  { background: #fef2f2; color: #b91c1c; }
+    .div-chip.yld-mid   { background: #fffbeb; color: #92400e; }
+    .div-chip.yld-low   { background: #f0fdf4; color: #166534; }
+    .div-chip.yld-none  { background: #f1f5f9; color: #475569; }
+    .div-chip-sym { font-weight: 800; flex-shrink: 0; }
+    .div-chip-amt { margin-left: auto; flex-shrink: 0; }
+    .overflow-badge {
+        font-size: 0.58rem; color: #94a3b8; font-weight: 600;
+        padding: 2px 4px; margin-top: 3px; text-align: center;
+    }
+
+    /* ── Filter chips ────────────────────────────────────────── */
+    .f-chip {
+        padding: 0.4rem 0.9rem; border-radius: 999px;
+        font-size: 0.78rem; font-weight: 600; cursor: pointer;
+        border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b;
+        transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .f-chip:hover, .f-chip.active {
+        background: #2563eb; color: #fff; border-color: #2563eb;
+    }
+
+    /* ── Agenda list (mobile + list view) ───────────────────── */
+    .agenda-day-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 16px; background: #f8fafc;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.72rem; font-weight: 700; color: #475569;
+        text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .agenda-day-header.is-today { background: #eff6ff; color: #1d4ed8; }
+    .agenda-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 16px; border-bottom: 1px solid #f8fafc;
+        text-decoration: none; transition: background 0.1s;
+    }
+    .agenda-row:hover { background: #f8faff; }
+    .agenda-avatar {
+        width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.65rem; font-weight: 800;
+    }
+
+    /* ── View toggle ─────────────────────────────────────────── */
+    .view-btn {
+        padding: 0.35rem 0.75rem; border-radius: 7px;
+        font-size: 0.72rem; font-weight: 600; cursor: pointer; border: none;
+        transition: all 0.15s;
+    }
+    .view-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .view-btn:not(.active) { background: transparent; color: #64748b; }
+
+    @media (max-width: 767px) {
+        .cal-cell { min-height: 60px; padding: 4px; }
+        .div-chip  { display: none; }
+        .cal-count { position: static; display: inline-flex; margin-left: 4px; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Hero Header -->
-        <div class="relative rounded-2xl overflow-hidden mb-6 p-6 sm:p-8"
-             style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 160px;">
-            <!-- Glow orbs -->
-            <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-10 pointer-events-none"
-                 style="background: radial-gradient(circle, #059669, transparent 70%); transform: translate(30%, -40%);"></div>
-            <div class="absolute bottom-0 left-0 w-56 h-56 rounded-full opacity-10 pointer-events-none"
-                 style="background: radial-gradient(circle, #2563eb, transparent 70%); transform: translate(-30%, 40%);"></div>
-            <!-- Accent line -->
-            <div class="absolute top-0 left-0 right-0 h-0.5"
-                 style="background: linear-gradient(90deg, #059669, #10b981, transparent);"></div>
-            <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ── Hero bar ───────────────────────────────────────────── -->
+    <div class="rounded-2xl overflow-hidden mb-5"
+         style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); box-shadow:0 4px 24px rgba(0,0,0,0.15);">
+        <!-- accent line -->
+        <div style="height:3px;background:linear-gradient(90deg,#059669,#10b981,#3b82f6,transparent)"></div>
+        <div class="px-5 py-5 sm:px-7">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <!-- Title + stats -->
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30"
-                              style="background: rgba(5,150,105,0.15);">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            Calendar
-                        </span>
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Dividend Calendar</span>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white mb-1.5">Dividend Calendar</h1>
-                    <p class="text-slate-400 text-sm">View all upcoming dividend payments at a glance</p>
-                </div>
-                <!-- Month Navigation + stats -->
-                <div class="flex flex-col sm:items-end gap-3">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <a href="?year={{ prev_year }}&month={{ prev_month }}&filter={{ filter_type }}"
-                           class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
-                           style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            Prev
-                        </a>
-                        <div class="px-5 py-2 rounded-xl font-black text-sm text-white min-w-[160px] text-center"
-                             style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 2px 8px rgba(5,150,105,0.4);">
-                            {{ month_name }} {{ year }}
-                        </div>
-                        <a href="?year={{ next_year }}&month={{ next_month }}&filter={{ filter_type }}"
-                           class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition"
-                           style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
-                            Next
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                        <a href="?year={{ today.year }}&month={{ today.month }}&filter={{ filter_type }}"
-                           class="px-3 py-2 rounded-xl text-sm font-bold text-blue-300 hover:text-white transition"
-                           style="background: rgba(37,99,235,0.2); border: 1px solid rgba(37,99,235,0.3);">Today</a>
-                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none mb-2">{{ month_name }} {{ year }}</h1>
                     <!-- Stats pills -->
-                    <div class="flex gap-2 flex-wrap">
-                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl"
-                             style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);">
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <div class="text-white font-black text-sm leading-none">{{ total_dividends|default:0 }}</div>
-                                <div class="text-slate-400 text-[10px] font-medium mt-0.5">Dividends</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl"
-                             style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);">
-                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <div>
-                                <div class="text-white font-black text-sm leading-none">{{ total_companies|default:0 }}</div>
-                                <div class="text-slate-400 text-[10px] font-medium mt-0.5">Companies</div>
-                            </div>
-                        </div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                              style="background:rgba(255,255,255,0.08);color:#e2e8f0;">
+                            <span class="text-emerald-400 font-black">{{ total_dividends|default:0 }}</span> dividends
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                              style="background:rgba(255,255,255,0.08);color:#e2e8f0;">
+                            <span class="text-blue-400 font-black">{{ unique_stocks_count|default:0 }}</span> stocks
+                        </span>
+                        {% if total_amount %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                              style="background:rgba(255,255,255,0.08);color:#e2e8f0;">
+                            <span class="text-amber-400 font-black">${{ total_amount|floatformat:0|intcomma }}</span> total
+                        </span>
+                        {% endif %}
+                        {% if portfolio_income is not None %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                              style="background:rgba(5,150,105,0.2);border:1px solid rgba(5,150,105,0.3);color:#6ee7b7;">
+                            Your income: <span class="font-black">${{ portfolio_income|floatformat:2|intcomma }}</span>
+                        </span>
+                        {% endif %}
                     </div>
+                </div>
+                <!-- Month navigation -->
+                <div class="flex items-center gap-2">
+                    <a href="?year={{ prev_year }}&month={{ prev_month }}&filter={{ filter_type }}"
+                       class="w-9 h-9 flex items-center justify-center rounded-xl transition"
+                       style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;"
+                       onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                    </a>
+                    <a href="?year={{ today.year }}&month={{ today.month }}&filter={{ filter_type }}"
+                       class="px-3 py-2 rounded-xl text-xs font-bold transition"
+                       style="background:rgba(37,99,235,0.25);border:1px solid rgba(37,99,235,0.4);color:#93c5fd;"
+                       onmouseover="this.style.background='rgba(37,99,235,0.4)'" onmouseout="this.style.background='rgba(37,99,235,0.25)'">Today</a>
+                    <a href="?year={{ next_year }}&month={{ next_month }}&filter={{ filter_type }}"
+                       class="w-9 h-9 flex items-center justify-center rounded-xl transition"
+                       style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;"
+                       onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Page info card -->
-        <div class="mb-5 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3.5 sm:px-5">
-            <p class="text-sm text-slate-500 leading-relaxed">
-                The dividend calendar shows every <strong class="text-slate-700">ex-dividend date</strong> for TSX stocks — the date you must own shares <em>before</em> to qualify for the next payment.
-                Buying on or after the ex-date means you'll miss that dividend cycle.
-                <strong class="text-slate-700">Payment date</strong> is typically 2–4 weeks after ex-date, which is when the cash actually lands in your account.
-                Use the month navigation to plan ahead and align your purchases with upcoming ex-dates.
-            </p>
-        </div>
+    <!-- ── Controls bar ─────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm mb-5 px-4 py-4"
+         style="box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <form method="get" id="cal-form">
+            <input type="hidden" name="year" value="{{ year }}">
+            <input type="hidden" name="month" value="{{ month }}">
 
-        <!-- Filter Card -->
-        <div class="card card-body mb-6">
-            <!-- Filters -->
-            <form method="get" class="space-y-4">
-                <input type="hidden" name="year" value="{{ year }}">
-                <input type="hidden" name="month" value="{{ month }}">
-                
-                <!-- Main Filter Buttons -->
-                <div class="flex flex-wrap gap-3 mb-4">
+            <!-- Row 1: filter chips + view toggle -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <!-- Filter type chips -->
+                <div class="flex flex-wrap gap-2">
                     <button type="submit" name="filter" value="all"
-                            class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
-                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
+                            class="f-chip {% if filter_type == 'all' %}active{% endif %}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M3 8h18M3 12h18M3 16h18M3 20h18"/></svg>
                         All Stocks
                     </button>
                     <button type="submit" name="filter" value="portfolio"
-                            class="btn btn-sm {% if filter_type == 'portfolio' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
-                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                            class="f-chip {% if filter_type == 'portfolio' %}active{% endif %}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         My Portfolio
                     </button>
                     <button type="submit" name="filter" value="watchlist"
-                            class="btn btn-sm {% if filter_type == 'watchlist' %}btn-primary{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200{% endif %}">
-                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                        </svg>
-                        My Watchlist
+                            class="f-chip {% if filter_type == 'watchlist' %}active{% endif %}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        Watchlist
                     </button>
                 </div>
-                
-                <!-- Advanced Filters (Collapsible) -->
-                <details class="group">
-                    <summary class="cursor-pointer text-sm font-medium text-slate-600 hover:text-blue-600 transition flex items-center gap-2 mb-3">
-                        <svg class="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                        Advanced Filters
-                    </summary>
-                    <div class="mt-3 pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <!-- Search -->
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
-                            <input
-                                type="text"
-                                name="search"
-                                value="{{ search_query }}"
-                                placeholder="Symbol or company name..."
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                        </div>
-                        
-                        <!-- Sector -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Sector</label>
-                            <select 
-                                name="sector" 
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                                <option value="">All Sectors</option>
-                                {% for sector in sectors %}
-                                <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>{{ sector }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Yield Range -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Min Yield (%)</label>
-                            <input 
-                                type="number" 
-                                name="min_yield" 
-                                step="0.1" 
-                                min="0" 
-                                max="100"
-                                value="{{ min_yield }}"
-                                placeholder="0.0"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Max Yield (%)</label>
-                            <input 
-                                type="number" 
-                                name="max_yield" 
-                                step="0.1" 
-                                min="0" 
-                                max="100"
-                                value="{{ max_yield }}"
-                                placeholder="100.0"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                        </div>
-                        
-                        <!-- Amount Range -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Min Amount ($)</label>
-                            <input 
-                                type="number" 
-                                name="min_amount" 
-                                step="0.01" 
-                                min="0"
-                                value="{{ min_amount }}"
-                                placeholder="0.00"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Max Amount ($)</label>
-                            <input 
-                                type="number" 
-                                name="max_amount" 
-                                step="0.01" 
-                                min="0"
-                                value="{{ max_amount }}"
-                                placeholder="999.99"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
-                            >
-                        </div>
-                    </div>
-                </details>
-                
-                <!-- Action Buttons -->
-                <div class="flex flex-wrap gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
-                    {% if search_query or sector_filter or min_yield or max_yield or min_amount or max_amount %}
-                    <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}" 
-                       class="btn btn-secondary btn-sm">
-                        Clear Filters
-                    </a>
-                    {% endif %}
-                    {% if total_dividends > 0 %}
-                    <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}{% if min_yield %}&min_yield={{ min_yield }}{% endif %}{% if max_yield %}&max_yield={{ max_yield }}{% endif %}{% if min_amount %}&min_amount={{ min_amount }}{% endif %}{% if max_amount %}&max_amount={{ max_amount }}{% endif %}&export=1" 
-                       class="btn btn-secondary btn-sm inline-flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Export CSV
-                    </a>
-                    {% endif %}
-                </div>
-            </form>
-            
-            <!-- Statistics -->
-            <div class="grid grid-cols-1 md:grid-cols-{% if portfolio_income %}4{% else %}3{% endif %} gap-4">
-                <div class="stat-card">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Dividends</div>
-                        <div class="stat-icon bg-blue-100">
-                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-black text-slate-900 mb-1">{{ total_dividends }}</div>
-                    <div class="text-sm text-slate-500">This month</div>
-                </div>
-                <div class="stat-card">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Amount</div>
-                        <div class="stat-icon bg-emerald-100">
-                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-black text-emerald-600 mb-1">${{ total_amount|floatformat:2|intcomma }}</div>
-                    <div class="text-sm text-slate-500">Cumulative</div>
-                </div>
-                {% if portfolio_income is not None %}
-                <div class="stat-card border-emerald-200 bg-emerald-50/30">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Your Income</div>
-                        <div class="stat-icon bg-emerald-200">
-                            <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-black text-emerald-700 mb-1">${{ portfolio_income|floatformat:2|intcomma }}</div>
-                    <div class="text-sm text-emerald-600">Based on your holdings</div>
-                </div>
-                {% endif %}
-                <div class="stat-card">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unique Stocks</div>
-                        <div class="stat-icon bg-violet-100">
-                            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-black text-slate-900 mb-1">{{ unique_stocks_count }}</div>
-                    <div class="text-sm text-slate-500">Paying dividends</div>
+                <!-- View toggle (calendar / agenda) -->
+                <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-100">
+                    <button type="button" id="btn-cal"  onclick="setView('cal')"  class="view-btn active">
+                        <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Calendar
+                    </button>
+                    <button type="button" id="btn-list" onclick="setView('list')" class="view-btn">
+                        <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>List
+                    </button>
                 </div>
             </div>
+
+            <!-- Row 2: search + sector + more -->
+            <div class="flex flex-wrap gap-2 items-end">
+                <!-- Search -->
+                <div class="relative flex-1 min-w-[180px]">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <input type="text" name="search" value="{{ search_query }}"
+                           placeholder="Search symbol or company…"
+                           class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition">
+                </div>
+                <!-- Sector -->
+                <select name="sector"
+                        class="px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
+                        onchange="document.getElementById('cal-form').submit()">
+                    <option value="">All Sectors</option>
+                    {% for sector in sectors %}
+                    <option value="{{ sector }}" {% if sector_filter == sector %}selected{% endif %}>{{ sector }}</option>
+                    {% endfor %}
+                </select>
+                <!-- More filters toggle -->
+                <button type="button" onclick="toggleMore()"
+                        class="px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white text-sm font-medium text-slate-600 transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    More
+                </button>
+                <!-- Apply -->
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition">
+                    Apply
+                </button>
+                <!-- Clear -->
+                {% if search_query or sector_filter or min_yield or max_yield or min_amount or max_amount %}
+                <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}"
+                   class="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition">
+                    Clear
+                </a>
+                {% endif %}
+                <!-- Export CSV -->
+                {% if total_dividends > 0 %}
+                <a href="?year={{ year }}&month={{ month }}&filter={{ filter_type }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sector_filter %}&sector={{ sector_filter }}{% endif %}&export=1"
+                   class="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    CSV
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- More filters panel (hidden by default) -->
+            <div id="more-filters" class="hidden mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Min Yield %</label>
+                    <input type="number" name="min_yield" value="{{ min_yield }}" step="0.1" min="0" placeholder="0"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Max Yield %</label>
+                    <input type="number" name="max_yield" value="{{ max_yield }}" step="0.1" min="0" placeholder="100"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Min Amount $</label>
+                    <input type="number" name="min_amount" value="{{ min_amount }}" step="0.01" min="0" placeholder="0"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Max Amount $</label>
+                    <input type="number" name="max_amount" value="{{ max_amount }}" step="0.01" min="0" placeholder="999"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Calendar view ─────────────────────────────────────────── -->
+    <div id="view-cal" class="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-6"
+         style="box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+
+        <!-- Day-of-week header -->
+        <div class="cal-grid" style="background:#f8fafc;">
+            <div class="cal-head-cell">Mon</div>
+            <div class="cal-head-cell">Tue</div>
+            <div class="cal-head-cell">Wed</div>
+            <div class="cal-head-cell">Thu</div>
+            <div class="cal-head-cell">Fri</div>
+            <div class="cal-head-cell">Sat</div>
+            <div class="cal-head-cell">Sun</div>
         </div>
 
-        <!-- Mobile agenda view -->
-        <div class="block md:hidden card overflow-hidden mb-6">
-            <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
-                <h2 class="text-sm font-black text-slate-700 uppercase tracking-wide">{{ month_name }} {{ year }} — Dividend Schedule</h2>
-            </div>
-            {% with has_any=False %}
+        <!-- Calendar cells -->
+        <div class="cal-grid">
             {% for day_data in calendar_days %}
-            {% if day_data.dividends and day_data.is_current_month %}
-            <div class="border-b border-slate-100 last:border-0">
-                <div class="px-4 py-2 bg-slate-50/60 flex items-center justify-between">
-                    <span class="text-xs font-black text-slate-700 uppercase tracking-wide">
-                        {{ year }}-{{ month }}-{{ day_data.day|stringformat:"02d" }}
-                        {% if day_data.is_today %}<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black">Today</span>{% endif %}
-                    </span>
-                    {% if day_data.total_amount > 0 %}
-                    <span class="text-xs font-black text-emerald-700" style="white-space:nowrap;">${{ day_data.total_amount|floatformat:2 }}</span>
+            {% with yld=day_data.dividends.0.yield_percent %}
+            <div class="cal-cell
+                {% if not day_data.is_current_month %}other-month{% endif %}
+                {% if day_data.date.weekday >= 5 %}is-weekend{% endif %}
+                {% if day_data.is_today %}is-today{% endif %}">
+
+                <!-- Day number -->
+                <div class="flex items-center mb-1">
+                    <span class="cal-day-num">{{ day_data.day }}</span>
+                    {% if day_data.dividend_count > 0 %}
+                    <span class="cal-count">{{ day_data.dividend_count }}</span>
                     {% endif %}
                 </div>
-                <div class="divide-y divide-slate-50">
-                    {% for dividend in day_data.dividends %}
+
+                <!-- Dividend chips -->
+                <div class="space-y-0">
+                    {% for dividend in day_data.dividends|slice:":4" %}
                     <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}"
-                       class="flex items-center gap-3 px-4 py-2.5 active:bg-slate-50">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs
-                            {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-100 text-red-700
-                            {% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
-                            {% else %}bg-emerald-100 text-emerald-700{% endif %}">
-                            {{ dividend.stock.symbol|slice:":2" }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <span class="text-sm font-black text-slate-900" style="white-space:nowrap;word-break:normal;hyphens:none;">{{ dividend.stock.symbol }}</span>
-                            <div class="text-xs text-slate-400 truncate">{{ dividend.stock.company_name }}</div>
-                        </div>
-                        <div class="flex-shrink-0 text-right">
-                            <div class="text-sm font-black text-slate-800" style="white-space:nowrap;">${{ dividend.amount|floatformat:4 }}</div>
-                            {% if dividend.yield_percent %}
-                            <div class="text-xs font-semibold
-                                {% if dividend.yield_percent >= 5 %}text-red-600
-                                {% elif dividend.yield_percent >= 3 %}text-amber-600
-                                {% else %}text-emerald-600{% endif %}" style="white-space:nowrap;">
-                                {{ dividend.yield_percent|floatformat:2 }}%
-                            </div>
-                            {% endif %}
-                        </div>
+                       class="div-chip {% if dividend.yield_percent and dividend.yield_percent >= 5 %}yld-high{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}yld-mid{% elif dividend.yield_percent %}yld-low{% else %}yld-none{% endif %}"
+                       title="{{ dividend.stock.company_name }} — ${{ dividend.amount|floatformat:4 }}{% if dividend.yield_percent %} · {{ dividend.yield_percent|floatformat:1 }}%{% endif %}">
+                        <span class="div-chip-sym">{{ dividend.stock.symbol }}</span>
+                        <span class="div-chip-amt">${{ dividend.amount|floatformat:2 }}</span>
                     </a>
                     {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            {% endfor %}
-            {% endwith %}
-            <div id="cal-mobile-empty" class="px-4 py-10 text-center text-sm text-slate-400">
-                No dividends scheduled for this month.
-            </div>
-        </div>
-
-        <!-- Desktop Calendar -->
-        <div class="hidden md:block card overflow-hidden">
-            <!-- Calendar Header (Days of Week) -->
-            <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-100">
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Mon</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Tue</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Wed</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Thu</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Fri</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600 border-r border-slate-100">Sat</div>
-                <div class="p-4 text-center font-semibold text-sm text-slate-600">Sun</div>
-            </div>
-
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 divide-x divide-y divide-slate-100 bg-slate-50/30">
-                {% for day_data in calendar_days %}
-                <div class="min-h-[150px] p-3 {% if not day_data.is_current_month %}bg-slate-100/50{% else %}bg-white{% endif %} 
-                            {% if day_data.is_today %}ring-4 ring-blue-500 ring-inset bg-blue-50{% endif %} 
-                            hover:bg-blue-50/50 transition-all duration-200 relative group">
-                    <!-- Day Number -->
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-base font-bold {% if day_data.is_current_month %}text-slate-900{% else %}text-slate-400{% endif %}
-                                    {% if day_data.is_today %}text-blue-700 text-lg{% endif %}">
-                            {{ day_data.day }}
-                        </span>
-                        {% if day_data.dividend_count > 0 %}
-                        <span class="text-xs bg-blue-600 text-white px-2 py-1 rounded-lg font-semibold">
-                            {{ day_data.dividend_count }}
-                        </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Dividends List -->
-                    <div class="space-y-2 max-h-[110px] overflow-y-auto custom-scrollbar">
-                        {% for dividend in day_data.dividends|slice:":3" %}
-                        <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" 
-                           class="block p-2 rounded-lg border hover:shadow-sm transition group/card {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-50 border-red-200 hover:bg-red-100{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-orange-50 border-orange-200 hover:bg-orange-100{% else %}bg-green-50 border-green-200 hover:bg-green-100{% endif %}"
-                           title="{{ dividend.stock.symbol }} - ${{ dividend.amount|floatformat:2 }} - {{ dividend.stock.company_name }}">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-slate-900 group-hover/card:text-blue-600 text-sm">
-                                    {{ dividend.stock.symbol }}
-                                </span>
-                                <span class="{% if dividend.yield_percent and dividend.yield_percent >= 5 %}text-red-700{% elif dividend.yield_percent and dividend.yield_percent >= 3 %}text-orange-700{% else %}text-green-700{% endif %} font-bold text-sm">
-                                    ${{ dividend.amount|floatformat:2 }}
-                                </span>
-                            </div>
-                            {% if dividend.yield_percent %}
-                            <div class="flex items-center text-xs {% if dividend.yield_percent >= 5 %}text-red-600{% elif dividend.yield_percent >= 3 %}text-orange-600{% else %}text-slate-600{% endif %}">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
-                                </svg>
-                                {{ dividend.yield_percent|floatformat:2 }}% yield
-                            </div>
-                            {% endif %}
-                        </a>
-                        {% endfor %}
-                        {% if day_data.dividend_count > 3 %}
-                        <div class="text-xs text-center pt-2 pb-1">
-                            <span class="badge bg-slate-200 text-slate-600">
-                                +{{ day_data.dividend_count|add:"-3" }} more
-                            </span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Total for Day -->
-                    {% if day_data.total_amount > 0 %}
-                    <div class="mt-2 pt-2 border-t-2 border-slate-200">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-600">Total:</span>
-                            <span class="text-sm font-bold text-green-700">
-                                ${{ day_data.total_amount|floatformat:2 }}
-                            </span>
-                        </div>
-                    </div>
+                    {% if day_data.dividend_count > 4 %}
+                    <div class="overflow-badge">+{{ day_data.dividend_count|add:"-4" }} more</div>
                     {% endif %}
                 </div>
-                {% endfor %}
             </div>
+            {% endwith %}
+            {% endfor %}
         </div>
+    </div>
 
-        <!-- Legend & Info -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Legend -->
-            <div class="card p-6">
-                <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Legend
-                </h3>
-                <div class="space-y-3">
-                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
-                        <div class="w-6 h-6 bg-white border-2 border-slate-200 rounded-lg shadow-sm"></div>
-                        <span class="text-sm font-medium text-slate-700">Current month</span>
-                    </div>
-                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
-                        <div class="w-6 h-6 bg-slate-100 border border-slate-200 rounded-lg"></div>
-                        <span class="text-sm font-medium text-slate-700">Other months</span>
-                    </div>
-                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
-                        <div class="w-6 h-6 bg-blue-50 ring-4 ring-blue-500 rounded-lg"></div>
-                        <span class="text-sm font-medium text-slate-700">Today</span>
-                    </div>
-                    <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
-                        <div class="w-6 h-6 bg-green-50 border border-green-200 rounded-lg"></div>
-                        <span class="text-sm font-medium text-slate-700">Dividend payment</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Tips -->
-            <div class="card p-6 border-blue-100 bg-blue-50/30">
-                <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                    </svg>
-                    Quick Tips
-                </h3>
-                <ul class="space-y-2 text-sm text-slate-700">
-                    <li class="flex items-start">
-                        <span class="text-green-600 mr-2">✓</span>
-                        <span>Click any stock symbol to view details</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-green-600 mr-2">✓</span>
-                        <span>Filter by portfolio or watchlist for personalized view</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-green-600 mr-2">✓</span>
-                        <span>Navigate months using Previous/Next buttons</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-green-600 mr-2">✓</span>
-                        <span>Days with multiple dividends show "+X more"</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Empty State -->
-        {% if total_dividends == 0 %}
-        <div class="mt-8 card p-12 text-center">
-            <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <h3 class="text-2xl font-bold text-slate-900 mb-3">No Dividends This Month</h3>
-            <p class="text-slate-600 mb-8 max-w-md mx-auto">
-                {% if filter_type == 'portfolio' %}
-                    No dividends scheduled for your portfolio this month. Try adding more dividend stocks to your portfolio.
-                {% elif filter_type == 'watchlist' %}
-                    No dividends scheduled for your watchlist this month. Add dividend-paying stocks to your watchlist.
-                {% else %}
-                    No dividends scheduled for any stocks this month. Check other months or browse dividend stocks.
+    <!-- ── List / Agenda view ───────────────────────────────────── -->
+    <div id="view-list" class="hidden bg-white rounded-2xl border border-slate-100 overflow-hidden mb-6"
+         style="box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        {% for day_data in calendar_days %}
+        {% if day_data.dividends and day_data.is_current_month %}
+        <div class="agenda-day-header {% if day_data.is_today %}is-today{% endif %}">
+            <span>
+                {{ day_data.date|date:"l, F j" }}
+                {% if day_data.is_today %}
+                <span class="ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black">Today</span>
                 {% endif %}
-            </p>
-            <div class="flex gap-4 justify-center flex-wrap">
-                <a href="{% url 'all_stocks' %}" class="btn btn-primary inline-flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Browse Stocks
-                </a>
-                {% if filter_type != 'all' %}
-                <a href="?year={{ year }}&month={{ month }}&filter=all" class="btn btn-secondary inline-flex items-center">
-                    View All Stocks
-                </a>
+            </span>
+            {% if day_data.total_amount > 0 %}
+            <span class="text-emerald-600 font-black">${{ day_data.total_amount|floatformat:2 }}</span>
+            {% endif %}
+        </div>
+        {% for dividend in day_data.dividends %}
+        <a href="{% url 'stock_detail' dividend.stock.symbol dividend.stock.get_seo_slug %}" class="agenda-row">
+            <!-- Avatar -->
+            <div class="agenda-avatar
+                {% if dividend.yield_percent and dividend.yield_percent >= 5 %}bg-red-100 text-red-700
+                {% elif dividend.yield_percent and dividend.yield_percent >= 3 %}bg-amber-100 text-amber-700
+                {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                {{ dividend.stock.symbol|slice:":2" }}
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-black text-slate-900">{{ dividend.stock.symbol }}</p>
+                <p class="text-xs text-slate-400 truncate">{{ dividend.stock.company_name }}</p>
+            </div>
+            <!-- Amount + yield -->
+            <div class="text-right flex-shrink-0">
+                <p class="text-sm font-black text-slate-800">${{ dividend.amount|floatformat:4 }}</p>
+                {% if dividend.yield_percent %}
+                <p class="text-xs font-semibold
+                    {% if dividend.yield_percent >= 5 %}text-red-600
+                    {% elif dividend.yield_percent >= 3 %}text-amber-600
+                    {% else %}text-emerald-600{% endif %}">
+                    {{ dividend.yield_percent|floatformat:2 }}%
+                </p>
                 {% endif %}
             </div>
-        </div>
+            <!-- Payment date -->
+            {% if dividend.payment_date %}
+            <div class="flex-shrink-0 hidden sm:block text-right">
+                <p class="text-xs text-slate-400">Pay date</p>
+                <p class="text-xs font-semibold text-slate-600">{{ dividend.payment_date|date:"M j" }}</p>
+            </div>
+            {% endif %}
+            <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        {% endfor %}
         {% endif %}
+        {% endfor %}
+        {% if total_dividends == 0 %}
+        <div class="py-16 text-center text-slate-400 text-sm">No dividends scheduled for this period.</div>
+        {% endif %}
+    </div>
+
+    <!-- ── Legend strip ──────────────────────────────────────────── -->
+    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 mb-4 px-1">
+        <span class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-full bg-blue-600 inline-block"></span> Today
+        </span>
+        <span class="flex items-center gap-1.5">
+            <span class="inline-block px-2 py-0.5 rounded div-chip yld-low">RY $1.38</span> Normal yield (&lt;3%)
+        </span>
+        <span class="flex items-center gap-1.5">
+            <span class="inline-block px-2 py-0.5 rounded div-chip yld-mid">TD $1.02</span> Mid yield (3–5%)
+        </span>
+        <span class="flex items-center gap-1.5">
+            <span class="inline-block px-2 py-0.5 rounded div-chip yld-high">ENB $0.89</span> High yield (&gt;5%)
+        </span>
+    </div>
+
+    <!-- ── Empty state ───────────────────────────────────────────── -->
+    {% if total_dividends == 0 %}
+    <div class="bg-white rounded-2xl border border-slate-100 p-12 text-center" style="box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-800 mb-2">No dividends this month</h3>
+        <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+            {% if filter_type == 'portfolio' %}No dividends in your portfolio this month. Add more dividend stocks.
+            {% elif filter_type == 'watchlist' %}No dividends in your watchlist this month.
+            {% else %}No dividends found with current filters.{% endif %}
+        </p>
+        <div class="flex gap-3 justify-center flex-wrap">
+            <a href="{% url 'all_stocks' %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition">Browse Stocks</a>
+            {% if filter_type != 'all' %}
+            <a href="?year={{ year }}&month={{ month }}&filter=all" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-bold rounded-xl transition">View All Stocks</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 
-<style>
-/* Custom scrollbar for dividend list */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
-}
-
-/* Smooth animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.calendar-day {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* Hover effects for calendar cells */
-.group:hover .calendar-day {
-    transform: scale(1.02);
-}
-
-/* Weekend styling */
-.weekend {
-    background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-}
-</style>
 <script>
+// ── View toggle ─────────────────────────────────────────────
+function setView(v) {
+    const isCal  = v === 'cal';
+    document.getElementById('view-cal').classList.toggle('hidden',  !isCal);
+    document.getElementById('view-list').classList.toggle('hidden',  isCal);
+    document.getElementById('btn-cal').classList.toggle('active',   isCal);
+    document.getElementById('btn-list').classList.toggle('active',  !isCal);
+    // On mobile default to list
+    localStorage.setItem('calView', v);
+}
+
+// ── More filters ────────────────────────────────────────────
+function toggleMore() {
+    const el = document.getElementById('more-filters');
+    el.classList.toggle('hidden');
+}
+
+// Restore last view preference + auto-list on mobile
 (function() {
-    var agenda = document.getElementById('cal-mobile-empty');
-    if (!agenda) return;
-    var parent = agenda.parentElement;
-    var dayRows = parent ? parent.querySelectorAll('.border-b.border-slate-100') : [];
-    if (dayRows.length > 0) agenda.style.display = 'none';
+    const saved = localStorage.getItem('calView');
+    const mobile = window.innerWidth < 768;
+    if (mobile || saved === 'list') setView('list');
+
+    // Open more-filters if any advanced filter is active
+    {% if min_yield or max_yield or min_amount or max_amount %}
+    document.getElementById('more-filters').classList.remove('hidden');
+    {% endif %}
 })();
 </script>
 {% endblock %}

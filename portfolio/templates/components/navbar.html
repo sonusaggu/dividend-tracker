@@ -48,7 +48,7 @@
                     <!-- Tools Dropdown -->
                     <div class="relative group">
                         <button onclick="toggleDropdown('tools-dropdown')"
-                                class="flex items-center space-x-1.5 px-3 py-2 rounded-xl transition-all duration-200 font-semibold text-sm text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 {% if request.resolver_match.url_name == 'stock_comparison' or request.resolver_match.url_name == 'dividend_calendar' or request.resolver_match.url_name == 'earnings_calendar' or request.resolver_match.url_name == 'drip_calculator' or request.resolver_match.url_name == 'canadian_tools' %}bg-blue-600 text-white{% endif %}">
+                                class="flex items-center space-x-1.5 px-3 py-2 rounded-xl transition-all duration-200 font-semibold text-sm text-slate-600 hover:bg-slate-100/80 hover:text-blue-600 {% if request.resolver_match.url_name == 'stock_comparison' or request.resolver_match.url_name == 'dividend_calendar' or request.resolver_match.url_name == 'earnings_calendar' or request.resolver_match.url_name == 'drip_calculator' or request.resolver_match.url_name == 'canadian_tools' or request.resolver_match.url_name == 'heatmap' %}bg-blue-600 text-white{% endif %}">
                             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
                             </svg>
@@ -59,6 +59,13 @@
                         </button>
                         <div id="tools-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-xl py-1.5 z-[9999]"
                              style="background: rgba(255,255,255,0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06); border: 1px solid rgba(226,232,240,0.7);">
+                            <a href="{% url 'heatmap' %}"
+                               class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium {% if request.resolver_match.url_name == 'heatmap' %}bg-blue-50 text-blue-600{% endif %}">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                                <span>Market Heatmap</span>
+                            </a>
                             <a href="{% url 'stock_comparison' %}"
                                class="flex items-center space-x-3 px-4 py-2.5 text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-1.5 transition text-sm font-medium">
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +233,14 @@
                     
                     <!-- Tools Section -->
                     <div class="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</div>
-                    <a href="{% url 'stock_comparison' %}" 
+                    <a href="{% url 'heatmap' %}"
+                       class="flex items-center space-x-3 px-4 py-2.5 ml-4 rounded-lg transition-all duration-200 font-medium {% if request.resolver_match.url_name == 'heatmap' %}bg-blue-50 text-blue-600{% else %}text-slate-700 hover:bg-slate-50 hover:text-blue-600{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                        <span>Market Heatmap</span>
+                    </a>
+                    <a href="{% url 'stock_comparison' %}"
                        class="flex items-center space-x-3 px-4 py-2.5 ml-4 rounded-lg transition-all duration-200 font-medium {% if request.resolver_match.url_name == 'stock_comparison' %}bg-blue-50 text-blue-600{% else %}text-slate-700 hover:bg-slate-50 hover:text-blue-600{% endif %}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>

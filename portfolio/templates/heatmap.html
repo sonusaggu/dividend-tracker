@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Market Heatmap — TSX Stocks{% endblock %}
+{% block meta_description %}Interactive TSX market heatmap showing stock price changes and trading volume grouped by sector.{% endblock %}
+{% block meta_robots %}index, follow{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #0f172a; }
+    .hm-page { background: #0f172a; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+
+    /* Sector label */
+    .sector-header {
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #64748b;
+        padding: 0.5rem 0 0.35rem; margin-top: 1rem;
+        border-top: 1px solid #1e293b;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .sector-avg { font-size: 0.68rem; font-weight: 600; }
+
+    /* Heatmap tiles */
+    .hm-grid { display: flex; flex-wrap: wrap; gap: 3px; }
+    .hm-tile {
+        width: 72px; height: 56px;
+        border-radius: 5px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.1s, box-shadow 0.1s;
+        overflow: hidden;
+        user-select: none;
+    }
+    .hm-tile:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(0,0,0,0.5); z-index: 10; }
+    .hm-sym  { font-size: 0.7rem; font-weight: 800; line-height: 1; }
+    .hm-pct  { font-size: 0.62rem; font-weight: 600; margin-top: 2px; }
+    /* Volume bar at bottom */
+    .hm-volbar {
+        position: absolute; bottom: 0; left: 0;
+        height: 3px; background: rgba(255,255,255,0.25);
+        border-radius: 0 0 5px 5px;
+    }
+
+    /* Tooltip */
+    #hm-tooltip {
+        position: fixed; pointer-events: none;
+        background: #1e293b; border: 1px solid #334155;
+        border-radius: 10px; padding: 10px 14px;
+        font-size: 0.78rem; color: #e2e8f0;
+        z-index: 9999; max-width: 220px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        display: none;
+    }
+    #hm-tooltip .tt-sym  { font-size: 1rem; font-weight: 800; color: #f1f5f9; }
+    #hm-tooltip .tt-name { font-size: 0.7rem; color: #94a3b8; margin-bottom: 6px; }
+    #hm-tooltip .tt-row  { display: flex; justify-content: space-between; gap: 12px; margin-top: 3px; }
+    #hm-tooltip .tt-lbl  { color: #64748b; }
+
+    /* Tab buttons */
+    .tab-btn {
+        padding: 0.45rem 1.1rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+        cursor: pointer; border: none; transition: all 0.15s;
+    }
+    .tab-btn.active { background: #2563eb; color: #fff; }
+    .tab-btn:not(.active) { background: #1e293b; color: #94a3b8; }
+    .tab-btn:not(.active):hover { background: #273549; color: #e2e8f0; }
+
+    /* Sector chips */
+    .sec-chip {
+        padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+        cursor: pointer; border: 1px solid #334155; background: #1e293b; color: #94a3b8;
+        transition: all 0.15s; white-space: nowrap;
+    }
+    .sec-chip.active, .sec-chip:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    /* Legend */
+    .legend { display: flex; align-items: center; gap: 4px; }
+    .legend-box { width: 18px; height: 12px; border-radius: 3px; }
+
+    /* Volume bar chart */
+    .vol-bar-wrap { margin-bottom: 6px; }
+    .vol-bar-row   { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .vol-bar-sym   { width: 52px; font-size: 0.73rem; font-weight: 700; color: #e2e8f0; flex-shrink: 0; }
+    .vol-bar-track { flex: 1; background: #1e293b; border-radius: 4px; height: 22px; overflow: hidden; }
+    .vol-bar-fill  { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px;
+                     font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.85); transition: width 0.6s; }
+    .vol-bar-meta  { width: 90px; font-size: 0.68rem; color: #64748b; flex-shrink: 0; text-align: right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hm-page">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- ── Header ──────────────────────────────────────────── -->
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-black text-white tracking-tight">Market Heatmap</h1>
+                <p class="text-slate-500 text-xs mt-0.5">
+                    TSX stocks by % change &amp; volume
+                    {% if latest_date %}&nbsp;·&nbsp;As of {{ latest_date|date:"M j, Y" }}{% endif %}
+                </p>
+            </div>
+            <!-- Tab buttons -->
+            <div class="flex gap-2">
+                <button class="tab-btn active" id="tab-heatmap" onclick="switchView('heatmap')">Heatmap</button>
+                <button class="tab-btn" id="tab-volume" onclick="switchView('volume')">Volume Leaders</button>
+            </div>
+        </div>
+
+        <!-- ── Heatmap Panel ──────────────────────────────────── -->
+        <div id="panel-heatmap">
+            <!-- Sector filter chips -->
+            <div class="flex flex-wrap gap-2 mb-4" id="sector-chips"></div>
+
+            <!-- Colour legend -->
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class="text-slate-500 text-xs font-semibold">% Change:</span>
+                <div class="legend">
+                    <div class="legend-box" style="background:#7f1d1d"></div>
+                    <div class="legend-box" style="background:#991b1b"></div>
+                    <div class="legend-box" style="background:#b91c1c"></div>
+                    <div class="legend-box" style="background:#ef4444"></div>
+                    <span class="text-xs text-slate-500 ml-1">Strong ↓</span>
+                </div>
+                <div class="legend">
+                    <div class="legend-box" style="background:#374151"></div>
+                    <span class="text-xs text-slate-500 ml-1">Flat</span>
+                </div>
+                <div class="legend">
+                    <span class="text-xs text-slate-500 mr-1">Strong ↑</span>
+                    <div class="legend-box" style="background:#16a34a"></div>
+                    <div class="legend-box" style="background:#15803d"></div>
+                    <div class="legend-box" style="background:#166534"></div>
+                    <div class="legend-box" style="background:#14532d"></div>
+                </div>
+            </div>
+
+            <!-- Grid rendered by JS -->
+            <div id="hm-container"></div>
+
+            <p class="text-slate-600 text-xs mt-3">Tile bottom bar = relative trading volume. Hover a tile for details.</p>
+        </div>
+
+        <!-- ── Volume Leaders Panel ──────────────────────────── -->
+        <div id="panel-volume" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-white font-bold text-sm">Top 30 Stocks by Trading Volume</h2>
+                <span class="text-slate-500 text-xs">{% if latest_date %}{{ latest_date|date:"M j, Y" }}{% endif %}</span>
+            </div>
+            <div id="vol-chart" class="max-w-3xl"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Tooltip -->
+<div id="hm-tooltip">
+    <div class="tt-sym" id="tt-sym"></div>
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-row"><span class="tt-lbl">Price</span><span id="tt-price"></span></div>
+    <div class="tt-row"><span class="tt-lbl">Change</span><span id="tt-chg"></span></div>
+    <div class="tt-row"><span class="tt-lbl">Volume</span><span id="tt-vol"></span></div>
+    <div class="tt-row"><span class="tt-lbl">Sector</span><span id="tt-sec" style="font-size:0.65rem;text-align:right;max-width:130px"></span></div>
+</div>
+
+<script>
+const RAW = {{ stocks_json|safe }};
+
+// ── Colour helper ──────────────────────────────────────────
+function tileColor(pct) {
+    if (pct <= -5)    return '#6b0f0f';
+    if (pct <= -3)    return '#991b1b';
+    if (pct <= -1.5)  return '#b91c1c';
+    if (pct <= -0.3)  return '#ef4444';
+    if (pct < 0.3)    return '#374151';
+    if (pct < 1.5)    return '#16a34a';
+    if (pct < 3)      return '#15803d';
+    if (pct < 5)      return '#166534';
+    return '#14532d';
+}
+function textBrightness(pct) {
+    return Math.abs(pct) < 0.3 ? '#94a3b8' : '#ffffff';
+}
+function fmtVol(v) {
+    if (!v) return '—';
+    if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
+    return v.toString();
+}
+function fmtPct(p) { return (p >= 0 ? '+' : '') + p.toFixed(2) + '%'; }
+
+// ── Group by sector ────────────────────────────────────────
+const sectors = {};
+RAW.forEach(s => {
+    const sec = s.sector || 'Other';
+    if (!sectors[sec]) sectors[sec] = [];
+    sectors[sec].push(s);
+});
+const sectorNames = Object.keys(sectors).sort((a, b) =>
+    sectors[b].length - sectors[a].length
+);
+
+// ── Sector chips ───────────────────────────────────────────
+let activeSector = 'All';
+const chipsEl = document.getElementById('sector-chips');
+
+function buildChips() {
+    chipsEl.innerHTML = '';
+    ['All', ...sectorNames].forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'sec-chip' + (name === activeSector ? ' active' : '');
+        btn.textContent = name === 'All' ? 'All Sectors' : name;
+        btn.onclick = () => { activeSector = name; buildChips(); renderHeatmap(); };
+        chipsEl.appendChild(btn);
+    });
+}
+
+// ── Heatmap render ─────────────────────────────────────────
+function renderHeatmap() {
+    const container = document.getElementById('hm-container');
+    container.innerHTML = '';
+
+    const showSectors = activeSector === 'All' ? sectorNames : [activeSector];
+
+    showSectors.forEach(sec => {
+        const stocks = sectors[sec];
+        if (!stocks || stocks.length === 0) return;
+
+        // Sector aggregate % avg
+        const avg = stocks.reduce((s, x) => s + x.change_pct, 0) / stocks.length;
+        const maxVol = Math.max(...stocks.map(s => s.volume || 0), 1);
+
+        const header = document.createElement('div');
+        header.className = 'sector-header';
+        const avgColor = tileColor(avg);
+        header.innerHTML = `
+            <span>${sec}</span>
+            <span class="sector-avg" style="color:${avgColor}">${fmtPct(avg)} avg &nbsp;·&nbsp; ${stocks.length} stocks</span>`;
+        container.appendChild(header);
+
+        const grid = document.createElement('div');
+        grid.className = 'hm-grid';
+
+        stocks.forEach(s => {
+            const bg   = tileColor(s.change_pct);
+            const col  = textBrightness(s.change_pct);
+            const volW = maxVol > 0 ? Math.round((s.volume / maxVol) * 100) : 0;
+
+            const tile = document.createElement('div');
+            tile.className = 'hm-tile';
+            tile.style.background = bg;
+            tile.innerHTML = `
+                <span class="hm-sym" style="color:${col}">${s.symbol}</span>
+                <span class="hm-pct" style="color:${col}">${fmtPct(s.change_pct)}</span>
+                <div class="hm-volbar" style="width:${volW}%"></div>`;
+
+            // Tooltip events
+            tile.addEventListener('mouseenter', e => showTooltip(e, s));
+            tile.addEventListener('mousemove',  e => moveTooltip(e));
+            tile.addEventListener('mouseleave', hideTooltip);
+            tile.addEventListener('click', () => {
+                window.location.href = `/stocks/${s.symbol}/`;
+            });
+
+            grid.appendChild(tile);
+        });
+
+        container.appendChild(grid);
+    });
+}
+
+// ── Tooltip ────────────────────────────────────────────────
+const tooltip = document.getElementById('hm-tooltip');
+function showTooltip(e, s) {
+    document.getElementById('tt-sym').textContent  = s.symbol;
+    document.getElementById('tt-name').textContent = s.name;
+    document.getElementById('tt-price').textContent = '$' + s.price.toFixed(2);
+    const chgEl = document.getElementById('tt-chg');
+    chgEl.textContent = fmtPct(s.change_pct);
+    chgEl.style.color = s.change_pct >= 0 ? '#4ade80' : '#f87171';
+    document.getElementById('tt-vol').textContent = fmtVol(s.volume);
+    document.getElementById('tt-sec').textContent = s.sector;
+    tooltip.style.display = 'block';
+    moveTooltip(e);
+}
+function moveTooltip(e) {
+    const pad = 14;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + 230 > window.innerWidth) x = e.clientX - 230 - pad;
+    if (y + 160 > window.innerHeight) y = e.clientY - 160 - pad;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+}
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+// ── Volume chart render ────────────────────────────────────
+function renderVolume() {
+    const sorted = [...RAW]
+        .filter(s => s.volume > 0)
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 30);
+
+    const maxVol = sorted[0]?.volume || 1;
+    const el = document.getElementById('vol-chart');
+    el.innerHTML = sorted.map(s => {
+        const pct  = (s.volume / maxVol * 100).toFixed(1);
+        const bg   = tileColor(s.change_pct);
+        return `
+        <div class="vol-bar-row">
+            <span class="vol-bar-sym">${s.symbol}</span>
+            <div class="vol-bar-track">
+                <div class="vol-bar-fill" style="width:${pct}%;background:${bg}">
+                    ${fmtVol(s.volume)}
+                </div>
+            </div>
+            <span class="vol-bar-meta">${fmtPct(s.change_pct)} · $${s.price.toFixed(2)}</span>
+        </div>`;
+    }).join('');
+}
+
+// ── Tab switcher ───────────────────────────────────────────
+function switchView(view) {
+    document.getElementById('panel-heatmap').classList.toggle('hidden', view !== 'heatmap');
+    document.getElementById('panel-volume').classList.toggle('hidden',  view !== 'volume');
+    document.getElementById('tab-heatmap').classList.toggle('active', view === 'heatmap');
+    document.getElementById('tab-volume').classList.toggle('active',  view === 'volume');
+}
+
+// ── Init ───────────────────────────────────────────────────
+buildChips();
+renderHeatmap();
+renderVolume();
+</script>
+{% endblock %}

@@ -32,6 +32,7 @@ class StaticViewSitemap(Sitemap):
             ('canadian_tools',         0.8, 'weekly'),
             ('posts_feed',             0.7, 'daily'),
             ('recommendations',         0.8, 'daily'),
+            ('heatmap',                 0.8, 'daily'),
             ('drip_calculator',        0.7, 'weekly'),
             ('contact_us',             0.5, 'monthly'),
             ('donations',              0.5, 'monthly'),

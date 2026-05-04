@@ -163,6 +163,7 @@ urlpatterns = [
 
     # Stock Recommendations by Risk Profile
     path('recommendations/', views.recommendations_view, name='recommendations'),
+    path('heatmap/', views.heatmap_view, name='heatmap'),
 
     # DRIP Calculator
     path('drip-calculator/', views.drip_calculator, name='drip_calculator'),

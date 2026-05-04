@@ -1808,9 +1808,10 @@ def stock_detail(request, symbol, slug=None):
             start_date = today - timedelta(days=90)
             history_qs = StockPrice.objects.filter(
                 stock=stock, price_date__gte=start_date
-            ).order_by('price_date').values_list('price_date', 'last_price')
+            ).order_by('price_date').values_list('price_date', 'last_price', 'volume')
             _price_meta['history'] = [
-                {'date': d.isoformat(), 'price': float(p)} for d, p in history_qs
+                {'date': d.isoformat(), 'price': float(p), 'volume': int(v) if v else 0}
+                for d, p, v in history_qs
             ]
         except (ValueError, TypeError, AttributeError):
             _price_meta['history'] = []
@@ -2123,6 +2124,52 @@ def stock_detail(request, symbol, slug=None):
         stock_ai_insights = []
         stock_news_summary = None
 
+    # Sector peer heatmap — cached per sector for 30 min
+    import json as _json
+    sector_peers_json = '[]'
+    if stock.sector:
+        _sector_key = f'sector_heatmap_{stock.sector}'
+        _sector_data = cache.get(_sector_key)
+        if _sector_data is None:
+            _recent_dates = list(
+                StockPrice.objects.order_by('-price_date')
+                .values_list('price_date', flat=True)
+                .distinct()[:2]
+            )
+            _latest_dt = _recent_dates[0] if _recent_dates else None
+            _prev_dt   = _recent_dates[1] if len(_recent_dates) > 1 else None
+            if _latest_dt:
+                _lat_sq = StockPrice.objects.filter(stock=OuterRef('pk')).order_by('-price_date')
+                peers_qs = Stock.objects.filter(
+                    sector=stock.sector, show_in_listing=True
+                ).annotate(
+                    cur_price=Subquery(_lat_sq.values('last_price')[:1]),
+                    cur_volume=Subquery(_lat_sq.values('volume')[:1]),
+                )
+                if _prev_dt:
+                    _prv_sq = StockPrice.objects.filter(stock=OuterRef('pk'), price_date=_prev_dt)
+                    peers_qs = peers_qs.annotate(prev_price=Subquery(_prv_sq.values('last_price')[:1]))
+                peers_qs = peers_qs.only('symbol', 'company_name').order_by('symbol')
+                _sector_data = []
+                for p in peers_qs:
+                    if not p.cur_price:
+                        continue
+                    cur  = float(p.cur_price)
+                    prev = float(p.prev_price) if _prev_dt and getattr(p, 'prev_price', None) else None
+                    chg  = round((cur - prev) / prev * 100, 2) if prev and prev > 0 else 0.0
+                    _sector_data.append({
+                        'symbol':     p.symbol,
+                        'name':       p.company_name[:30],
+                        'price':      cur,
+                        'change_pct': chg,
+                        'volume':     int(p.cur_volume) if p.cur_volume else 0,
+                        'is_current': p.symbol == stock.symbol,
+                    })
+                cache.set(_sector_key, _sector_data, 30 * 60)
+            else:
+                _sector_data = []
+        sector_peers_json = _json.dumps(_sector_data)
+
     context = {
         'stock': stock,
         'latest_price': latest_price,
@@ -2159,6 +2206,7 @@ def stock_detail(request, symbol, slug=None):
         'insider_trades': insider_trades,
         'insider_buys': insider_buys,
         'insider_sells': insider_sells,
+        'sector_peers_json': sector_peers_json,
     }
 
     return render(request, 'stock_detail.html', context)
@@ -6104,6 +6152,62 @@ def big6_banks_dashboard(request):
     }
     
     return render(request, 'big6_banks_dashboard.html', context)
+
+
+@cache_page(1800)
+@cache_control(max_age=1800)
+def heatmap_view(request):
+    """Market heatmap: stock % change (colour) and volume (leaders chart)."""
+    import json as _json
+    from portfolio.models import StockPrice as SP
+
+    # Two most-recent global price dates  ─── 2 queries
+    dates = list(
+        SP.objects.order_by('-price_date')
+        .values_list('price_date', flat=True)
+        .distinct()[:2]
+    )
+    latest_date = dates[0] if dates else None
+    prev_date   = dates[1] if len(dates) > 1 else None
+
+    if not latest_date:
+        return render(request, 'heatmap.html', {
+            'stocks_json': '[]',
+            'latest_date': None,
+        })
+
+    _latest = SP.objects.filter(stock=OuterRef('pk')).order_by('-price_date')
+    qs = Stock.objects.filter(show_in_listing=True).annotate(
+        cur_price=Subquery(_latest.values('last_price')[:1]),
+        cur_volume=Subquery(_latest.values('volume')[:1]),
+    )
+    if prev_date:
+        _prev = SP.objects.filter(stock=OuterRef('pk'), price_date=prev_date)
+        qs = qs.annotate(prev_price=Subquery(_prev.values('last_price')[:1]))
+
+    qs = qs.only('symbol', 'company_name', 'sector', 'tsx60_member').order_by('sector', 'symbol')
+
+    stocks_data = []
+    for s in qs:
+        if not s.cur_price:
+            continue
+        cur  = float(s.cur_price)
+        prev = float(s.prev_price) if prev_date and getattr(s, 'prev_price', None) else None
+        chg  = round((cur - prev) / prev * 100, 2) if prev and prev > 0 else 0.0
+        vol  = int(s.cur_volume) if s.cur_volume else 0
+        stocks_data.append({
+            'symbol':     s.symbol,
+            'name':       s.company_name[:35],
+            'sector':     s.sector or 'Other',
+            'price':      cur,
+            'change_pct': chg,
+            'volume':     vol,
+        })
+
+    return render(request, 'heatmap.html', {
+        'stocks_json': _json.dumps(stocks_data),
+        'latest_date': latest_date,
+    })
 
 
 @cache_page(1800)  # Server-side cache: score 2000+ stocks once per 30 min, not on every request
