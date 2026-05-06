@@ -1255,7 +1255,13 @@ def all_stocks_view(request):
     # If 2 or less, show all
     
     context['sponsored_content'] = featured_stocks
-    
+
+    # Broker affiliate links for banner
+    from portfolio.models import AffiliateLink
+    context['broker_links'] = list(
+        AffiliateLink.objects.filter(is_active=True, platform_type='broker').order_by('display_order')[:3]
+    )
+
     # Handle CSV export
     if request.GET.get('export') == '1':
         import csv
@@ -2208,6 +2214,11 @@ def stock_detail(request, symbol, slug=None):
         'insider_sells': insider_sells,
         'sector_peers_json': sector_peers_json,
     }
+
+    from portfolio.models import AffiliateLink
+    context['broker_links'] = list(
+        AffiliateLink.objects.filter(is_active=True, platform_type='broker').order_by('display_order')[:3]
+    )
 
     return render(request, 'stock_detail.html', context)
 
