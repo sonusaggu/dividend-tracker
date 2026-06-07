@@ -747,7 +747,7 @@
                         </div>
                         <div>
                             <div class="font-black text-slate-900 text-base leading-tight">Price History</div>
-                            <div class="text-slate-400 text-xs font-medium mt-0.5">90-day chart &middot; {{ stock.symbol }}</div>
+                            <div id="priceChartRangeLabel" class="text-slate-400 text-xs font-medium mt-0.5">3-month chart &middot; {{ stock.symbol }}</div>
                         </div>
                     </div>
                     {% if latest_price %}
@@ -761,6 +761,58 @@
                     </div>
                     {% endif %}
                 </div>
+                <!-- Range filter + SMA toggles -->
+                <div class="px-5 py-3 bg-slate-50 flex flex-wrap items-center justify-between gap-3" style="border-bottom: 1px solid #f1f5f9;">
+                    <div id="priceRangeFilter" class="inline-flex rounded-lg bg-white border border-slate-200 p-0.5 text-xs font-semibold" role="group">
+                        <button type="button" data-range="30"  class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-900 transition">1M</button>
+                        <button type="button" data-range="90"  class="px-2.5 py-1 rounded-md bg-blue-600 text-white">3M</button>
+                        <button type="button" data-range="180" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-900 transition">6M</button>
+                        <button type="button" data-range="365" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-900 transition">1Y</button>
+                        <button type="button" data-range="0"   class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-900 transition">All</button>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-semibold text-slate-600">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input id="toggleSMA50" type="checkbox" class="rounded border-slate-300 text-amber-500 focus:ring-amber-400 w-3.5 h-3.5">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#f59e0b;"></span>
+                            <span>SMA 50</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input id="toggleSMA200" type="checkbox" class="rounded border-slate-300 text-violet-500 focus:ring-violet-400 w-3.5 h-3.5">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#8b5cf6;"></span>
+                            <span>SMA 200</span>
+                        </label>
+                    </div>
+                </div>
+                {% if latest_sma_50 or latest_sma_200 %}
+                <div class="px-5 py-3 bg-white flex flex-wrap items-center gap-2" style="border-bottom: 1px solid #f1f5f9;">
+                    {% if latest_sma_50 %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                        <span class="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+                        SMA 50: ${{ latest_sma_50|floatformat:2 }}
+                        {% if latest_price and latest_price.last_price %}
+                            {% if latest_price.last_price > latest_sma_50 %}
+                                <span class="text-emerald-600 font-black">▲ Above</span>
+                            {% else %}
+                                <span class="text-red-500 font-black">▼ Below</span>
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                    {% if latest_sma_200 %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 border border-violet-100">
+                        <span class="inline-block w-2 h-2 rounded-full bg-violet-500"></span>
+                        SMA 200: ${{ latest_sma_200|floatformat:2 }}
+                        {% if latest_price and latest_price.last_price %}
+                            {% if latest_price.last_price > latest_sma_200 %}
+                                <span class="text-emerald-600 font-black">▲ Above</span>
+                            {% else %}
+                                <span class="text-red-500 font-black">▼ Below</span>
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
                 <!-- Canvas -->
                 <div class="bg-white px-2 pb-4 pt-2">
                     <div style="height:200px; position:relative;" class="sm:!h-[240px]">
@@ -1259,7 +1311,7 @@
 {% endif %}
 
 <!-- Sector Heatmap -->
-{% if stock.sector %}
+{% if False %}{# Heatmap disabled on the stock detail page — use the dedicated /heatmap page #}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
     <div class="card p-5">
         <div class="flex items-center justify-between mb-4">
@@ -1685,85 +1737,159 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
     const el = document.getElementById('price-history-data');
     const canvas = document.getElementById('priceHistoryChart');
     if (!el || !canvas) return;
-    try {
-        const data = JSON.parse(el.textContent);
-        if (!data || data.length === 0) return;
-        const labels = data.map(function(d) { return d.date; });
-        const values = data.map(function(d) { return d.price; });
-        const ctx = canvas.getContext('2d');
-        const grad = ctx.createLinearGradient(0, 0, 0, 240);
-        grad.addColorStop(0, 'rgba(59,130,246,0.18)');
-        grad.addColorStop(1, 'rgba(59,130,246,0.0)');
+    let data;
+    try { data = JSON.parse(el.textContent); } catch (e) { console.warn('Price history parse:', e); return; }
+    if (!data || data.length === 0) return;
+
+    const rangeLabel = document.getElementById('priceChartRangeLabel');
+    const sma50Toggle = document.getElementById('toggleSMA50');
+    const sma200Toggle = document.getElementById('toggleSMA200');
+    const filterContainer = document.getElementById('priceRangeFilter');
+    const ctx = canvas.getContext('2d');
+    const RANGE_LABELS = { 30: '1-month', 90: '3-month', 180: '6-month', 365: '1-year', 0: 'Full history' };
+
+    function sliceData(days) {
+        if (!days || days >= data.length) return data;
+        return data.slice(-days);
+    }
+
+    function buildAreaGradient(values) {
         const first = values[0], last = values[values.length - 1];
         const isUp = last >= first;
-        const lineColor = isUp ? '#10b981' : '#ef4444';
-        const gradUp = ctx.createLinearGradient(0, 0, 0, 240);
-        gradUp.addColorStop(0, isUp ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)');
-        gradUp.addColorStop(1, 'rgba(255,255,255,0)');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Price (CAD)',
-                    data: values,
-                    borderColor: lineColor,
-                    borderWidth: 2,
-                    backgroundColor: gradUp,
-                    fill: true,
-                    tension: 0.35,
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: lineColor,
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1e293b',
-                        titleColor: '#94a3b8',
-                        bodyColor: '#f8fafc',
-                        padding: 10,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(ctx) { return ' $' + ctx.parsed.y.toFixed(2); }
+        const g = ctx.createLinearGradient(0, 0, 0, 240);
+        g.addColorStop(0, isUp ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        return { gradient: g, lineColor: isUp ? '#10b981' : '#ef4444' };
+    }
+
+    let chart;
+    function render(days) {
+        const slice = sliceData(days);
+        const labels = slice.map(function(d) { return d.date; });
+        const values = slice.map(function(d) { return d.price; });
+        const { gradient, lineColor } = buildAreaGradient(values);
+
+        const datasets = [{
+            label: 'Price',
+            data: values,
+            borderColor: lineColor,
+            borderWidth: 2,
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: lineColor,
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+            order: 1
+        }];
+        if (sma50Toggle && sma50Toggle.checked) {
+            datasets.push({
+                label: 'SMA 50',
+                data: slice.map(function(d) { return d.sma50; }),
+                borderColor: '#f59e0b',
+                borderWidth: 1.5,
+                borderDash: [4, 3],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                spanGaps: true,
+                order: 0
+            });
+        }
+        if (sma200Toggle && sma200Toggle.checked) {
+            datasets.push({
+                label: 'SMA 200',
+                data: slice.map(function(d) { return d.sma200; }),
+                borderColor: '#8b5cf6',
+                borderWidth: 1.5,
+                borderDash: [6, 4],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                spanGaps: true,
+                order: 0
+            });
+        }
+
+        if (chart) {
+            chart.data.labels = labels;
+            chart.data.datasets = datasets;
+            chart.update();
+        } else {
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#94a3b8',
+                            bodyColor: '#f8fafc',
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(ctx) {
+                                    if (ctx.parsed.y === null || ctx.parsed.y === undefined) return null;
+                                    return ' ' + ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 6, maxRotation: 0, color: '#94a3b8', font: { size: 11 } },
+                            border: { display: false }
+                        },
+                        y: {
+                            display: true,
+                            position: 'right',
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: { color: '#94a3b8', font: { size: 11 }, callback: function(v) { return '$' + v.toFixed(2); } },
+                            border: { display: false }
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        grid: { display: false },
-                        ticks: {
-                            maxTicksLimit: 6,
-                            maxRotation: 0,
-                            color: '#94a3b8',
-                            font: { size: 11 }
-                        },
-                        border: { display: false }
-                    },
-                    y: {
-                        display: true,
-                        position: 'right',
-                        beginAtZero: false,
-                        grid: { color: 'rgba(0,0,0,0.04)' },
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { size: 11 },
-                            callback: function(v) { return '$' + v.toFixed(2); }
-                        },
-                        border: { display: false }
-                    }
                 }
-            }
+            });
+        }
+        if (rangeLabel) {
+            const label = RANGE_LABELS[days] || (days + '-day');
+            rangeLabel.textContent = label + ' chart · {{ stock.symbol }}';
+        }
+    }
+
+    let currentRange = 90;
+    render(currentRange);
+
+    if (filterContainer) {
+        filterContainer.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-range]');
+            if (!btn) return;
+            const days = parseInt(btn.dataset.range, 10);
+            currentRange = days;
+            filterContainer.querySelectorAll('button').forEach(function(b) {
+                b.classList.remove('bg-blue-600', 'text-white');
+                b.classList.add('text-slate-500', 'hover:text-slate-900', 'transition');
+            });
+            btn.classList.add('bg-blue-600', 'text-white');
+            btn.classList.remove('text-slate-500', 'hover:text-slate-900', 'transition');
+            render(currentRange);
         });
-    } catch (e) { console.warn('Price history chart:', e); }
+    }
+    if (sma50Toggle) sma50Toggle.addEventListener('change', function() { render(currentRange); });
+    if (sma200Toggle) sma200Toggle.addEventListener('change', function() { render(currentRange); });
 })();
 {% endif %}
 
@@ -1928,7 +2054,7 @@ function openShareModal(symbol, companyName, price, yieldPercent) {
 {% endif %}
 
 <!-- Sector Heatmap JS -->
-{% if stock.sector %}
+{% if False %}{# Heatmap disabled on the stock detail page #}
 <script>
 (function() {
     const PEERS = {{ sector_peers_json|safe }};

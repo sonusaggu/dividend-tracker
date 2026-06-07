@@ -363,6 +363,9 @@
             <a href="?tsx60=on" class="preset-chip {% if tsx60_only and not search_query and not sector_filter %}active{% endif %}">TSX 60 Only</a>
             <a href="?sort_by=market_cap" class="preset-chip {% if sort_by == 'market_cap' and not min_yield %}active{% endif %}">Large Cap</a>
             <a href="?frequency=Monthly&sort_by=yield" class="preset-chip {% if dividend_frequency == 'Monthly' %}active{% endif %}">Monthly Payers</a>
+            <a href="?above_sma_50=on" class="preset-chip {% if above_sma_50 and not above_sma_200 %}active{% endif %}" title="Stocks trading above their 50-day simple moving average — short-term bullish.">▲ Above 50-SMA</a>
+            <a href="?above_sma_200=on" class="preset-chip {% if above_sma_200 and not above_sma_50 %}active{% endif %}" title="Stocks trading above their 200-day simple moving average — long-term uptrend.">▲ Above 200-SMA</a>
+            <a href="?above_sma_50=on&above_sma_200=on" class="preset-chip {% if above_sma_50 and above_sma_200 %}active{% endif %}" title="Stocks above both 50- and 200-day SMAs — strong uptrend.">▲ Above Both SMAs</a>
         </div>
 
         <!-- Main filter row -->
@@ -448,6 +451,16 @@
                                    class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
                             <span class="text-sm text-slate-700">ETF only</span>
                         </label>
+                        <label class="flex items-center gap-2 cursor-pointer" title="Stocks where the current price is above the 50-day simple moving average — typically a short-term bullish signal.">
+                            <input type="checkbox" name="above_sma_50" {% if above_sma_50 %}checked{% endif %}
+                                   class="w-4 h-4 rounded text-amber-600 border-slate-300 focus:ring-amber-500">
+                            <span class="text-sm text-slate-700">Above 50-day SMA</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer" title="Stocks where the current price is above the 200-day simple moving average — long-term trend filter.">
+                            <input type="checkbox" name="above_sma_200" {% if above_sma_200 %}checked{% endif %}
+                                   class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500">
+                            <span class="text-sm text-slate-700">Above 200-day SMA</span>
+                        </label>
                     </div>
                 </div>
             </details>
@@ -466,10 +479,12 @@
                     {% endif %}
                     {% if tsx60_only %}<span class="active-chip">TSX 60 <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
                     {% if etf_only %}<span class="active-chip">ETF <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
+                    {% if above_sma_50 %}<span class="active-chip">▲ 50-SMA <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
+                    {% if above_sma_200 %}<span class="active-chip">▲ 200-SMA <a href="?{% if search_query %}search={{ search_query }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
                     {% if dividend_frequency %}<span class="active-chip">{{ dividend_frequency }} <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if sector_filter %}sector={{ sector_filter }}&{% endif %}sort_by={{ sort_by }}">×</a></span>{% endif %}
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    {% if search_query or sector_filter or min_yield or max_yield or min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter %}
+                    {% if search_query or sector_filter or min_yield or max_yield or min_price or max_price or dividend_frequency or tsx60_only or etf_only or has_dividend_filter or above_sma_50 or above_sma_200 %}
                     <a href="{% url 'all_stocks' %}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">Clear all</a>
                     {% endif %}
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">

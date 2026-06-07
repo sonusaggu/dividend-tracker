@@ -915,6 +915,8 @@ def all_stocks_view(request):
     tsx60_only = request.GET.get('tsx60', '') == 'on'
     etf_only = request.GET.get('etf', '') == 'on'
     has_dividend_filter = request.GET.get('has_dividend', '')
+    above_sma_50 = request.GET.get('above_sma_50', '') == 'on'
+    above_sma_200 = request.GET.get('above_sma_200', '') == 'on'
     
     # Save recent search to session
     if search_query:
@@ -993,6 +995,19 @@ def all_stocks_view(request):
         stocks = stocks.filter(has_dividend=True)
     elif has_dividend_filter == 'no':
         stocks = stocks.filter(has_dividend=False)
+
+    if above_sma_50:
+        stocks = stocks.filter(
+            latest_price_value__isnull=False,
+            latest_sma_50__isnull=False,
+            latest_price_value__gt=F('latest_sma_50'),
+        )
+    if above_sma_200:
+        stocks = stocks.filter(
+            latest_price_value__isnull=False,
+            latest_sma_200__isnull=False,
+            latest_price_value__gt=F('latest_sma_200'),
+        )
 
     # --- 7️⃣ Sorting map (simpler than if/elif chain)
     sort_map = {
@@ -1234,6 +1249,8 @@ def all_stocks_view(request):
         'tsx60_only': tsx60_only,
         'etf_only': etf_only,
         'has_dividend_filter': has_dividend_filter,
+        'above_sma_50': above_sma_50,
+        'above_sma_200': above_sma_200,
     }
 
     # Add recent searches to context
@@ -1790,7 +1807,7 @@ def stock_detail(request, symbol, slug=None):
     # Cache price-change lookups and price history per symbol for 15 minutes.
     # These queries are identical for every visitor on the same stock page and
     # don't depend on the logged-in user, so a shared cache key is safe.
-    _price_cache_key = f'stock_price_meta_{stock.symbol}'
+    _price_cache_key = f'stock_price_meta_v2_{stock.symbol}'  # bumped to v2 when SMA50/200 added
     _price_meta = cache.get(_price_cache_key)
 
     if _price_meta is None:
@@ -1811,13 +1828,39 @@ def stock_detail(request, symbol, slug=None):
                 pass
 
         try:
-            start_date = today - timedelta(days=90)
-            history_qs = StockPrice.objects.filter(
+            # Pull a wide enough window (~14 months of trading days) so the 200-day SMA has
+            # enough lead-in data even when the chart's visible range is "1Y". The client
+            # filters down to the user-selected range.
+            start_date = today - timedelta(days=420)
+            history_qs = list(StockPrice.objects.filter(
                 stock=stock, price_date__gte=start_date
-            ).order_by('price_date').values_list('price_date', 'last_price', 'volume')
+            ).order_by('price_date').values_list('price_date', 'last_price', 'volume'))
+
+            prices = [float(p) for _, p, _ in history_qs]
+
+            def _sma(window):
+                out = [None] * len(prices)
+                if len(prices) < window:
+                    return out
+                running = sum(prices[:window])
+                out[window - 1] = round(running / window, 4)
+                for i in range(window, len(prices)):
+                    running += prices[i] - prices[i - window]
+                    out[i] = round(running / window, 4)
+                return out
+
+            sma50 = _sma(50)
+            sma200 = _sma(200)
+
             _price_meta['history'] = [
-                {'date': d.isoformat(), 'price': float(p), 'volume': int(v) if v else 0}
-                for d, p, v in history_qs
+                {
+                    'date': d.isoformat(),
+                    'price': float(p),
+                    'volume': int(v) if v else 0,
+                    'sma50': sma50[i],
+                    'sma200': sma200[i],
+                }
+                for i, (d, p, v) in enumerate(history_qs)
             ]
         except (ValueError, TypeError, AttributeError):
             _price_meta['history'] = []
@@ -2204,6 +2247,8 @@ def stock_detail(request, symbol, slug=None):
         'price_change_30d': price_change_30d,
         'price_52w_percent': price_52w_percent,
         'price_history_data': price_history_data,
+        'latest_sma_50': (price_history_data[-1].get('sma50') if price_history_data else None),
+        'latest_sma_200': (price_history_data[-1].get('sma200') if price_history_data else None),
         'stock_ai_insights': stock_ai_insights,
         'stock_news_summary': stock_news_summary,
         'dividend_safety_score': dividend_safety_score,

@@ -44,6 +44,11 @@ class StockPrice(models.Model):
     volume = models.BigIntegerField(null=True, blank=True)
     fiftytwo_week_high = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fiftytwo_week_low = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Rolling moving averages computed by the compute_sma management command. Stored on
+    # each row so the all-stocks listing can filter "price above SMA" with a simple SQL
+    # comparison instead of replaying history per row.
+    sma_50 = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, db_index=True)
+    sma_200 = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

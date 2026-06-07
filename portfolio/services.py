@@ -287,6 +287,8 @@ class StockService:
             upcoming_dividend_date=Subquery(upcoming_dividends.values('ex_dividend_date')[:1]),
             latest_price_value=Subquery(latest_prices.values('last_price')[:1]),
             latest_price_date=Subquery(latest_prices.values('price_date')[:1]),
+            latest_sma_50=Subquery(latest_prices.values('sma_50')[:1]),
+            latest_sma_200=Subquery(latest_prices.values('sma_200')[:1]),
             market_cap_value=Subquery(latest_valuations.values('market_cap')[:1]),
             pe_ratio_value=Subquery(latest_valuations.values('pe_ratio')[:1]),
             has_dividend=Exists(Dividend.objects.filter(stock=OuterRef('pk')))
